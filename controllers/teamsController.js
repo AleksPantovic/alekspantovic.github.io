@@ -1,6 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const fetch = require('node-fetch');
+const jwt = require('jsonwebtoken');
+const axios = require('axios');
+
+const PUBLIC_KEY_URL = 'https://plugins.coyoapp.com'; // Whitelisted URL for public keys
 
 let accessToken = null; // Store the access token in memory
 let tokenExpiryTime = null; // Store token expiry time
@@ -73,6 +77,38 @@ async function ensureAccessToken(req, res, next) {
         await refreshAccessToken();
     }
     next();
+}
+
+// Function to validate JWT token
+async function validateJwtToken(token) {
+    try {
+        // Fetch the public key
+        const response = await axios.get(`${PUBLIC_KEY_URL}/.well-known/jwks.json`);
+        const publicKey = response.data.keys[0]; // Assuming the first key is valid
+
+        // Verify the token
+        const decoded = jwt.verify(token, publicKey, { algorithms: ['RS256'] });
+        console.log('Token is valid:', decoded);
+        return decoded;
+    } catch (error) {
+        console.error('JWT validation failed:', error);
+        throw new Error('Invalid token');
+    }
+}
+
+// Middleware to validate lifecycle event tokens
+async function validateLifecycleToken(req, res, next) {
+    const token = req.headers['authorization']?.split(' ')[1]; // Extract token from Authorization header
+    if (!token) {
+        return res.status(401).json({ error: 'Authorization token is missing' });
+    }
+
+    try {
+        await validateJwtToken(token);
+        next();
+    } catch (error) {
+        res.status(401).json({ error: 'Invalid token' });
+    }
 }
 
 // Endpoint to fetch all user directories
@@ -173,6 +209,11 @@ router.get('/users/:id', ensureAccessToken, async (req, res) => {
         console.error('Error fetching user:', error);
         res.status(500).json({ error: 'Failed to fetch user' });
     }
+});
+
+// Example endpoint with token validation
+router.post('/lifecycle-event', validateLifecycleToken, (req, res) => {
+    res.status(200).json({ message: 'Lifecycle event processed successfully' });
 });
 
 module.exports = router;
