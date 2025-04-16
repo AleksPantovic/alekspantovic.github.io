@@ -30,6 +30,17 @@
         "default": "https://login.microsoftonline.com/common/oauth2/v2.0/authorize"
       }
     ],
+    "apiAccess": {
+        "url": "/event/access_token",
+        "client": {
+            "mode": [
+                "authorization_code"
+            ],
+            "scope": [
+                "plugin:notify"
+            ]
+        }
+    },
     "entryPoints": [
       {
         "id": "510e9e0c-e3b8-44a8-8db1-5185d3d844ce",
@@ -45,4 +56,3 @@
       }
     ]
   }
-  
