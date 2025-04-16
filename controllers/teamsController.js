@@ -111,6 +111,17 @@ async function validateLifecycleToken(req, res, next) {
     }
 }
 
+// Middleware to handle CORS
+router.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', 'https://haiiloplugin.netlify.app'); // Allow requests from your frontend
+    res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Authorization, Content-Type');
+    if (req.method === 'OPTIONS') {
+        return res.sendStatus(200); // Handle preflight requests
+    }
+    next();
+});
+
 // Endpoint to fetch all user directories
 router.get('/userdirectories', ensureAccessToken, async (req, res) => {
     try {
