@@ -3,6 +3,7 @@ const router = express.Router();
 const fetch = require('node-fetch');
 
 let accessToken = null; // Store the access token in memory
+let tokenExpiryTime = null; // Store token expiry time
 
 // Function to fetch a new authorization code
 async function fetchAuthorizationCode() {
@@ -26,6 +27,7 @@ async function fetchAuthorizationCode() {
         }
 
         const data = await response.json();
+        console.log('Authorization Code:', data.code); // Debugging
         return data.code; // Assuming the response contains the authorization code
     } catch (error) {
         console.error('Error fetching authorization code:', error);
@@ -58,14 +60,16 @@ async function refreshAccessToken() {
 
         const data = await response.json();
         accessToken = data.access_token;
+        tokenExpiryTime = Date.now() + data.expires_in * 1000; // Calculate token expiry time
+        console.log('Access Token:', accessToken); // Debugging
     } catch (error) {
         console.error('Error refreshing access token:', error);
     }
 }
 
-// Middleware to ensure access token is available
+// Middleware to ensure access token is available and valid
 async function ensureAccessToken(req, res, next) {
-    if (!accessToken) {
+    if (!accessToken || Date.now() >= tokenExpiryTime) {
         await refreshAccessToken();
     }
     next();
