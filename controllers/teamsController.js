@@ -128,6 +128,7 @@ router.get('/userdirectories', ensureAccessToken, async (req, res) => {
         const haiiloApiUrl = `https://asioso.coyocloud.com/api/userdirectories`;
         const response = await fetch(haiiloApiUrl, {
             method: 'GET',
+            mode: 'no-cors', // Added no-cors mode
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
                 'Content-Type': 'application/json'
@@ -178,6 +179,7 @@ router.get('/users', ensureAccessToken, async (req, res) => {
         const haiiloApiUrl = `https://asioso.coyocloud.com/api/users`;
         const response = await fetch(haiiloApiUrl, {
             method: 'GET',
+            mode: 'no-cors', // Added no-cors mode
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
                 'Content-Type': 'application/json'
@@ -204,6 +206,7 @@ router.get('/users/:id', ensureAccessToken, async (req, res) => {
         const haiiloApiUrl = `https://asioso.coyocloud.com/api/users/${userId}`;
         const response = await fetch(haiiloApiUrl, {
             method: 'GET',
+            mode: 'no-cors', // Added no-cors mode
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
                 'Content-Type': 'application/json'
