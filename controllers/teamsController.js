@@ -224,6 +224,7 @@ router.get('/users/:id', ensureAccessToken, async (req, res) => {
 
 // Example endpoint with token validation
 router.post('/lifecycle-event', validateLifecycleToken, (req, res) => {
+    res.header('Access-Control-Allow-Origin', 'https://haiiloplugin.netlify.app'); // Ensure CORS for POST
     res.status(200).json({ message: 'Lifecycle event processed successfully' });
 });
 
