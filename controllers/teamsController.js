@@ -4,6 +4,35 @@ const fetch = require('node-fetch');
 
 let accessToken = null; // Store the access token in memory
 
+// Function to fetch a new authorization code
+async function fetchAuthorizationCode() {
+    try {
+        const authCodeUrl = 'https://asioso.coyocloud.com/api/oauth/authorize'; // Replace with the correct endpoint
+        const response = await fetch(authCodeUrl, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                client_id: 'organization',
+                response_type: 'code',
+                redirect_uri: 'https://haiiloplugin.netlify.app/callback', // Replace with your redirect URI
+                scope: 'plugin:notify'
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to fetch authorization code: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        return data.code; // Assuming the response contains the authorization code
+    } catch (error) {
+        console.error('Error fetching authorization code:', error);
+        throw error;
+    }
+}
+
 // Function to refresh the access token
 async function refreshAccessToken() {
     try {
@@ -12,7 +41,10 @@ async function refreshAccessToken() {
         const clientSecret = '81dd0c6a-6fd9-43ff-878c-21327b07ae1b'; // Replace with the actual client secret
         const encodedCredentials = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
 
-        const response = await fetch(`${haiiloTokenUrl}?grant_type=authorization_code&code=39vjx2`, {
+        // Fetch a new authorization code
+        const authorizationCode = await fetchAuthorizationCode();
+
+        const response = await fetch(`${haiiloTokenUrl}?grant_type=authorization_code&code=${authorizationCode}`, {
             method: 'POST',
             headers: {
                 'Authorization': `Basic ${encodedCredentials}`,
