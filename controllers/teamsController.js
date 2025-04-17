@@ -77,12 +77,12 @@ async function refreshAccessToken() {
 // Middleware to ensure access token is available and valid
 async function ensureAccessToken(req, res, next) {
     try {
-        console.log('Entering ensureAccessToken middleware');
+        console.log('Entering ensureAccessToken middleware'); // Debugging
         if (!accessToken || Date.now() >= tokenExpiryTime) {
-            console.log('Access token missing or expired. Refreshing token...');
+            console.log('Access token missing or expired. Refreshing token...'); // Debugging
             await refreshAccessToken();
         }
-        console.log('Access Token:', accessToken);
+        console.log('Access Token:', accessToken); // Debugging
         next();
     } catch (error) {
         console.error('Error in ensureAccessToken middleware:', error);
@@ -157,6 +157,7 @@ router.get('/userdirectories', ensureAccessToken, async (req, res) => {
 
 // Endpoint to fetch all users
 router.get('/users', ensureAccessToken, async (req, res) => {
+    console.log('Executing /users endpoint'); // Debugging
     console.log('Access Token:', accessToken); // Debugging
     try {
         const haiiloApiUrl = `https://asioso.coyocloud.com/api/users`;
@@ -170,7 +171,7 @@ router.get('/users', ensureAccessToken, async (req, res) => {
 
         if (!response.ok) {
             const errorText = await response.text();
-            console.error('Failed to fetch users:', errorText);
+            console.error('Failed to fetch users:', errorText); // Debugging
             return res.status(response.status).json({ error: 'Failed to fetch users', details: errorText });
         }
 
