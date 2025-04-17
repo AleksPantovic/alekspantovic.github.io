@@ -3,190 +3,250 @@ const router = express.Router();
 const fetch = require('node-fetch');
 const jwt = require('jsonwebtoken');
 const axios = require('axios');
+require('dotenv').config(); // For environment variables
 
-const PUBLIC_KEY_URL = 'https://plugins.coyoapp.com'; // Whitelisted URL for public keys
+// Configuration
+const PUBLIC_KEY_URL = process.env.PUBLIC_KEY_URL || 'https://plugins.coyoapp.com';
+const HAILLO_BASE_URL = process.env.HAILLO_BASE_URL || 'https://asioso.coyocloud.com';
+const CLIENT_ID = process.env.CLIENT_ID || 'organization';
+const CLIENT_SECRET = process.env.CLIENT_SECRET || '81dd0c6a-6fd9-43ff-878c-21327b07ae1b';
+const REDIRECT_URI = process.env.REDIRECT_URI || 'https://haiiloplugin.netlify.app/callback';
 
-let accessToken = null; // Store the access token in memory
-let tokenExpiryTime = null; // Store token expiry time
+// Token management
+let accessToken = null;
+let tokenExpiryTime = null;
 
-// Function to fetch a new authorization code
+// Enhanced CORS Middleware
+router.use((req, res, next) => {
+    const allowedOrigins = [
+        'https://haiiloplugin.netlify.app',
+        'http://localhost:3000',
+        'http://localhost:8080'
+    ];
+    
+    const origin = req.headers.origin;
+    if (allowedOrigins.includes(origin)) {
+        res.header('Access-Control-Allow-Origin', origin);
+    }
+    
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Authorization, Content-Type, X-Requested-With, X-Coyo-Context');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Vary', 'Origin');
+    
+    if (req.method === 'OPTIONS') {
+        res.header('Access-Control-Max-Age', '86400');
+        return res.status(204).send();
+    }
+    
+    next();
+});
+
+// Global OPTIONS handler
+router.options('*', (req, res) => {
+    res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Authorization, Content-Type, X-Requested-With');
+    res.status(204).send();
+});
+
+// Token Management Functions
 async function fetchAuthorizationCode() {
     try {
-        const authCodeUrl = 'https://asioso.coyocloud.com/api/oauth/authorize'; // Replace with the correct endpoint
+        const authCodeUrl = `${HAILLO_BASE_URL}/api/oauth/authorize`;
         const response = await fetch(authCodeUrl, {
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
             },
             body: JSON.stringify({
-                client_id: 'organization',
+                client_id: CLIENT_ID,
                 response_type: 'code',
-                redirect_uri: 'https://haiiloplugin.netlify.app/callback', // Replace with your redirect URI
+                redirect_uri: REDIRECT_URI,
                 scope: 'plugin:notify'
             })
         });
 
         if (!response.ok) {
-            throw new Error(`Failed to fetch authorization code: ${response.statusText}`);
+            const errorData = await response.json();
+            throw new Error(`Failed to fetch authorization code: ${errorData.message || response.statusText}`);
         }
 
         const data = await response.json();
-        console.log('Authorization Code:', data.code); // Debugging
-        return data.code; // Assuming the response contains the authorization code
+        return data.code;
     } catch (error) {
-        console.error('Error fetching authorization code:', error);
+        console.error('Authorization Code Error:', error);
         throw error;
     }
 }
 
-// Function to refresh the access token
 async function refreshAccessToken() {
     try {
-        console.log('Refreshing access token...');
-        const haiiloTokenUrl = 'https://asioso.coyocloud.com/api/oauth/token';
-        const clientId = 'organization';
-        const clientSecret = '81dd0c6a-6fd9-43ff-878c-21327b07ae1b'; // Replace with the actual client secret
-        const encodedCredentials = Buffer.from(`${clientId}:${clientSecret}`).toString('base64');
-
-        // Fetch a new authorization code
+        const tokenUrl = `${HAILLO_BASE_URL}/api/oauth/token`;
         const authorizationCode = await fetchAuthorizationCode();
+        const encodedCredentials = Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString('base64');
 
-        const response = await fetch(`${haiiloTokenUrl}?grant_type=authorization_code&code=${authorizationCode}`, {
+        const response = await fetch(`${tokenUrl}?grant_type=authorization_code&code=${authorizationCode}`, {
             method: 'POST',
             headers: {
                 'Authorization': `Basic ${encodedCredentials}`,
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
             }
         });
 
         if (!response.ok) {
-            const errorText = await response.text();
-            console.error('Failed to refresh access token:', errorText);
-            throw new Error(`Failed to refresh access token: ${response.statusText}`);
+            const errorData = await response.json();
+            throw new Error(`Token refresh failed: ${errorData.message || response.statusText}`);
         }
 
         const data = await response.json();
         accessToken = data.access_token;
-        tokenExpiryTime = Date.now() + data.expires_in * 1000; // Calculate token expiry time
-        console.log('New Access Token:', accessToken);
+        tokenExpiryTime = Date.now() + (data.expires_in * 1000);
+        return accessToken;
     } catch (error) {
-        console.error('Error refreshing access token:', error);
+        console.error('Token Refresh Error:', error);
+        throw error;
     }
 }
 
-// Middleware to ensure access token is available and valid
+// Middleware to ensure valid access token
 async function ensureAccessToken(req, res, next) {
     try {
-        console.log('Entering ensureAccessToken middleware'); // Debugging
         if (!accessToken || Date.now() >= tokenExpiryTime) {
-            console.log('Access token missing or expired. Refreshing token...'); // Debugging
             await refreshAccessToken();
         }
-        console.log('Access Token:', accessToken); // Debugging
+        req.accessToken = accessToken; // Attach to request object
         next();
     } catch (error) {
-        console.error('Error in ensureAccessToken middleware:', error);
-        res.status(500).json({ error: 'Failed to refresh access token' });
+        console.error('Access Token Middleware Error:', error);
+        res.status(401).json({ 
+            error: 'Authentication failed',
+            details: error.message
+        });
     }
 }
 
-// Function to validate JWT token
+// JWT Validation
 async function validateJwtToken(token) {
     try {
         const response = await axios.get(`${PUBLIC_KEY_URL}/.well-known/jwks.json`);
-        const publicKey = response.data.keys[0]; // Assuming the first key is valid
+        const jwks = response.data;
+        
+        // Find the correct key based on the token's kid
+        const decodedToken = jwt.decode(token, { complete: true });
+        const key = jwks.keys.find(k => k.kid === decodedToken.header.kid);
+        
+        if (!key) {
+            throw new Error('Matching key not found in JWKS');
+        }
 
-        const decoded = jwt.verify(token, publicKey, { algorithms: ['RS256'] });
-        console.log('Token is valid:', decoded);
-        return decoded;
+        const publicKey = jwt.verify(token, key, { algorithms: ['RS256'] });
+        return publicKey;
     } catch (error) {
-        console.error('JWT validation failed:', error);
-        throw new Error('Invalid token');
+        console.error('JWT Validation Error:', error);
+        throw new Error('Invalid token: ' + error.message);
     }
 }
 
-// Middleware to validate lifecycle event tokens
+// Lifecycle Token Validation Middleware
 async function validateLifecycleToken(req, res, next) {
-    const token = req.headers['authorization']?.split(' ')[1]; // Extract token from Authorization header
+    const authHeader = req.headers['authorization'];
+    if (!authHeader) {
+        return res.status(401).json({ error: 'Authorization header missing' });
+    }
+
+    const token = authHeader.split(' ')[1];
     if (!token) {
-        return res.status(401).json({ error: 'Authorization token is missing' });
+        return res.status(401).json({ error: 'Bearer token missing' });
     }
 
     try {
-        await validateJwtToken(token);
+        const decoded = await validateJwtToken(token);
+        req.tokenPayload = decoded;
         next();
     } catch (error) {
-        res.status(401).json({ error: 'Invalid token' });
+        res.status(403).json({ 
+            error: 'Invalid token',
+            details: error.message
+        });
     }
 }
 
-// Middleware to handle CORS
-router.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', 'https://haiiloplugin.netlify.app'); // Allow requests from your frontend
-    res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Authorization, Content-Type');
-    if (req.method === 'OPTIONS') {
-        return res.sendStatus(200); // Handle preflight requests
-    }
-    next();
-});
-
-// Endpoint to fetch all user directories
+// API Endpoints
 router.get('/userdirectories', ensureAccessToken, async (req, res) => {
     try {
-        const haiiloApiUrl = `https://asioso.coyocloud.com/api/userdirectories`;
-        const response = await fetch(haiiloApiUrl, {
-            method: 'GET',
+        const response = await fetch(`${HAILLO_BASE_URL}/api/userdirectories`, {
             headers: {
-                'Authorization': `Bearer ${accessToken}`,
-                'Content-Type': 'application/json'
+                'Authorization': `Bearer ${req.accessToken}`,
+                'Accept': 'application/json'
             }
         });
 
         if (!response.ok) {
-            throw new Error(`Failed to fetch user directories: ${response.statusText}`);
+            throw new Error(`API responded with status ${response.status}`);
         }
 
         const data = await response.json();
         res.json(data);
     } catch (error) {
-        console.error('Error fetching user directories:', error);
-        res.status(500).json({ error: 'Failed to fetch user directories' });
+        console.error('User Directories Error:', error);
+        res.status(502).json({ 
+            error: 'Failed to fetch user directories',
+            details: error.message
+        });
     }
 });
 
-// Endpoint to fetch all users
 router.get('/users', ensureAccessToken, async (req, res) => {
-    console.log('Executing /users endpoint'); // Debugging
-    console.log('Access Token:', accessToken); // Debugging
     try {
-        const haiiloApiUrl = `https://asioso.coyocloud.com/api/users`;
-        const response = await fetch(haiiloApiUrl, {
-            method: 'GET',
+        const response = await fetch(`${HAILLO_BASE_URL}/api/users`, {
             headers: {
-                'Authorization': `Bearer ${accessToken}`,
-                'Content-Type': 'application/json'
+                'Authorization': `Bearer ${req.accessToken}`,
+                'Accept': 'application/json'
             }
         });
 
         if (!response.ok) {
-            const errorText = await response.text();
-            console.error('Failed to fetch users:', errorText); // Debugging
-            return res.status(response.status).json({ error: 'Failed to fetch users', details: errorText });
+            const errorData = await response.json();
+            throw new Error(errorData.message || 'Failed to fetch users');
         }
 
         const data = await response.json();
         res.json(data);
     } catch (error) {
-        console.error('Error fetching users:', error);
-        res.status(500).json({ error: 'Failed to fetch users' });
+        console.error('Users Endpoint Error:', error);
+        res.status(500).json({ 
+            error: 'Failed to fetch users',
+            details: error.message
+        });
     }
 });
 
-// Example endpoint with token validation
 router.post('/lifecycle-event', validateLifecycleToken, (req, res) => {
-    res.header('Access-Control-Allow-Origin', 'https://haiiloplugin.netlify.app'); // Ensure CORS for POST
-    res.status(200).json({ message: 'Lifecycle event processed successfully' });
+    try {
+        console.log('Lifecycle event received:', req.body);
+        res.json({ 
+            status: 'success',
+            message: 'Event processed',
+            eventData: req.body
+        });
+    } catch (error) {
+        res.status(400).json({
+            error: 'Bad request',
+            details: error.message
+        });
+    }
+});
+
+// Health check endpoint
+router.get('/health', (req, res) => {
+    res.json({
+        status: 'healthy',
+        timestamp: new Date().toISOString(),
+        tokenValid: accessToken && Date.now() < tokenExpiryTime
+    });
 });
 
 module.exports = router;
