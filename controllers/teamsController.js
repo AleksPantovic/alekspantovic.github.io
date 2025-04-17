@@ -42,6 +42,7 @@ async function fetchAuthorizationCode() {
 // Function to refresh the access token
 async function refreshAccessToken() {
     try {
+        console.log('Refreshing access token...');
         const haiiloTokenUrl = 'https://asioso.coyocloud.com/api/oauth/token';
         const clientId = 'organization';
         const clientSecret = '81dd0c6a-6fd9-43ff-878c-21327b07ae1b'; // Replace with the actual client secret
@@ -60,14 +61,14 @@ async function refreshAccessToken() {
 
         if (!response.ok) {
             const errorText = await response.text();
-            console.error('Failed to refresh access token:', errorText); // Debugging
+            console.error('Failed to refresh access token:', errorText);
             throw new Error(`Failed to refresh access token: ${response.statusText}`);
         }
 
         const data = await response.json();
         accessToken = data.access_token;
         tokenExpiryTime = Date.now() + data.expires_in * 1000; // Calculate token expiry time
-        console.log('Access Token:', accessToken); // Debugging
+        console.log('New Access Token:', accessToken);
     } catch (error) {
         console.error('Error refreshing access token:', error);
     }
@@ -75,22 +76,26 @@ async function refreshAccessToken() {
 
 // Middleware to ensure access token is available and valid
 async function ensureAccessToken(req, res, next) {
-    if (!accessToken || Date.now() >= tokenExpiryTime) {
-        console.log('Refreshing access token...'); // Debugging
-        await refreshAccessToken();
+    try {
+        console.log('Entering ensureAccessToken middleware');
+        if (!accessToken || Date.now() >= tokenExpiryTime) {
+            console.log('Access token missing or expired. Refreshing token...');
+            await refreshAccessToken();
+        }
+        console.log('Access Token:', accessToken);
+        next();
+    } catch (error) {
+        console.error('Error in ensureAccessToken middleware:', error);
+        res.status(500).json({ error: 'Failed to refresh access token' });
     }
-    console.log('Access Token:', accessToken); // Debugging
-    next();
 }
 
 // Function to validate JWT token
 async function validateJwtToken(token) {
     try {
-        // Fetch the public key
         const response = await axios.get(`${PUBLIC_KEY_URL}/.well-known/jwks.json`);
         const publicKey = response.data.keys[0]; // Assuming the first key is valid
 
-        // Verify the token
         const decoded = jwt.verify(token, publicKey, { algorithms: ['RS256'] });
         console.log('Token is valid:', decoded);
         return decoded;
@@ -164,7 +169,7 @@ router.get('/users', ensureAccessToken, async (req, res) => {
 
         if (!response.ok) {
             const errorText = await response.text();
-            console.error('Failed to fetch users:', errorText); // Debugging
+            console.error('Failed to fetch users:', errorText);
             return res.status(response.status).json({ error: 'Failed to fetch users', details: errorText });
         }
 
