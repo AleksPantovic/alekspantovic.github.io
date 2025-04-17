@@ -59,6 +59,8 @@ async function refreshAccessToken() {
         });
 
         if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Failed to refresh access token:', errorText); // Debugging
             throw new Error(`Failed to refresh access token: ${response.statusText}`);
         }
 
@@ -74,8 +76,10 @@ async function refreshAccessToken() {
 // Middleware to ensure access token is available and valid
 async function ensureAccessToken(req, res, next) {
     if (!accessToken || Date.now() >= tokenExpiryTime) {
+        console.log('Refreshing access token...'); // Debugging
         await refreshAccessToken();
     }
+    console.log('Access Token:', accessToken); // Debugging
     next();
 }
 
@@ -128,7 +132,6 @@ router.get('/userdirectories', ensureAccessToken, async (req, res) => {
         const haiiloApiUrl = `https://asioso.coyocloud.com/api/userdirectories`;
         const response = await fetch(haiiloApiUrl, {
             method: 'GET',
-            mode: 'no-cors', // Added no-cors mode
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
                 'Content-Type': 'application/json'
@@ -147,39 +150,12 @@ router.get('/userdirectories', ensureAccessToken, async (req, res) => {
     }
 });
 
-// Endpoint to fetch a specific user directory
-router.get('/userdirectories/:id', ensureAccessToken, async (req, res) => {
-    const userDirectoryId = req.params.id;
-
-    try {
-        const haiiloApiUrl = `https://asioso.coyocloud.com/api/userdirectories/${userDirectoryId}`;
-        const response = await fetch(haiiloApiUrl, {
-            method: 'GET',
-            headers: {
-                'Authorization': `Bearer ${accessToken}`,
-                'Content-Type': 'application/json'
-            }
-        });
-
-        if (!response.ok) {
-            throw new Error(`Failed to fetch user directory: ${response.statusText}`);
-        }
-
-        const data = await response.json();
-        res.json(data);
-    } catch (error) {
-        console.error('Error fetching user directory:', error);
-        res.status(500).json({ error: 'Failed to fetch user directory' });
-    }
-});
-
 // Endpoint to fetch all users
 router.get('/users', ensureAccessToken, async (req, res) => {
     try {
         const haiiloApiUrl = `https://asioso.coyocloud.com/api/users`;
         const response = await fetch(haiiloApiUrl, {
             method: 'GET',
-            mode: 'no-cors', // Added no-cors mode
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
                 'Content-Type': 'application/json'
@@ -187,7 +163,9 @@ router.get('/users', ensureAccessToken, async (req, res) => {
         });
 
         if (!response.ok) {
-            throw new Error(`Failed to fetch users: ${response.statusText}`);
+            const errorText = await response.text();
+            console.error('Failed to fetch users:', errorText); // Debugging
+            return res.status(response.status).json({ error: 'Failed to fetch users', details: errorText });
         }
 
         const data = await response.json();
@@ -195,33 +173,6 @@ router.get('/users', ensureAccessToken, async (req, res) => {
     } catch (error) {
         console.error('Error fetching users:', error);
         res.status(500).json({ error: 'Failed to fetch users' });
-    }
-});
-
-// Endpoint to fetch a specific user by ID
-router.get('/users/:id', ensureAccessToken, async (req, res) => {
-    const userId = req.params.id;
-
-    try {
-        const haiiloApiUrl = `https://asioso.coyocloud.com/api/users/${userId}`;
-        const response = await fetch(haiiloApiUrl, {
-            method: 'GET',
-            mode: 'no-cors', // Added no-cors mode
-            headers: {
-                'Authorization': `Bearer ${accessToken}`,
-                'Content-Type': 'application/json'
-            }
-        });
-
-        if (!response.ok) {
-            throw new Error(`Failed to fetch user: ${response.statusText}`);
-        }
-
-        const data = await response.json();
-        res.json(data);
-    } catch (error) {
-        console.error('Error fetching user:', error);
-        res.status(500).json({ error: 'Failed to fetch user' });
     }
 });
 
