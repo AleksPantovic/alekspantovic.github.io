@@ -157,6 +157,7 @@ router.get('/userdirectories', ensureAccessToken, async (req, res) => {
 
 // Endpoint to fetch all users
 router.get('/users', ensureAccessToken, async (req, res) => {
+    console.log('Access Token:', accessToken); // Debugging
     try {
         const haiiloApiUrl = `https://asioso.coyocloud.com/api/users`;
         const response = await fetch(haiiloApiUrl, {
