@@ -5,8 +5,9 @@ export default async (request, context) => {
         headers: {
             ...response.headers,
             'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-            'Access-Control-Allow-Headers': 'Authorization, Content-Type',
+            'Access-Control-Allow-Methods': 'GET, POST, OPTIONS, PUT, DELETE',
+            'Access-Control-Allow-Headers': 'Authorization, Content-Type, X-Requested-With',
+            'Access-Control-Allow-Credentials': 'true',
         },
     });
 };
