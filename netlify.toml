@@ -28,8 +28,23 @@ Access-Control-Allow-Headers = "Content-Type"
     Access-Control-Allow-Headers = "Authorization, Content-Type, X-Requested-With"
     Access-Control-Allow-Credentials = "true"
 
+[[headers]]
+  for = "/*" # Specific CORS headers for https://asioso.coyocloud.com
+  [headers.values]
+    Access-Control-Allow-Origin = "https://asioso.coyocloud.com"
+    Access-Control-Allow-Methods = "GET, POST, OPTIONS"
+    Access-Control-Allow-Headers = "Content-Type, Authorization"
+
 [[redirects]]
   force = true
   from = "/api/*"
   to = "https://asioso.coyocloud.com/api/:splat"
   status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[functions]
+  directory = "netlify/functions"

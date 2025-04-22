@@ -30,17 +30,6 @@
             "default": "https://login.microsoftonline.com/common/oauth2/v2.0/authorize"
         }
     ],
-    "permissions": {
-        "camera": true,
-        "geolocation": true,
-        "fullscreen": true
-    },
-    "sandbox": {
-        "allow-scripts": true,
-        "allow-forms": true,
-        "allow-popups": true,
-        "allow-downloads": true
-    },
     "referrerPolicy": "strict-origin",
     "apiAccess": {
         "url": "/event/access_token",
