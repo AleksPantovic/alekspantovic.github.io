@@ -60,6 +60,7 @@ async function ensureAuth(req, res, next) {
 
 // API Endpoints
 router.get('/users', ensureAuth, async (req, res) => {
+  console.log('Access Token:', req.accessToken); // Debugging
   try {
     const response = await axios.get(`${API_BASE_URL}/api/users`, {
       headers: {
