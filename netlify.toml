@@ -7,3 +7,16 @@ Content-Type = "application/javascript"
 for = "*.jsx"
 [headers.values]
 Content-Type = "application/javascript"
+
+[[headers]]
+  for = "/*" # Apply to all paths
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "GET, POST, OPTIONS"
+    Access-Control-Allow-Headers = "Authorization, Content-Type"
+
+[[redirects]]
+  force = true
+  from = "/api/*"
+  to = "https://asioso.coyocloud.com/api/:splat"
+  status = 200
