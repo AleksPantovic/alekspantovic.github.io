@@ -1,172 +1,105 @@
 const express = require('express');
- const router = express.Router();
- const axios = require('axios');
- const jwt = require('jsonwebtoken');
- require('dotenv').config();
+const router = express.Router();
+const axios = require('axios');
+const jwt = require('jsonwebtoken');
+require('dotenv').config();
 
- // Configuration
- const API_BASE_URL = process.env.API_BASE_URL || 'https://asioso.coyocloud.com';
- const AUTH_URL = `${API_BASE_URL}/api/oauth/token`;
- const CLIENT_ID = process.env.CLIENT_ID || 'organization';
- const CLIENT_SECRET = process.env.CLIENT_SECRET || '81dd0c6a-6fd9-43ff-878c-21327b07ae1b';
- const SCOPE = process.env.SCOPE || 'plugin:notify';
- const JKU_WHITELIST = ['https://plugins.coyoapp.com'];
+// Configuration - Move these to environment variables
+const API_BASE_URL = process.env.API_BASE_URL || 'https://asioso.coyocloud.com';
+const AUTH_URL = `${API_BASE_URL}/api/oauth/token`;
+const CLIENT_ID = process.env.CLIENT_ID || 'organization';
+const CLIENT_SECRET = process.env.CLIENT_SECRET || '81dd0c6a-6fd9-43ff-878c-21327b07ae1b';
+const SCOPE = process.env.SCOPE || 'plugin:notify';
+const JKU_WHITELIST = ['https://plugins.coyoapp.com'];
 
- // Token storage
- let accessToken = null;
- let tokenExpiry = null;
+// Token storage with concurrency protection
+let tokenRefreshPromise = null;
 
- // Helper function to encode credentials
- const encodeCredentials = () => {
-     return Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString('base64');
- };
+// Helper function to encode credentials
+const encodeCredentials = () => Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString('base64');
 
- // Get OAuth token
- async function getAccessToken() {
-     try {
-         console.log('Attempting to retrieve a new access token...');
-         const response = await axios.post(AUTH_URL,
-             new URLSearchParams({
-                 grant_type: 'client_credentials',
-                 scope: SCOPE
-             }), {
-                 headers: {
-                     'Authorization': `Basic ${encodeCredentials()}`,
-                     'Content-Type': 'application/x-www-form-urlencoded'
-                 }
-             });
+// Improved token handling
+async function getAccessToken() {
+  try {
+    const response = await axios.post(AUTH_URL,
+      new URLSearchParams({
+        grant_type: 'client_credentials',
+        scope: SCOPE
+      }), {
+        headers: {
+          'Authorization': `Basic ${encodeCredentials()}`,
+          'Content-Type': 'application/x-www-form-urlencoded'
+        }
+      });
 
-         accessToken = response.data.access_token;
-         tokenExpiry = Date.now() + (response.data.expires_in * 1000);
-         console.log('Access token retrieved successfully:', accessToken.substring(0, 20) + '...'); // Log first 20 chars
-         console.log('Token expires at:', new Date(tokenExpiry));
-         return accessToken;
-     } catch (error) {
-         console.error('OAuth Token Error:', error.response?.data || error.message);
-         throw new Error('Failed to obtain access token');
-     }
- }
+    return {
+      token: response.data.access_token,
+      expiresIn: Date.now() + (response.data.expires_in * 1000)
+    };
+  } catch (error) {
+    console.error('OAuth Error:', error.response?.data || error.message);
+    throw new Error('Failed to obtain access token');
+  }
+}
 
- // Middleware to ensure valid token
- async function ensureAuth(req, res, next) {
-     try {
-         if (!accessToken || Date.now() >= tokenExpiry) {
-             console.log('Access token is invalid or expired. Fetching a new one...');
-             await getAccessToken();
-         } else {
-             console.log('Using existing access token:', accessToken.substring(0, 20) + '...'); // Log first 20 chars
-         }
-         req.accessToken = accessToken;
-         next();
-     } catch (error) {
-         console.error('Authentication failed in ensureAuth:', error.message);
-         res.status(401).json({
-             error: 'Authentication failed',
-             message: error.message
-         });
-     }
- }
+// Enhanced auth middleware
+async function ensureAuth(req, res, next) {
+  try {
+    if (!tokenRefreshPromise || (tokenRefreshPromise.expiresIn <= Date.now())) {
+      tokenRefreshPromise = getAccessToken()
+        .then(tokenData => {
+          tokenData.expiresIn = Date.now() + (tokenData.expiresIn * 1000);
+          return tokenData;
+        });
+    }
 
- // Validate JWT token
- async function validateJwtToken(token) {
-     try {
-         const decodedHeader = jwt.decode(token, { complete: true });
-         const jku = decodedHeader?.header?.jku;
+    const { token } = await tokenRefreshPromise;
+    req.accessToken = token;
+    next();
+  } catch (error) {
+    res.status(401).json({ error: 'Authentication failed', message: error.message });
+  }
+}
 
-         // Ensure the jku URL is whitelisted
-         if (!jku || !JKU_WHITELIST.includes(jku)) {
-             throw new Error('Invalid jku URL');
-         }
+// API Endpoints
+router.get('/api/users', ensureAuth, async (req, res) => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/api/users`, {
+      headers: {
+        'Authorization': `Bearer ${req.accessToken}`,
+        'Accept': 'application/json'
+      }
+    });
+    res.json(response.data);
+  } catch (error) {
+    handleApiError(res, error, 'Failed to fetch users');
+  }
+});
 
-         // Fetch the public key from the jku URL
-         const response = await axios.get(jku);
-         const publicKey = response.data.keys[0]; // Assuming the first key is valid
+// Lifecycle Events
+router.post('/lifecycle/install', validateLifecycleToken, async (req, res) => {
+  try {
+    const { token } = req.body;
+    const decoded = await validateJwtToken(token);
+    
+    if (decoded.payload.iss.includes('coyo')) {
+      console.log('Valid installation for:', decoded.payload);
+      return res.status(201).json({ code: 100, message: 'ok' });
+    }
+    
+    console.log('Invalid issuer:', decoded.payload.iss);
+    res.status(400).json({ code: 101, message: 'Unsupported COYO instance' });
+  } catch (error) {
+    handleApiError(res, error, 'Installation failed');
+  }
+});
 
-         // Verify the token
-         const decoded = jwt.verify(token, publicKey, { algorithms: ['RS256'] });
-         return decoded;
-     } catch (error) {
-         console.error('JWT Validation Error:', error.message);
-         throw new Error('Invalid token');
-     }
- }
+// Generic error handler
+function handleApiError(res, error, defaultMessage) {
+  console.error(error);
+  const status = error.response?.status || 500;
+  const data = error.response?.data || { message: error.message };
+  res.status(status).json({ error: defaultMessage, details: data });
+}
 
- // Middleware to validate lifecycle event tokens
- async function validateLifecycleToken(req, res, next) {
-     const authHeader = req.headers['authorization'];
-     if (!authHeader) {
-         return res.status(401).json({ error: 'Authorization header missing' });
-     }
-
-     const token = authHeader.split(' ')[1];
-     if (!token) {
-         return res.status(401).json({ error: 'Bearer token missing' });
-     }
-
-     try {
-         const decoded = await validateJwtToken(token);
-         req.tokenPayload = decoded;
-         next();
-     } catch (error) {
-         res.status(403).json({
-             error: 'Invalid token',
-             details: error.message
-         });
-     }
- }
-
- // API Endpoints
- router.get('/api/users', ensureAuth, async (req, res) => { // Changed to relative path and added ensureAuth middleware here
-     try {
-         console.log('Attempting to fetch users with access token:', req.accessToken.substring(0, 20) + '...');
-         const response = await axios.get(`${API_BASE_URL}/api/users`, {
-             headers: {
-                 'Authorization': `Bearer ${req.accessToken}`,
-                 'Accept': 'application/json'
-             }
-         });
-
-         console.log('Successfully fetched user data. Status:', response.status);
-         res.json(response.data);
-     } catch (error) {
-         console.error('Error fetching users:', error.response?.data || error.message);
-         res.status(error.response?.status || 500).json({
-             error: 'Failed to fetch users',
-             details: error.response?.data || error.message
-         });
-     }
- });
-
- router.post('/lifecycle-event', validateLifecycleToken, (req, res) => { // Changed to relative path
-     try {
-         console.log('Lifecycle event received:', req.body);
-         res.json({
-             status: 'success',
-             message: 'Event processed',
-             eventData: req.body
-         });
-     } catch (error) {
-         res.status(400).json({
-             error: 'Bad request',
-             details: error.message
-         });
-     }
- });
-
- // Lifecycle event: Install
- router.post('/lifecycle/install', (req, res) => { // Changed to relative path
-     console.log('Received lifecycle event: install %s', req.body.token);
-     let decodedToken = jwt.decode(req.body.token);
-     console.log('Decoded header: %j', decodedToken.header);
-     console.log('Decoded payload: %j', decodedToken.payload);
-
-     if (decodedToken.payload.iss.indexOf('coyo') >= 0) {
-         console.log('Successful installation');
-         res.status(201).json({ code: 100, message: 'ok' });
-     } else {
-         console.log('Unsupported COYO instance');
-         res.status(400).json({ code: 101, message: 'Unsupported COYO instance' });
-     }
- });
-
- module.exports = router;
+module.exports = router;
