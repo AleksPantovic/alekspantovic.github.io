@@ -109,17 +109,28 @@ async function validateLifecycleToken(req, res, next) {
 }
 
 // API Endpoints
-router.get('/users', ensureAuth, async (req, res) => {
+router.get('https://asioso.coyocloud.com/api/users', async (req, res) => {
     try {
+        // Step 1: Fetch the access token
+        if (!accessToken || Date.now() >= tokenExpiry) {
+            console.log('Fetching new access token...');
+            await getAccessToken();
+        }
+
+        console.log('Using Access Token:', accessToken); // Debugging
+
+        // Step 2: Use the token to fetch users
         const response = await axios.get(`${API_BASE_URL}/api/users`, {
             headers: {
-                'Authorization': `Bearer ${req.accessToken}`,
+                'Authorization': `Bearer ${accessToken}`,
                 'Accept': 'application/json'
             }
         });
+
+        // Step 3: Return the user data
         res.json(response.data);
     } catch (error) {
-        console.error('Users API Error:', error.response?.data || error.message);
+        console.error('Error fetching users:', error.response?.data || error.message);
         res.status(error.response?.status || 500).json({
             error: 'Failed to fetch users',
             details: error.response?.data || error.message
@@ -127,7 +138,7 @@ router.get('/users', ensureAuth, async (req, res) => {
     }
 });
 
-router.post('/lifecycle-event', validateLifecycleToken, (req, res) => {
+router.post('https://asioso.coyocloud.com/lifecycle-event', validateLifecycleToken, (req, res) => {
     try {
         console.log('Lifecycle event received:', req.body);
         res.json({ 
@@ -144,7 +155,7 @@ router.post('/lifecycle-event', validateLifecycleToken, (req, res) => {
 });
 
 // Lifecycle event: Install
-router.post('/lifecycle/install', (req, res) => {
+router.post('https://asioso.coyocloud.com/lifecycle/install', (req, res) => {
     console.log('Received lifecycle event: install %s', req.body.token);
     let decodedToken = jwt.decode(req.body.token);
     console.log('Decoded header: %j', decodedToken.header);
