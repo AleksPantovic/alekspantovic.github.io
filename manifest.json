@@ -1,34 +1,27 @@
 {
     "manifestVersion": "2.0.0",
-    "pluginVersion": "0.3.2",
+    "pluginVersion": "0.1.0",
     "name": {
-        "en": "Microsoft AD Data Editor",
-        "de": "Microsoft AD Dateneditor"
+      "en": "Demo Plugin - Step 1",
+      "de": "Demo Plugin - Step 1"
     },
     "description": {
-        "en": "Edit and save data fetched from Microsoft Active Directory.",
-        "de": "Bearbeiten und Speichern von Daten aus Microsoft Active Directory."
+      "en": "A simple demo plug-in",
+      "de": "Ein einfaches Beispiel-Plug-in"
     },
-    "config": [
-        {
-            "key": "activeDirectoryLink",
-            "type": "text",
-            "label": {
-                "en": "Microsoft Active Directory Link",
-                "de": "Microsoft Active Directory Link"
-            },
-            "placeholder": {
-                "en": "https://login.microsoftonline.com/{tenantId}/oauth2/v2.0/authorize",
-                "de": "https://login.microsoftonline.com/{tenantId}/oauth2/v2.0/authorize"
-            },
-            "description": {
-                "en": "Enter the link to your Microsoft Active Directory.",
-                "de": "Geben Sie den Link zu Ihrem Microsoft Active Directory ein."
-            },
-            "pattern": "^https:\\/\\/login\\.microsoftonline\\.com\\/.+$",
-            "required": true,
-            "default": "https://login.microsoftonline.com/common/oauth2/v2.0/authorize"
+    "entryPoints": [
+      {
+        "id": "510e9e0c-e3b8-44a8-8db1-5185d3d844ce",
+        "url": "/",
+        "name": {
+          "en": "My first plug-in view",
+          "de": "Meine erste Plug-in Ansicht"
+        },
+        "description": {
+          "en": "Showing my plug-in",
+          "de": "Mein Plug-in"
         }
+      }
     ],
     "referrerPolicy": "strict-origin",
     "apiAccess": {
@@ -41,19 +34,5 @@
                 "plugin:notify"
             ]
         }
-    },
-    "entryPoints": [
-        {
-            "id": "510e9e0c-e3b8-44a8-8db1-5185d3d844ce",
-            "name": {
-                "en": "Microsoft AD Data Editor",
-                "de": "Microsoft AD Dateneditor"
-            },
-            "description": {
-                "en": "Edit and save data fetched from Microsoft Active Directory.",
-                "de": "Bearbeiten und Speichern von Daten aus Microsoft Active Directory."
-            },
-            "url": "/ep1.html"
-        }
-    ]
+    }
 }

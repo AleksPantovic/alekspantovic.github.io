@@ -10,7 +10,7 @@ const AUTH_URL = `${API_BASE_URL}/api/oauth/token`;
 const CLIENT_ID = process.env.CLIENT_ID || 'organization';
 const CLIENT_SECRET = process.env.CLIENT_SECRET || '81dd0c6a-6fd9-43ff-878c-21327b07ae1b';
 const SCOPE = process.env.SCOPE || 'plugin:notify';
-const JKU_WHITELIST = ['https://plugins.coyoapp.com']; // Whitelisted jku URLs
+const JKU_WHITELIST = ['https://plugins.coyoapp.com']; 
 
 // Token storage
 let accessToken = null;
@@ -140,6 +140,22 @@ router.post('/lifecycle-event', validateLifecycleToken, (req, res) => {
             error: 'Bad request',
             details: error.message
         });
+    }
+});
+
+// Lifecycle event: Install
+router.post('/lifecycle/install', (req, res) => {
+    console.log('Received lifecycle event: install %s', req.body.token);
+    let decodedToken = jwt.decode(req.body.token);
+    console.log('Decoded header: %j', decodedToken.header);
+    console.log('Decoded payload: %j', decodedToken.payload);
+
+    if (decodedToken.payload.iss.indexOf('coyo') >= 0) {
+        console.log('Successful installation');
+        res.status(201).json({ code: 100, message: 'ok' });
+    } else {
+        console.log('Unsupported COYO instance');
+        res.status(400).json({ code: 101, message: 'Unsupported COYO instance' });
     }
 });
 
