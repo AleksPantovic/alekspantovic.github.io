@@ -17,28 +17,56 @@ let tokenRefreshPromise = null;
 
 const encodeCredentials = () => Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString('base64');
 
-async function getAccessToken() {
-  try {
-    const response = await axios.post(AUTH_URL,
-      new URLSearchParams({
-        grant_type: 'client_credentials',
-        scope: SCOPE
-      }), {
+async function getAccessToken(authCode) { // Add authCode parameter
+    try {
+      const response = await axios.post(AUTH_URL,
+        new URLSearchParams({
+          grant_type: 'authorization_code', // Changed from client_credentials
+          code: authCode,
+          scope: SCOPE,
+          redirect_uri: process.env.REDIRECT_URI // Add your redirect URI
+        }), {
+          headers: {
+            'Authorization': `Basic ${encodeCredentials()}`,
+            'Content-Type': 'application/x-www-form-urlencoded'
+          }
+        });
+      return response.data.access_token;
+    } catch (error) {
+      console.error('OAuth Error:', error.response?.data || error.message);
+      throw new Error('Token acquisition failed');
+    }
+  }
+  
+  router.get('/api/token', async (req, res) => {
+    try {
+      const authCode = req.query.code;
+      const token = await getAccessToken(authCode);
+      
+      // Store token securely (use Redis/DB in production)
+      accessToken = token;
+      tokenExpiry = Date.now() + (3600 * 1000); // 1 hour expiry
+      
+      res.redirect('/?auth_success=true');
+    } catch (error) {
+      res.redirect('/?error=auth_failed');
+    }
+  });
+  router.get('/api/users', ensureAuth, async (req, res) => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/api/users`, {
         headers: {
-          Authorization: `Basic ${encodeCredentials()}`,
-          'Content-Type': 'application/x-www-form-urlencoded'
+          'Authorization': `Bearer ${req.accessToken}`,
+          'X-Client-ID': CLIENT_ID, // Required by Haiilo
+          'Accept-Version': '1.5.0' // Specify API version
         }
       });
-
-    return {
-      token: response.data.access_token,
-      expiresIn: Date.now() + (response.data.expires_in * 1000)
-    };
-  } catch (error) {
-    console.error('OAuth Error:', error.response?.data || error.message);
-    throw new Error('Failed to obtain access token');
-  }
-}
+      res.json(response.data);
+    } catch (error) {
+      console.error('API Error:', error.response?.headers); // Check response headers
+      handleError(res, error);
+    }
+  });
 
 async function ensureAuth(req, res, next) {
   try {

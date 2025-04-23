@@ -27,6 +27,25 @@
       });
     });
   </script>
+  <script>
+    async function startAuthFlow() {
+      // Redirect to Haiilo authorization endpoint
+      const authUrl = `https://asioso.coyocloud.com/oauth/authorize?
+        response_type=code&
+        client_id=${encodeURIComponent(CLIENT_ID)}&
+        redirect_uri=${encodeURIComponent(window.location.origin)}&
+        scope=plugin:notify%20user:read`;
+      
+      window.location.href = authUrl;
+    }
+  
+    // Handle callback after authorization
+    if (window.location.search.includes('code=')) {
+      const code = new URLSearchParams(window.location.search).get('code');
+      fetch(`/api/token?code=${code}`)
+        .then(handleResponse);
+    }
+  </script>
 </head>
 <body>
   <button id="fetch-btn">Fetch Users</button>

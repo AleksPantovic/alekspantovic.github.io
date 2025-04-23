@@ -25,12 +25,13 @@
     ],
     "referrerPolicy": "strict-origin",
     "apiAccess": {
-      "client": {
-        "mode": ["authorization_code", "client_credentials"],
-        "scope": ["plugin:notify", "user:read"]
-      }
+        "client": {
+        "mode": ["authorization_code"],
+        "scope": ["plugin:notify", "user:read", "openid"]
+        },
+        "user": {
+        "scope": ["profile", "email"]
+        }
     },
-    "security": {
-      "jkuWhitelist": ["https://plugins.coyoapp.com"]
-    }
+    "requiredPermissions": ["USER_READ"]
   }
