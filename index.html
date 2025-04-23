@@ -1,44 +1,36 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Asioso plugin</title>
-    <script>
-      document.addEventListener('DOMContentLoaded', function() {
-          document.getElementById('fetch-btn').addEventListener('click', function() {
-              const status = document.getElementById('status');
-              const output = document.getElementById('output');
-              status.textContent = 'Fetching user data...';
-              output.textContent = ''; // Clear previous output
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Haiilo Plugin</title>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('fetch-btn').addEventListener('click', async () => {
+        const status = document.getElementById('status');
+        const output = document.getElementById('output');
+        
+        status.textContent = 'Fetching users...';
+        output.textContent = '';
 
-              // Fetch data from the deployed backend
-              fetch('/api/users') // Replace with your backend URL
-                  .then(response => {
-                      if (!response.ok) {
-                          throw new Error(`Failed to fetch users: ${response.statusText}`);
-                      }
-                      return response.json();
-                  })
-                  .then(data => {
-                      status.textContent = 'Successfully fetched user data';
-                      output.textContent = JSON.stringify(data, null, 2); // Display JSON data
-                      console.log('User data:', data);
-                  })
-                  .catch(error => {
-                      status.textContent = 'Error: ' + error.message;
-                      console.error(error);
-                  });
-          });
+        try {
+          const response = await fetch('/api/users');
+          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+          
+          const data = await response.json();
+          output.textContent = JSON.stringify(data, null, 2);
+          status.textContent = 'Data fetched successfully';
+        } catch (error) {
+          status.textContent = `Error: ${error.message}`;
+          console.error('Fetch Error:', error);
+        }
       });
+    });
   </script>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
-    <button id="fetch-btn">Fetch Users</button>
-    <div id="status">Ready to fetch data</div>
-    <pre id="output" style="background: #f4f4f4; padding: 10px; border: 1px solid #ddd;"></pre>
-  </body>
+</head>
+<body>
+  <button id="fetch-btn">Fetch Users</button>
+  <div id="status">Ready</div>
+  <pre id="output" style="background: #f0f0f0; padding: 1rem;"></pre>
+</body>
 </html>

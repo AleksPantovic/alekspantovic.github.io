@@ -4,21 +4,19 @@ const axios = require('axios');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
-// Configuration - Move these to environment variables
+// Configuration
 const API_BASE_URL = process.env.API_BASE_URL || 'https://asioso.coyocloud.com';
 const AUTH_URL = `${API_BASE_URL}/api/oauth/token`;
-const CLIENT_ID = process.env.CLIENT_ID || 'organization';
-const CLIENT_SECRET = process.env.CLIENT_SECRET || '81dd0c6a-6fd9-43ff-878c-21327b07ae1b';
+const CLIENT_ID = process.env.CLIENT_ID;
+const CLIENT_SECRET = process.env.CLIENT_SECRET;
 const SCOPE = process.env.SCOPE || 'plugin:notify';
 const JKU_WHITELIST = ['https://plugins.coyoapp.com'];
 
-// Token storage with concurrency protection
+// Token management
 let tokenRefreshPromise = null;
 
-// Helper function to encode credentials
 const encodeCredentials = () => Buffer.from(`${CLIENT_ID}:${CLIENT_SECRET}`).toString('base64');
 
-// Improved token handling
 async function getAccessToken() {
   try {
     const response = await axios.post(AUTH_URL,
@@ -27,7 +25,7 @@ async function getAccessToken() {
         scope: SCOPE
       }), {
         headers: {
-          'Authorization': `Basic ${encodeCredentials()}`,
+          Authorization: `Basic ${encodeCredentials()}`,
           'Content-Type': 'application/x-www-form-urlencoded'
         }
       });
@@ -42,7 +40,6 @@ async function getAccessToken() {
   }
 }
 
-// Enhanced auth middleware
 async function ensureAuth(req, res, next) {
   try {
     if (!tokenRefreshPromise || (tokenRefreshPromise.expiresIn <= Date.now())) {
@@ -61,45 +58,51 @@ async function ensureAuth(req, res, next) {
   }
 }
 
-// API Endpoints
+async function validateJwtToken(token) {
+  try {
+    const decodedHeader = jwt.decode(token, { complete: true });
+    if (!JKU_WHITELIST.includes(decodedHeader?.header?.jku)) {
+      throw new Error('Invalid jku URL');
+    }
+
+    const response = await axios.get(decodedHeader.header.jku);
+    const publicKey = response.data.keys[0];
+    return jwt.verify(token, publicKey, { algorithms: ['RS256'] });
+  } catch (error) {
+    console.error('JWT Validation Error:', error.message);
+    throw new Error('Invalid token');
+  }
+}
+
 router.get('/api/users', ensureAuth, async (req, res) => {
   try {
     const response = await axios.get(`${API_BASE_URL}/api/users`, {
       headers: {
-        'Authorization': `Bearer ${req.accessToken}`,
-        'Accept': 'application/json'
+        Authorization: `Bearer ${req.accessToken}`,
+        Accept: 'application/json'
       }
     });
     res.json(response.data);
   } catch (error) {
-    handleApiError(res, error, 'Failed to fetch users');
+    console.error('API Error:', error.response?.data || error.message);
+    res.status(error.response?.status || 500).json({
+      error: 'Failed to fetch users',
+      details: error.response?.data || error.message
+    });
   }
 });
 
-// Lifecycle Events
-router.post('/lifecycle/install', validateLifecycleToken, async (req, res) => {
+router.post('/lifecycle/install', async (req, res) => {
   try {
-    const { token } = req.body;
-    const decoded = await validateJwtToken(token);
-    
+    const decoded = await validateJwtToken(req.body.token);
     if (decoded.payload.iss.includes('coyo')) {
-      console.log('Valid installation for:', decoded.payload);
+      console.log('Valid installation:', decoded.payload);
       return res.status(201).json({ code: 100, message: 'ok' });
     }
-    
-    console.log('Invalid issuer:', decoded.payload.iss);
     res.status(400).json({ code: 101, message: 'Unsupported COYO instance' });
   } catch (error) {
-    handleApiError(res, error, 'Installation failed');
+    res.status(403).json({ error: 'Invalid token', details: error.message });
   }
 });
-
-// Generic error handler
-function handleApiError(res, error, defaultMessage) {
-  console.error(error);
-  const status = error.response?.status || 500;
-  const data = error.response?.data || { message: error.message };
-  res.status(status).json({ error: defaultMessage, details: data });
-}
 
 module.exports = router;
