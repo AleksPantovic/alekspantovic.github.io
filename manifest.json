@@ -2,36 +2,25 @@
   "manifestVersion": "2.0.0",
   "pluginVersion": "0.1.0",
   "name": {
-    "en": "Asioso Haiilo Plugin",
-    "de": "Asioso Haiilo Plugin"
+    "en": "Demo Plugin - Step 1",
+    "de": "Demo Plugin - Step 1"
   },
   "description": {
-    "en": "Integration plugin for Haiilo platform",
-    "de": "Integrationsplugin für die Haiilo-Plattform"
+    "en": "A simple demo plug-in",
+    "de": "Ein einfaches Beispiel-Plug-in"
   },
   "entryPoints": [
     {
       "id": "510e9e0c-e3b8-44a8-8db1-5185d3d844ce",
       "url": "/",
       "name": {
-        "en": "User Management",
-        "de": "Benutzerverwaltung"
+        "en": "My first plug-in view",
+        "de": "Meine erste Plug-in Ansicht"
       },
       "description": {
-        "en": "Manage Haiilo user data",
-        "de": "Haiilo-Benutzerdaten verwalten"
+        "en": "Showing my plug-in",
+        "de": "Mein Plug-in"
       }
     }
-  ],
-  "referrerPolicy": "strict-origin",
-  "apiAccess": {
-    "client": {
-      "mode": ["authorization_code"],
-      "scope": ["plugin:notify", "user:read"]
-    }
-  },
-  "requiredPermissions": ["USER_READ"],
-  "security": {
-    "jkuWhitelist": ["https://plugins.coyoapp.com"]
-  }
+  ]
 }
