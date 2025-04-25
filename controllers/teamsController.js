@@ -110,6 +110,16 @@ router.get('/api/users', ensureAuth, async (req, res) => {
                 'Accept': 'application/json'
             }
         });
+
+        // Check if the response is valid JSON
+        if (response.headers['content-type'] !== 'application/json') {
+            console.error('Unexpected response content type:', response.headers['content-type']);
+            return res.status(500).json({
+                error: 'Unexpected response from API',
+                details: 'Expected JSON but received non-JSON response'
+            });
+        }
+
         res.json(response.data);
     } catch (error) {
         console.error('API Error:', error.response?.data || error.message);
