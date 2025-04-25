@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const axios = require('axios');
 const jwt = require('jsonwebtoken');
+const jwksClient = require('jwks-rsa');
 require('dotenv').config();
 
 // Configuration
@@ -10,7 +11,7 @@ const AUTH_URL = `${API_BASE_URL}/api/oauth/token`;
 const CLIENT_ID = process.env.CLIENT_ID;
 const CLIENT_SECRET = process.env.CLIENT_SECRET;
 const SCOPE = process.env.SCOPE || 'plugin:notify';
-const JKU_WHITELIST = ['https://plugins.coyoapp.com'];
+const JKU_WHITELIST = ['https://certificates.plugins.coyoapp.com/.well-known/jwks.json'];
 
 // Token management
 let accessToken = null;
@@ -63,6 +64,40 @@ async function ensureAuth(req, res, next) {
     }
 }
 
+// JWT validation middleware for lifecycle events
+const client = jwksClient({
+    jwksUri: 'https://certificates.plugins.coyoapp.com/.well-known/jwks.json'
+});
+
+async function validateInstallationToken(req, res, next) {
+    const token = req.body.token;
+
+    try {
+        const decoded = jwt.decode(token, { complete: true });
+
+        // Validate JKU
+        if (!decoded || !JKU_WHITELIST.includes(decoded.header.jku)) {
+            throw new Error('Invalid JKU');
+        }
+
+        // Get public key
+        const key = await client.getSigningKey(decoded.header.kid);
+        const publicKey = key.getPublicKey();
+
+        // Verify token
+        jwt.verify(token, publicKey, {
+            algorithms: ['RS256'],
+            issuer: 'https://asioso.coyocloud.com'
+        });
+
+        req.decodedToken = decoded;
+        next();
+    } catch (error) {
+        console.error('JWT Validation Error:', error.message);
+        res.status(403).json({ error: 'Invalid installation token', details: error.message });
+    }
+}
+
 // API Endpoint to fetch users
 router.get('/api/users', ensureAuth, async (req, res) => {
     try {
@@ -86,16 +121,19 @@ router.get('/api/users', ensureAuth, async (req, res) => {
 });
 
 // Lifecycle event: Install
-router.post('/lifecycle/install', async (req, res) => {
+router.post('/lifecycle/install', validateInstallationToken, (req, res) => {
     try {
-        const decoded = jwt.decode(req.body.token, { complete: true });
-        if (!decoded || !decoded.payload.iss.includes('coyo')) {
-            throw new Error('Unsupported COYO instance');
-        }
-        console.log('Valid installation:', decoded.payload);
-        res.status(201).json({ code: 100, message: 'ok' });
+        const tenantId = req.decodedToken.payload.tenantId;
+        console.log('Valid installation for tenant:', tenantId);
+
+        // Respond to Haiilo
+        res.status(200).json({
+            code: 100,
+            message: 'Installation successful',
+            tenantId: tenantId
+        });
     } catch (error) {
-        res.status(403).json({ error: 'Invalid token', details: error.message });
+        res.status(500).json({ error: 'Installation failed', details: error.message });
     }
 });
 
