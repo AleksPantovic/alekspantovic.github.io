@@ -1,8 +1,13 @@
 [[headers]]
 for = "*.json"
 [headers.values]
-Content-Type = "application/json"
+Content-Type = "application/json" # Ensure correct MIME type
 Access-Control-Allow-Origin = "*" # Allow all origins
 Access-Control-Allow-Methods = "GET, OPTIONS"
 Access-Control-Allow-Headers = "Content-Type"
+
+[[redirects]]
+  from = "/manifest.json"
+  to = "/manifest.json"
+  status = 200
 
