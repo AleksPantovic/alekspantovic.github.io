@@ -35,7 +35,7 @@
     "jkuWhitelist": ["https://plugins.coyoapp.com"]
   },
   "lifecycle": {
-  "url": "/lifecycle/",
-  "events": ["install"]
-}
+    "url": "/lifecycle/",
+    "events": ["install"]
+  }
 }
