@@ -15,11 +15,20 @@
 
         try {
           const response = await fetch('/api/users');
-          if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-          
-          const data = await response.json();
-          output.textContent = JSON.stringify(data, null, 2);
-          status.textContent = 'Data fetched successfully';
+          const contentType = response.headers.get('content-type');
+
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+
+          if (contentType && contentType.includes('application/json')) {
+            const data = await response.json();
+            output.textContent = JSON.stringify(data, null, 2);
+            status.textContent = 'Data fetched successfully';
+          } else {
+            const text = await response.text();
+            throw new Error(`Unexpected response: ${text}`);
+          }
         } catch (error) {
           status.textContent = `Error: ${error.message}`;
           console.error('Fetch Error:', error);

@@ -75,7 +75,40 @@ async function validateInstallationToken(token) {
     }
 }
 
+// API Endpoint to fetch users
+async function fetchUsers(req, res) {
+    try {
+        console.log('Using Access Token:', accessToken); // Debugging
+        const response = await axios.get(`${API_BASE_URL}/api/users`, {
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'X-Client-ID': CLIENT_ID,
+                'Accept-Version': '1.5.0',
+                'Accept': 'application/json'
+            }
+        });
+
+        // Check if the response is valid JSON
+        if (response.headers['content-type'] !== 'application/json') {
+            console.error('Unexpected response content type:', response.headers['content-type']);
+            return res.status(500).json({
+                error: 'Unexpected response from API',
+                details: 'Expected JSON but received non-JSON response'
+            });
+        }
+
+        res.json(response.data);
+    } catch (error) {
+        console.error('API Error:', error.response?.data || error.message);
+        res.status(error.response?.status || 500).json({
+            error: 'Failed to fetch users',
+            details: error.response?.data || error.message
+        });
+    }
+}
+
 module.exports = {
     getAccessToken,
-    validateInstallationToken
+    validateInstallationToken,
+    fetchUsers
 };
