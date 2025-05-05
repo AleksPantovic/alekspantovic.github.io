@@ -9,12 +9,12 @@ for = "*.jsx"
 Content-Type = "application/javascript"
 
 [[headers]]
-for = "*.json"
-[headers.values]
-Content-Type = "application/json" # Correct MIME type for JSON
-Access-Control-Allow-Origin = "*" # Allow all origins
-Access-Control-Allow-Methods = "GET, OPTIONS"
-Access-Control-Allow-Headers = "Content-Type"
+  for = "/manifest.json"
+  [headers.values]
+    Content-Type = "application/json"
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "GET, OPTIONS"
+    Access-Control-Allow-Headers = "Content-Type"
 
 [[headers]]
   for = "/*"
