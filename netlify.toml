@@ -28,9 +28,9 @@ Content-Type = "application/javascript"
 for = "*.json"
 [headers.values]
 Content-Type = "application/json"
-Access-Control-Allow-Origin = "https://haiiloplugin.netlify.app"
-Access-Control-Allow-Methods = "GET, POST, OPTIONS"
-Access-Control-Allow-Headers = "Authorization, Content-Type"
+Access-Control-Allow-Origin = "*" # Allow all origins
+Access-Control-Allow-Methods = "GET, OPTIONS"
+Access-Control-Allow-Headers = "Content-Type"
 
 [[redirects]]
   from = "/api/*"

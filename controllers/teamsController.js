@@ -91,6 +91,7 @@ async function fetchUsers(req, res) {
         // Check if the response is valid JSON
         if (response.headers['content-type'] !== 'application/json') {
             console.error('Unexpected response content type:', response.headers['content-type']);
+            console.error('Response body:', response.data); // Debugging
             return res.status(500).json({
                 error: 'Unexpected response from API',
                 details: 'Expected JSON but received non-JSON response'
