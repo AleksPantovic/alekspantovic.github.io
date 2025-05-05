@@ -24,14 +24,28 @@ Content-Type = "application/javascript"
     Access-Control-Allow-Headers = "Authorization, Content-Type, X-Requested-With"
     Access-Control-Allow-Credentials = "true"
 
+[[headers]]
+for = "*.json"
+[headers.values]
+Content-Type = "application/json"
+Access-Control-Allow-Origin = "https://haiiloplugin.netlify.app"
+Access-Control-Allow-Methods = "GET, POST, OPTIONS"
+Access-Control-Allow-Headers = "Authorization, Content-Type"
+
 [[redirects]]
   from = "/api/*"
-  to = "https://asioso.coyocloud.com/api/:splat"
+  to = "https://asioso.coyocloud.com/:splat"
   status = 200
+  force = true
 
 [[redirects]]
   from = "/manifest.json"
   to = "/manifest.json"
+  status = 200
+
+[[redirects]]
+  from = "/lifecycle/*"
+  to = "/.netlify/functions/lifecycle"
   status = 200
 
 [[redirects]]

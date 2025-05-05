@@ -1,5 +1,3 @@
-const express = require('express');
-const router = express.Router();
 const axios = require('axios');
 const jwt = require('jsonwebtoken');
 const jwksClient = require('jwks-rsa');
@@ -46,32 +44,12 @@ async function getAccessToken(authCode) {
     }
 }
 
-// Middleware to ensure valid token
-async function ensureAuth(req, res, next) {
-    try {
-        if (!accessToken || Date.now() >= tokenExpiry) {
-            console.log('Fetching new access token...');
-            const authCode = req.query.code; // Pass the authCode from the request
-            if (!authCode) {
-                throw new Error('Authorization code is required');
-            }
-            await getAccessToken(authCode);
-        }
-        req.accessToken = accessToken;
-        next();
-    } catch (error) {
-        res.status(401).json({ error: 'Authentication failed', message: error.message });
-    }
-}
-
 // JWT validation middleware for lifecycle events
 const client = jwksClient({
     jwksUri: 'https://certificates.plugins.coyoapp.com/.well-known/jwks.json'
 });
 
-async function validateInstallationToken(req, res, next) {
-    const token = req.body.token;
-
+async function validateInstallationToken(token) {
     try {
         const decoded = jwt.decode(token, { complete: true });
 
@@ -90,61 +68,14 @@ async function validateInstallationToken(req, res, next) {
             issuer: 'https://asioso.coyocloud.com'
         });
 
-        req.decodedToken = decoded;
-        next();
+        return decoded;
     } catch (error) {
         console.error('JWT Validation Error:', error.message);
-        res.status(403).json({ error: 'Invalid installation token', details: error.message });
+        throw new Error('Invalid installation token');
     }
 }
 
-// API Endpoint to fetch users
-router.get('/api/users', ensureAuth, async (req, res) => {
-    try {
-        console.log('Using Access Token:', req.accessToken); // Debugging
-        const response = await axios.get(`${API_BASE_URL}/api/users`, {
-            headers: {
-                'Authorization': `Bearer ${req.accessToken}`,
-                'X-Client-ID': CLIENT_ID,
-                'Accept-Version': '1.5.0',
-                'Accept': 'application/json'
-            }
-        });
-
-        // Check if the response is valid JSON
-        if (response.headers['content-type'] !== 'application/json') {
-            console.error('Unexpected response content type:', response.headers['content-type']);
-            return res.status(500).json({
-                error: 'Unexpected response from API',
-                details: 'Expected JSON but received non-JSON response'
-            });
-        }
-
-        res.json(response.data);
-    } catch (error) {
-        console.error('API Error:', error.response?.data || error.message);
-        res.status(error.response?.status || 500).json({
-            error: 'Failed to fetch users',
-            details: error.response?.data || error.message
-        });
-    }
-});
-
-// Lifecycle event: Install
-router.post('/lifecycle/install', validateInstallationToken, (req, res) => {
-    try {
-        const tenantId = req.decodedToken.payload.tenantId;
-        console.log('Valid installation for tenant:', tenantId);
-
-        // Respond to Haiilo
-        res.status(200).json({
-            code: 100,
-            message: 'Installation successful',
-            tenantId: tenantId
-        });
-    } catch (error) {
-        res.status(500).json({ error: 'Installation failed', details: error.message });
-    }
-});
-
-module.exports = router;
+module.exports = {
+    getAccessToken,
+    validateInstallationToken
+};
