@@ -166,9 +166,9 @@ async function fetchUsers(req, res) {
         const response = await axios.get(`${API_BASE_URL}/api/users`, {
             headers: {
                 'Authorization': `Bearer ${accessToken}`,
-                'X-Client-ID': process.env.X_COYO_CLIENT_ID, // Add client ID from .env
-                'X-Coyo-Current-User': process.env.X_COYO_CURRENT_USER, // Add current user ID from .env
-                'X-Csrf-Token': process.env.X_CSRF_TOKEN, // Add CSRF token from .env
+                'X-Client-ID': process.env.X_COYO_CLIENT_ID,
+                'X-Coyo-Current-User': process.env.X_COYO_CURRENT_USER,
+                'X-Csrf-Token': process.env.X_CSRF_TOKEN,
                 'Accept-Version': '1.5.0',
                 'Accept': 'application/json'
             }
@@ -178,21 +178,55 @@ async function fetchUsers(req, res) {
         if (response.headers['content-type'] !== 'application/json') {
             console.error('Unexpected response content type:', response.headers['content-type']);
             console.error('Response body:', response.data); // Debugging
-            return res.status(500).json({
-                error: 'Unexpected response from API',
-                details: 'Expected JSON but received non-JSON response'
-            });
+            return res.status(500).send(`
+                <html>
+                    <body>
+                        <h1>Error: Unexpected response from API</h1>
+                        <p>Expected JSON but received non-JSON response.</p>
+                        <pre>${response.data}</pre>
+                    </body>
+                </html>
+            `);
         }
 
-        // Explicitly set the Content-Type header for the response
-        res.setHeader('Content-Type', 'application/json');
-        res.json(response.data);
+        // Handle empty user list
+        if (!response.data || response.data.length === 0) {
+            return res.send(`
+                <html>
+                    <head>
+                        <title>Users</title>
+                    </head>
+                    <body>
+                        <h1>Users List</h1>
+                        <p>No users found.</p>
+                    </body>
+                </html>
+            `);
+        }
+
+        // Render the response as an HTML page
+        const usersHtml = response.data.map(user => `<li>${user.name} (${user.email})</li>`).join('');
+        res.send(`
+            <html>
+                <head>
+                    <title>Users</title>
+                </head>
+                <body>
+                    <h1>Users List</h1>
+                    <ul>${usersHtml}</ul>
+                </body>
+            </html>
+        `);
     } catch (error) {
         console.error('API Error:', error.response?.data || error.message);
-        res.status(error.response?.status || 500).json({
-            error: 'Failed to fetch users',
-            details: error.response?.data || error.message
-        });
+        res.status(error.response?.status || 500).send(`
+            <html>
+                <body>
+                    <h1>Error: Failed to fetch users</h1>
+                    <p>${error.response?.data || error.message}</p>
+                </body>
+            </html>
+        `);
     }
 }
 
