@@ -32,6 +32,14 @@ Access-Control-Allow-Origin = "*" # Allow all origins
 Access-Control-Allow-Methods = "GET, OPTIONS"
 Access-Control-Allow-Headers = "Content-Type"
 
+[[headers]]
+for = "/manifest.json"
+[headers.values]
+Content-Type = "application/json" # Ensure correct MIME type
+Access-Control-Allow-Origin = "*" # Allow all origins
+Access-Control-Allow-Methods = "GET, OPTIONS"
+Access-Control-Allow-Headers = "Content-Type"
+
 [[redirects]]
   from = "/api/*"
   to = "https://asioso.coyocloud.com/:splat"
