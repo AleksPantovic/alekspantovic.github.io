@@ -184,6 +184,8 @@ async function fetchUsers(req, res) {
             });
         }
 
+        // Explicitly set the Content-Type header for the response
+        res.setHeader('Content-Type', 'application/json');
         res.json(response.data);
     } catch (error) {
         console.error('API Error:', error.response?.data || error.message);
