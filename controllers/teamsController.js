@@ -159,4 +159,39 @@ router.post('/lifecycle/install', (req, res) => {
     }
 });
 
+async function fetchUsers(req, res) {
+    try {
+        console.log('Using Access Token:', accessToken); // Debugging
+
+        const response = await axios.get(`${API_BASE_URL}/api/users`, {
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'X-Client-ID': process.env.X_COYO_CLIENT_ID, // Add client ID from .env
+                'X-Coyo-Current-User': process.env.X_COYO_CURRENT_USER, // Add current user ID from .env
+                'X-Csrf-Token': process.env.X_CSRF_TOKEN, // Add CSRF token from .env
+                'Accept-Version': '1.5.0',
+                'Accept': 'application/json'
+            }
+        });
+
+        // Check if the response is valid JSON
+        if (response.headers['content-type'] !== 'application/json') {
+            console.error('Unexpected response content type:', response.headers['content-type']);
+            console.error('Response body:', response.data); // Debugging
+            return res.status(500).json({
+                error: 'Unexpected response from API',
+                details: 'Expected JSON but received non-JSON response'
+            });
+        }
+
+        res.json(response.data);
+    } catch (error) {
+        console.error('API Error:', error.response?.data || error.message);
+        res.status(error.response?.status || 500).json({
+            error: 'Failed to fetch users',
+            details: error.response?.data || error.message
+        });
+    }
+}
+
 module.exports = router;
