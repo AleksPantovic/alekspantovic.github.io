@@ -41,7 +41,8 @@
 
           if (contentType && contentType.includes('text/html')) {
             const html = await response.text();
-            output.innerHTML = `<iframe srcdoc="${html.replace(/"/g, '&quot;')}"></iframe>`;
+            // Safely render the HTML response in an iframe
+            output.innerHTML = `<iframe srcdoc="${html.replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}"></iframe>`;
             status.textContent = 'HTML content rendered successfully';
           } else {
             throw new Error(`Unexpected response type: ${contentType}`);
