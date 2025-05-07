@@ -243,7 +243,7 @@ router.get('/render-users', ensureAuth, async (req, res) => {
             }
         });
 
-        // Render the response as a new HTML page
+        // Render the response as a complete HTML page
         res.send(`
             <!DOCTYPE html>
             <html lang="en">
@@ -251,6 +251,11 @@ router.get('/render-users', ensureAuth, async (req, res) => {
                 <meta charset="UTF-8">
                 <meta name="viewport" content="width=device-width, initial-scale=1.0">
                 <title>Rendered Users</title>
+                <script>
+                  document.addEventListener('DOMContentLoaded', () => {
+                    console.log('JavaScript is enabled and running.');
+                  });
+                </script>
             </head>
             <body>
                 <h1>Users List</h1>
