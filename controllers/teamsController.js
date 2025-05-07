@@ -114,16 +114,81 @@ router.get('/users', ensureAuth, async (req, res) => {
         const response = await axios.get(`${API_BASE_URL}/api/users`, {
             headers: {
                 'Authorization': `Bearer ${req.accessToken}`,
+                'X-Client-ID': process.env.X_COYO_CLIENT_ID,
+                'X-Coyo-Current-User': process.env.X_COYO_CURRENT_USER,
+                'X-Csrf-Token': process.env.X_CSRF_TOKEN,
+                'Accept-Version': '1.5.0',
                 'Accept': 'application/json'
             }
         });
-        res.json(response.data);
+
+        // Render the response as a complete HTML page
+        res.send(`
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Users List</title>
+                <style>
+                    body {
+                        font-family: Arial, sans-serif;
+                        margin: 20px;
+                    }
+                    h1 {
+                        color: #333;
+                    }
+                    ul {
+                        list-style-type: none;
+                        padding: 0;
+                    }
+                    li {
+                        background: #f9f9f9;
+                        margin: 5px 0;
+                        padding: 10px;
+                        border: 1px solid #ddd;
+                        border-radius: 5px;
+                    }
+                </style>
+                <script>
+                    document.addEventListener('DOMContentLoaded', () => {
+                        console.log('JavaScript is enabled and running.');
+                    });
+                </script>
+            </head>
+            <body>
+                <h1>Users List</h1>
+                <ul>
+                    ${response.data.map(user => `<li>${user.name} (${user.email})</li>`).join('')}
+                </ul>
+            </body>
+            </html>
+        `);
     } catch (error) {
-        console.error('Users API Error:', error.response?.data || error.message);
-        res.status(error.response?.status || 500).json({
-            error: 'Failed to fetch users',
-            details: error.response?.data || error.message
-        });
+        console.error('API Error:', error.response?.data || error.message);
+        res.status(error.response?.status || 500).send(`
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Error</title>
+                <style>
+                    body {
+                        font-family: Arial, sans-serif;
+                        margin: 20px;
+                    }
+                    h1 {
+                        color: red;
+                    }
+                </style>
+            </head>
+            <body>
+                <h1>Error: Failed to fetch users</h1>
+                <p>${error.response?.data || error.message}</p>
+            </body>
+            </html>
+        `);
     }
 });
 
@@ -229,59 +294,5 @@ async function fetchUsers(req, res) {
         `);
     }
 }
-
-router.get('/render-users', ensureAuth, async (req, res) => {
-    try {
-        const response = await axios.get(`${API_BASE_URL}/api/users`, {
-            headers: {
-                'Authorization': `Bearer ${req.accessToken}`,
-                'X-Client-ID': process.env.X_COYO_CLIENT_ID,
-                'X-Coyo-Current-User': process.env.X_COYO_CURRENT_USER,
-                'X-Csrf-Token': process.env.X_CSRF_TOKEN,
-                'Accept-Version': '1.5.0',
-                'Accept': 'application/json'
-            }
-        });
-
-        // Render the response as a complete HTML page
-        res.send(`
-            <!DOCTYPE html>
-            <html lang="en">
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Rendered Users</title>
-                <script>
-                  document.addEventListener('DOMContentLoaded', () => {
-                    console.log('JavaScript is enabled and running.');
-                  });
-                </script>
-            </head>
-            <body>
-                <h1>Users List</h1>
-                <ul>
-                    ${response.data.map(user => `<li>${user.name} (${user.email})</li>`).join('')}
-                </ul>
-            </body>
-            </html>
-        `);
-    } catch (error) {
-        console.error('API Error:', error.response?.data || error.message);
-        res.status(error.response?.status || 500).send(`
-            <!DOCTYPE html>
-            <html lang="en">
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Error</title>
-            </head>
-            <body>
-                <h1>Error: Failed to fetch users</h1>
-                <p>${error.response?.data || error.message}</p>
-            </body>
-            </html>
-        `);
-    }
-});
 
 module.exports = router;

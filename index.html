@@ -12,11 +12,16 @@
     h1 {
       color: #333;
     }
-    iframe {
-      width: 100%;
-      height: 500px;
-      border: none;
-      margin-top: 20px;
+    ul {
+      list-style-type: none;
+      padding: 0;
+    }
+    li {
+      background: #f9f9f9;
+      margin: 5px 0;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
     }
     .error {
       color: red;
@@ -45,11 +50,15 @@
             throw new Error(`HTTP error! status: ${response.status}`);
           }
 
-          if (contentType && contentType.includes('text/html')) {
-            const html = await response.text();
-            // Safely render the HTML response in an iframe
-            output.innerHTML = `<iframe srcdoc="${html.replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;')}"></iframe>`;
-            status.textContent = 'HTML content rendered successfully';
+          if (contentType && contentType.includes('application/json')) {
+            const data = await response.json();
+            if (data.length === 0) {
+              output.innerHTML = '<p>No users found.</p>';
+            } else {
+              const userList = data.map(user => `<li>${user.name} (${user.email})</li>`).join('');
+              output.innerHTML = `<ul>${userList}</ul>`;
+            }
+            status.textContent = 'Data fetched successfully';
           } else {
             throw new Error(`Unexpected response type: ${contentType}`);
           }
@@ -60,35 +69,11 @@
         }
       });
     });
-
-    function redirectToRenderUsers() {
-      window.location.href = '/render-users';
-    }
-  </script>
-  <script>
-    async function startAuthFlow() {
-      // Redirect to Haiilo authorization endpoint
-      const authUrl = `https://asioso.coyocloud.com/oauth/authorize?
-        response_type=code&
-        client_id=${encodeURIComponent(CLIENT_ID)}&
-        redirect_uri=${encodeURIComponent(window.location.origin)}&
-        scope=plugin:notify%20user:read`;
-      
-      window.location.href = authUrl;
-    }
-  
-    // Handle callback after authorization
-    if (window.location.search.includes('code=')) {
-      const code = new URLSearchParams(window.location.search).get('code');
-      fetch(`/api/token?code=${code}`)
-        .then(handleResponse);
-    }
   </script>
 </head>
 <body>
-  <h1>Haiilo Plugin - Rendered Response</h1>
-  <button id="fetch-btn">Fetch and Render Response</button>
-  <button onclick="redirectToRenderUsers()">Render Users on New Page</button>
+  <h1>Haiilo Plugin - Users</h1>
+  <button id="fetch-btn">Fetch Users</button>
   <div id="status">Ready</div>
   <div id="output" style="margin-top: 20px;"></div>
 </body>
