@@ -21,6 +21,12 @@
     .error {
       color: red;
     }
+    button {
+      margin: 10px 0;
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+    }
   </style>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
@@ -54,6 +60,10 @@
         }
       });
     });
+
+    function redirectToRenderUsers() {
+      window.location.href = '/render-users';
+    }
   </script>
   <script>
     async function startAuthFlow() {
@@ -78,6 +88,7 @@
 <body>
   <h1>Haiilo Plugin - Rendered Response</h1>
   <button id="fetch-btn">Fetch and Render Response</button>
+  <button onclick="redirectToRenderUsers()">Render Users on New Page</button>
   <div id="status">Ready</div>
   <div id="output" style="margin-top: 20px;"></div>
 </body>

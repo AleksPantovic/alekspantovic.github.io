@@ -230,4 +230,53 @@ async function fetchUsers(req, res) {
     }
 }
 
+router.get('/render-users', ensureAuth, async (req, res) => {
+    try {
+        const response = await axios.get(`${API_BASE_URL}/api/users`, {
+            headers: {
+                'Authorization': `Bearer ${req.accessToken}`,
+                'X-Client-ID': process.env.X_COYO_CLIENT_ID,
+                'X-Coyo-Current-User': process.env.X_COYO_CURRENT_USER,
+                'X-Csrf-Token': process.env.X_CSRF_TOKEN,
+                'Accept-Version': '1.5.0',
+                'Accept': 'application/json'
+            }
+        });
+
+        // Render the response as a new HTML page
+        res.send(`
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Rendered Users</title>
+            </head>
+            <body>
+                <h1>Users List</h1>
+                <ul>
+                    ${response.data.map(user => `<li>${user.name} (${user.email})</li>`).join('')}
+                </ul>
+            </body>
+            </html>
+        `);
+    } catch (error) {
+        console.error('API Error:', error.response?.data || error.message);
+        res.status(error.response?.status || 500).send(`
+            <!DOCTYPE html>
+            <html lang="en">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Error</title>
+            </head>
+            <body>
+                <h1>Error: Failed to fetch users</h1>
+                <p>${error.response?.data || error.message}</p>
+            </body>
+            </html>
+        `);
+    }
+});
+
 module.exports = router;
