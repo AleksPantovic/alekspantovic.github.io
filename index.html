@@ -35,6 +35,8 @@
   </style>
   <script>
     document.addEventListener('DOMContentLoaded', () => {
+      console.log('JavaScript is enabled and running.');
+
       document.getElementById('fetch-btn').addEventListener('click', async () => {
         const status = document.getElementById('status');
         const output = document.getElementById('output');
@@ -43,8 +45,12 @@
         output.innerHTML = ''; // Clear previous content
 
         try {
+          console.log('Sending request to /api/users...');
           const response = await fetch('/api/users');
           const contentType = response.headers.get('content-type');
+
+          console.log('Response Headers:', response.headers);
+          console.log('Content-Type:', contentType);
 
           if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
@@ -52,6 +58,8 @@
 
           if (contentType && contentType.includes('application/json')) {
             const data = await response.json();
+            console.log('Response Data:', data);
+
             if (data.length === 0) {
               output.innerHTML = '<p>No users found.</p>';
             } else {

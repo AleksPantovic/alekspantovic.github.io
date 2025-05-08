@@ -111,6 +111,7 @@ async function validateLifecycleToken(req, res, next) {
 // API Endpoints
 router.get('/users', ensureAuth, async (req, res) => {
     try {
+        console.log('Fetching users from API...');
         const response = await axios.get(`${API_BASE_URL}/api/users`, {
             headers: {
                 'Authorization': `Bearer ${req.accessToken}`,
@@ -121,6 +122,9 @@ router.get('/users', ensureAuth, async (req, res) => {
                 'Accept': 'application/json'
             }
         });
+
+        console.log('API Response Headers:', response.headers);
+        console.log('API Response Data:', response.data);
 
         // Return the response as JSON
         res.json(response.data);
