@@ -126,8 +126,16 @@ router.get('/users', ensureAuth, async (req, res) => {
         console.log('API Response Headers:', response.headers);
         console.log('API Response Data:', response.data);
 
-        // Return the response as JSON
-        res.json(response.data);
+        // Ensure the response is JSON
+        if (response.headers['content-type'] && response.headers['content-type'].includes('application/json')) {
+            res.json(response.data);
+        } else {
+            console.error('Unexpected response type:', response.headers['content-type']);
+            res.status(500).json({
+                error: 'Unexpected response from API',
+                details: 'Expected JSON but received non-JSON response'
+            });
+        }
     } catch (error) {
         console.error('API Error:', error.response?.data || error.message);
         res.status(error.response?.status || 500).json({

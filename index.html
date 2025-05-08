@@ -68,6 +68,8 @@
             }
             status.textContent = 'Data fetched successfully';
           } else {
+            const text = await response.text();
+            console.error('Unexpected response:', text);
             throw new Error(`Unexpected response type: ${contentType}`);
           }
         } catch (error) {
