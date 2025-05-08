@@ -1,4 +1,9 @@
 export default async (request, context) => {
+    // Exclude /manifest.json from CORS headers
+    if (request.url.endsWith('/manifest.json')) {
+        return context.next();
+    }
+
     const response = await context.next();
     return new Response(response.body, {
         ...response,
@@ -13,5 +18,5 @@ export default async (request, context) => {
 };
 
 export const config = {
-    path: '/*', // Apply to all paths
+    path: '/*', // Apply to all paths except /manifest.json
 };
