@@ -23,17 +23,6 @@
       }
     }
   ],
-  "referrerPolicy": "strict-origin",
-  "apiAccess": {
-    "client": {
-      "mode": ["authorization_code"],
-      "scope": ["plugin:notify", "user:read"]
-    }
-  },
-  "requiredPermissions": ["USER_READ"],
-  "security": {
-    "jkuWhitelist": ["https://plugins.coyoapp.com"]
-  },
   "lifecycle": {
     "url": "/lifecycle/",
     "events": ["install"]
