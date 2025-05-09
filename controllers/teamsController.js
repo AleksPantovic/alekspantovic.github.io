@@ -24,7 +24,7 @@ const encodeCredentials = () => {
 // Get OAuth token
 async function getAccessToken() {
     try {
-        const response = await axios.post(AUTH_URL, 
+        const response = await axios.post(AUTH_URL,
             new URLSearchParams({
                 grant_type: 'client_credentials',
                 scope: SCOPE
@@ -101,7 +101,7 @@ async function validateLifecycleToken(req, res, next) {
         req.tokenPayload = decoded;
         next();
     } catch (error) {
-        res.status(403).json({ 
+        res.status(403).json({
             error: 'Invalid token',
             details: error.message
         });
@@ -112,6 +112,15 @@ async function validateLifecycleToken(req, res, next) {
 router.get('/users', ensureAuth, async (req, res) => {
     try {
         console.log('Fetching users from API...');
+        console.log('Request Headers:', {
+            Authorization: `Bearer ${req.accessToken}`,
+            'X-Client-ID': process.env.X_COYO_CLIENT_ID,
+            'X-Coyo-Current-User': process.env.X_COYO_CURRENT_USER,
+            'X-Csrf-Token': process.env.X_CSRF_TOKEN,
+            'Accept-Version': '1.5.0',
+            Accept: 'application/json'
+        });
+
         const response = await axios.get(`${API_BASE_URL}/api/users`, {
             headers: {
                 'Authorization': `Bearer ${req.accessToken}`,
@@ -126,20 +135,22 @@ router.get('/users', ensureAuth, async (req, res) => {
         console.log('API Response Headers:', response.headers);
         console.log('API Response Data:', response.data);
 
-        // Ensure the response is JSON
-        if (response.headers['content-type'] && response.headers['content-type'].includes('application/json')) {
+        const contentType = response.headers['content-type'];
+        if (contentType && contentType.includes('application/json')) {
             res.json(response.data);
         } else {
-            console.error('Unexpected response type:', response.headers['content-type']);
+            console.error('Upstream API returned unexpected content type:', contentType);
+            console.error('Upstream API response data:', response.data);
             res.status(500).json({
-                error: 'Unexpected response from API',
-                details: 'Expected JSON but received non-JSON response'
+                error: 'Unexpected data format from the upstream API',
+                details: `Expected JSON but received: ${contentType}`
             });
         }
+
     } catch (error) {
         console.error('API Error:', error.response?.data || error.message);
         res.status(error.response?.status || 500).json({
-            error: 'Failed to fetch users',
+            error: 'Failed to fetch users from the upstream API',
             details: error.response?.data || error.message
         });
     }
@@ -148,7 +159,7 @@ router.get('/users', ensureAuth, async (req, res) => {
 router.post('/lifecycle-event', validateLifecycleToken, (req, res) => {
     try {
         console.log('Lifecycle event received:', req.body);
-        res.json({ 
+        res.json({
             status: 'success',
             message: 'Event processed',
             eventData: req.body
@@ -176,76 +187,5 @@ router.post('/lifecycle/install', (req, res) => {
         res.status(400).json({ code: 101, message: 'Unsupported COYO instance' });
     }
 });
-
-async function fetchUsers(req, res) {
-    try {
-        console.log('Using Access Token:', accessToken); // Debugging
-
-        const response = await axios.get(`${API_BASE_URL}/api/users`, {
-            headers: {
-                'Authorization': `Bearer ${accessToken}`,
-                'X-Client-ID': process.env.X_COYO_CLIENT_ID,
-                'X-Coyo-Current-User': process.env.X_COYO_CURRENT_USER,
-                'X-Csrf-Token': process.env.X_CSRF_TOKEN,
-                'Accept-Version': '1.5.0',
-                'Accept': 'application/json'
-            }
-        });
-
-        // Check if the response is valid JSON
-        if (response.headers['content-type'] !== 'application/json') {
-            console.error('Unexpected response content type:', response.headers['content-type']);
-            console.error('Response body:', response.data); // Debugging
-            return res.status(500).send(`
-                <html>
-                    <body>
-                        <h1>Error: Unexpected response from API</h1>
-                        <p>Expected JSON but received non-JSON response.</p>
-                        <pre>${response.data}</pre>
-                    </body>
-                </html>
-            `);
-        }
-
-        // Handle empty user list
-        if (!response.data || response.data.length === 0) {
-            return res.send(`
-                <html>
-                    <head>
-                        <title>Users</title>
-                    </head>
-                    <body>
-                        <h1>Users List</h1>
-                        <p>No users found.</p>
-                    </body>
-                </html>
-            `);
-        }
-
-        // Render the response as an HTML page
-        const usersHtml = response.data.map(user => `<li>${user.name} (${user.email})</li>`).join('');
-        res.send(`
-            <html>
-                <head>
-                    <title>Users</title>
-                </head>
-                <body>
-                    <h1>Users List</h1>
-                    <ul>${usersHtml}</ul>
-                </body>
-            </html>
-        `);
-    } catch (error) {
-        console.error('API Error:', error.response?.data || error.message);
-        res.status(error.response?.status || 500).send(`
-            <html>
-                <body>
-                    <h1>Error: Failed to fetch users</h1>
-                    <p>${error.response?.data || error.message}</p>
-                </body>
-            </html>
-        `);
-    }
-}
 
 module.exports = router;

@@ -53,7 +53,9 @@
           console.log('Content-Type:', contentType);
 
           if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            const errorDetails = await response.json();
+            console.error('Error Details:', errorDetails);
+            throw new Error(`HTTP error! status: ${response.status} - ${errorDetails.error}`);
           }
 
           if (contentType && contentType.includes('application/json')) {
