@@ -25,6 +25,6 @@
   ],
   "lifecycle": {
     "url": "/lifecycle/",
-    "events": ["install"]
+    "events": ["install", "uninstall", "instance_add", "instance_remove", "access_token"]
   }
 }

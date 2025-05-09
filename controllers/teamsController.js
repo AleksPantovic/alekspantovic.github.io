@@ -177,17 +177,96 @@ router.post('/lifecycle-event', validateLifecycleToken, (req, res) => {
 
 // Lifecycle event: Install
 router.post('/lifecycle/install', (req, res) => {
-    console.log('Received lifecycle event: install %s', req.body.token);
-    let decodedToken = jwt.decode(req.body.token);
-    console.log('Decoded header: %j', decodedToken.header);
-    console.log('Decoded payload: %j', decodedToken.payload);
+    try {
+        console.log('Received lifecycle event: install');
+        const decodedToken = jwt.decode(req.body.token, { complete: true });
+        console.log('Decoded Header:', decodedToken?.header);
+        console.log('Decoded Payload:', decodedToken?.payload);
 
-    if (decodedToken.payload.iss.indexOf('coyo') >= 0) {
-        console.log('Successful installation');
-        res.status(201).json({ code: 100, message: 'ok' });
-    } else {
-        console.log('Unsupported COYO instance');
-        res.status(400).json({ code: 101, message: 'Unsupported COYO instance' });
+        // Perform installation logic here
+        res.status(201).json({ message: 'Plugin installed successfully' });
+    } catch (error) {
+        console.error('Install Event Error:', error.message);
+        res.status(400).json({
+            error: 'Failed to process install event',
+            details: error.message
+        });
+    }
+});
+
+// Lifecycle event: Uninstall
+router.post('/lifecycle/uninstall', (req, res) => {
+    try {
+        console.log('Received lifecycle event: uninstall');
+        const decodedToken = jwt.decode(req.body.token, { complete: true });
+        console.log('Decoded Header:', decodedToken?.header);
+        console.log('Decoded Payload:', decodedToken?.payload);
+
+        // Perform uninstallation logic here
+        res.status(201).json({ message: 'Plugin uninstalled successfully' });
+    } catch (error) {
+        console.error('Uninstall Event Error:', error.message);
+        res.status(400).json({
+            error: 'Failed to process uninstall event',
+            details: error.message
+        });
+    }
+});
+
+// Lifecycle event: Instance Add
+router.post('/lifecycle/instance_add', (req, res) => {
+    try {
+        console.log('Received lifecycle event: instance_add');
+        const decodedToken = jwt.decode(req.body.token, { complete: true });
+        console.log('Decoded Header:', decodedToken?.header);
+        console.log('Decoded Payload:', decodedToken?.payload);
+
+        // Perform instance addition logic here
+        res.status(201).json({ message: 'Instance added successfully' });
+    } catch (error) {
+        console.error('Instance Add Event Error:', error.message);
+        res.status(400).json({
+            error: 'Failed to process instance_add event',
+            details: error.message
+        });
+    }
+});
+
+// Lifecycle event: Instance Remove
+router.post('/lifecycle/instance_remove', (req, res) => {
+    try {
+        console.log('Received lifecycle event: instance_remove');
+        const decodedToken = jwt.decode(req.body.token, { complete: true });
+        console.log('Decoded Header:', decodedToken?.header);
+        console.log('Decoded Payload:', decodedToken?.payload);
+
+        // Perform instance removal logic here
+        res.status(200).json({ message: 'Instance removed successfully' });
+    } catch (error) {
+        console.error('Instance Remove Event Error:', error.message);
+        res.status(400).json({
+            error: 'Failed to process instance_remove event',
+            details: error.message
+        });
+    }
+});
+
+// API Access Token Event
+router.post('/lifecycle/access_token', (req, res) => {
+    try {
+        console.log('Received lifecycle event: access_token');
+        const decodedToken = jwt.decode(req.body.token, { complete: true });
+        console.log('Decoded Header:', decodedToken?.header);
+        console.log('Decoded Payload:', decodedToken?.payload);
+
+        // Perform access token handling logic here
+        res.status(201).json({ message: 'Access token processed successfully' });
+    } catch (error) {
+        console.error('Access Token Event Error:', error.message);
+        res.status(400).json({
+            error: 'Failed to process access_token event',
+            details: error.message
+        });
     }
 });
 
