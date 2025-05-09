@@ -1,5 +1,6 @@
 const express = require('express');
 const path = require('path');
+const cors = require('cors');
 const app = express();
 
 // Serve static files from the "public" directory
@@ -10,5 +11,11 @@ app.get('/manifest.json', (req, res) => {
     res.setHeader('Content-Type', 'application/json');
     res.sendFile(path.join(__dirname, 'public', 'manifest.json'));
 });
+
+app.use(cors({
+    origin: '*', // Allow all origins (adjust as needed)
+    methods: ['GET', 'POST', 'OPTIONS'],
+    allowedHeaders: ['Authorization', 'Content-Type', 'X-Client-ID', 'X-Coyo-Current-User', 'X-Csrf-Token']
+}));
 
 // ...existing code...
