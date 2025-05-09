@@ -118,7 +118,8 @@ router.get('/users', ensureAuth, async (req, res) => {
             'X-Coyo-Current-User': process.env.X_COYO_CURRENT_USER,
             'X-Csrf-Token': process.env.X_CSRF_TOKEN,
             'Accept-Version': '1.5.0',
-            Accept: 'application/json'
+            Accept: 'application/json',
+            'User-Agent': 'HaiiloPlugin/1.0 (Server-Side)' // Add a descriptive User-Agent
         });
 
         const response = await axios.get(`${API_BASE_URL}/api/users`, {
@@ -128,7 +129,8 @@ router.get('/users', ensureAuth, async (req, res) => {
                 'X-Coyo-Current-User': process.env.X_COYO_CURRENT_USER,
                 'X-Csrf-Token': process.env.X_CSRF_TOKEN,
                 'Accept-Version': '1.5.0',
-                'Accept': 'application/json'
+                'Accept': 'application/json',
+                'User-Agent': 'HaiiloPlugin/1.0 (Server-Side)' // Add a descriptive User-Agent
             }
         });
 
@@ -143,7 +145,8 @@ router.get('/users', ensureAuth, async (req, res) => {
             console.error('Upstream API response data:', response.data);
             res.status(500).json({
                 error: 'Unexpected data format from the upstream API',
-                details: `Expected JSON but received: ${contentType}`
+                details: `Expected JSON but received: ${contentType}`,
+                responseBody: response.data // Include the raw response for debugging
             });
         }
 
