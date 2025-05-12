@@ -63,8 +63,9 @@ for = "/*"
 
 [[redirects]]
   from = "/lifecycle/*"
-  to = "/.netlify/functions/lifecycle"
+  to = "/.netlify/functions/lifecycle" # Route lifecycle events to a Netlify function
   status = 200
+  force = true
 
 [[redirects]]
   from = "/*"

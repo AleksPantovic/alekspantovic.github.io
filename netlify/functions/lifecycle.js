@@ -7,42 +7,58 @@ const client = jwksClient({
 
 exports.handler = async (event) => {
     try {
-        const body = JSON.parse(event.body);
-        const token = body.token;
+        const { path } = event;
+        const body = JSON.parse(event.body || '{}');
+        console.log(`Received lifecycle event: ${path}`);
+        console.log('Event Body:', body);
 
-        const decoded = jwt.decode(token, { complete: true });
-
-        // Validate JKU
-        if (!decoded || decoded.header.jku !== 'https://certificates.plugins.coyoapp.com/.well-known/jwks.json') {
-            throw new Error('Invalid JKU');
+        if (path.endsWith('/install')) {
+            // Handle install event
+            console.log('Processing install event...');
+            return {
+                statusCode: 201,
+                body: JSON.stringify({ message: 'Plugin installed successfully' }),
+            };
+        } else if (path.endsWith('/uninstall')) {
+            // Handle uninstall event
+            console.log('Processing uninstall event...');
+            return {
+                statusCode: 201,
+                body: JSON.stringify({ message: 'Plugin uninstalled successfully' }),
+            };
+        } else if (path.endsWith('/instance_add')) {
+            // Handle instance add event
+            console.log('Processing instance add event...');
+            return {
+                statusCode: 201,
+                body: JSON.stringify({ message: 'Instance added successfully' }),
+            };
+        } else if (path.endsWith('/instance_remove')) {
+            // Handle instance remove event
+            console.log('Processing instance remove event...');
+            return {
+                statusCode: 201,
+                body: JSON.stringify({ message: 'Instance removed successfully' }),
+            };
+        } else if (path.endsWith('/access_token')) {
+            // Handle access token event
+            console.log('Processing access token event...');
+            return {
+                statusCode: 201,
+                body: JSON.stringify({ message: 'Access token processed successfully' }),
+            };
+        } else {
+            console.error('Unknown lifecycle event');
+            return {
+                statusCode: 400,
+                body: JSON.stringify({ error: 'Unknown lifecycle event' }),
+            };
         }
-
-        // Get public key
-        const key = await client.getSigningKey(decoded.header.kid);
-        const publicKey = key.getPublicKey();
-
-        // Verify token
-        jwt.verify(token, publicKey, {
-            algorithms: ['RS256'],
-            issuer: 'https://asioso.coyocloud.com'
-        });
-
-        const tenantId = decoded.payload.tenantId;
-        console.log('Valid installation for tenant:', tenantId);
-
-        return {
-            statusCode: 200,
-            body: JSON.stringify({
-                code: 100,
-                message: 'Installation successful',
-                tenantId: tenantId
-            })
-        };
     } catch (error) {
-        console.error('Lifecycle Event Error:', error.message);
+        console.error('Error processing lifecycle event:', error.message);
         return {
-            statusCode: 403,
-            body: JSON.stringify({ error: 'Invalid installation token', details: error.message })
+            statusCode: 500,
+            body: JSON.stringify({ error: 'Internal Server Error', details: error.message }),
         };
     }
 };
