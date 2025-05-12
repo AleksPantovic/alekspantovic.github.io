@@ -46,7 +46,7 @@ for = "/*"
 
 [[redirects]]
   from = "/users"
-  to = "https://asioso.coyocloud.com/api/user" # Directly proxy to Haiilo API
+  to = "/.netlify/functions/proxy" # Route to the proxy function
   status = 200
   force = true
 
