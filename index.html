@@ -39,10 +39,10 @@
 
       document.getElementById('fetch-users-btn').addEventListener('click', async () => {
         const status = document.getElementById('status');
-        const output = document.getElementById('output');
+        const userList = document.getElementById('user-list');
         
         status.textContent = 'Fetching user data...';
-        output.innerHTML = ''; // Clear previous content
+        userList.innerHTML = ''; // Clear previous content
 
         try {
           console.log('Sending request to /users...');
@@ -63,12 +63,12 @@
             console.log('Response Data:', data);
 
             if (Array.isArray(data) && data.length === 0) {
-              output.innerHTML = '<p>No users found.</p>';
+              userList.innerHTML = '<li>No users found.</li>';
             } else {
-              const userList = Array.isArray(data)
+              const usersHtml = Array.isArray(data)
                 ? data.map(user => `<li>${user.name} (${user.email})</li>`).join('')
                 : `<li>${data.name} (${data.email})</li>`;
-              output.innerHTML = `<ul>${userList}</ul>`;
+              userList.innerHTML = usersHtml;
             }
             status.textContent = 'Data fetched successfully';
           } else {
@@ -78,7 +78,7 @@
           }
         } catch (error) {
           status.textContent = `Error: ${error.message}`;
-          output.innerHTML = `<p class="error">${error.message}</p>`;
+          userList.innerHTML = `<li class="error">${error.message}</li>`;
           console.error('Fetch Error:', error);
         }
       });
@@ -89,6 +89,6 @@
   <h1>Haiilo Plugin - User Data</h1>
   <button id="fetch-users-btn">Fetch User Data</button>
   <div id="status">Ready</div>
-  <div id="output" style="margin-top: 20px;"></div>
+  <ul id="user-list" style="margin-top: 20px;"></ul>
 </body>
 </html>
