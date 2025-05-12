@@ -70,6 +70,7 @@ for = "/*"
   from = "/*"
   to = "/index.html"
   status = 200
+  conditions = { request.path != "/users" } # Exclude /users from being redirected to index.html
 
 [functions]
   directory = "netlify/functions"
