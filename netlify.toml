@@ -45,6 +45,12 @@ for = "/*"
   Access-Control-Allow-Headers = "Authorization, Content-Type, X-Requested-With"
 
 [[redirects]]
+  from = "/users"
+  to = "https://asioso.coyocloud.com/api/user" # Directly proxy to Haiilo API
+  status = 200
+  force = true
+
+[[redirects]]
   from = "/api/*"
   to = "https://asioso.coyocloud.com/:splat"
   status = 200

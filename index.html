@@ -45,8 +45,18 @@
         userList.innerHTML = ''; // Clear previous content
 
         try {
-          console.log('Sending request to /users...');
-          const response = await fetch('/users');
+          console.log('Sending request to Haiilo API...');
+          const response = await fetch('https://asioso.coyocloud.com/api/user', {
+            headers: {
+              'Authorization': 'Bearer <ACCESS_TOKEN>', // Replace <ACCESS_TOKEN> with a valid token
+              'X-Client-ID': '<X_COYO_CLIENT_ID>', // Replace with your client ID
+              'X-Coyo-Current-User': '<X_COYO_CURRENT_USER>', // Replace with the current user ID
+              'X-Csrf-Token': '<X_CSRF_TOKEN>', // Replace with a valid CSRF token
+              'Accept-Version': '1.5.0',
+              'Accept': 'application/json'
+            }
+          });
+
           const contentType = response.headers.get('content-type');
 
           console.log('Response Headers:', response.headers);
