@@ -53,6 +53,8 @@
           console.log('Content-Type:', contentType);
 
           if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Error Response:', errorText);
             throw new Error(`HTTP error! status: ${response.status}`);
           }
 
