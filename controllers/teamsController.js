@@ -111,7 +111,7 @@ async function validateLifecycleToken(req, res, next) {
 // API Endpoints
 router.get('/users', ensureAuth, async (req, res) => {
     try {
-        console.log('Fetching users from API...');
+        console.log('Fetching user data from API...');
         console.log('Request Headers:', {
             Authorization: `Bearer ${req.accessToken}`,
             'X-Client-ID': process.env.X_COYO_CLIENT_ID,
@@ -122,7 +122,7 @@ router.get('/users', ensureAuth, async (req, res) => {
             'User-Agent': 'HaiiloPlugin/1.0 (Server-Side)' // Add a descriptive User-Agent
         });
 
-        const response = await axios.get(`${API_BASE_URL}/api/users`, {
+        const response = await axios.get(`${API_BASE_URL}/api/user`, { // Corrected the endpoint
             headers: {
                 'Authorization': `Bearer ${req.accessToken}`,
                 'X-Client-ID': process.env.X_COYO_CLIENT_ID,
@@ -153,7 +153,7 @@ router.get('/users', ensureAuth, async (req, res) => {
     } catch (error) {
         console.error('API Error:', error.response?.data || error.message);
         res.status(error.response?.status || 500).json({
-            error: 'Failed to fetch users from the upstream API',
+            error: 'Failed to fetch user data from the upstream API',
             details: error.response?.data || error.message
         });
     }

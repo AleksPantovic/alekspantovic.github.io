@@ -37,35 +37,35 @@
     document.addEventListener('DOMContentLoaded', () => {
       console.log('JavaScript is enabled and running.');
 
-      document.getElementById('fetch-btn').addEventListener('click', async () => {
+      document.getElementById('fetch-users-btn').addEventListener('click', async () => {
         const status = document.getElementById('status');
         const output = document.getElementById('output');
         
-        status.textContent = 'Fetching users...';
+        status.textContent = 'Fetching user data...';
         output.innerHTML = ''; // Clear previous content
 
         try {
-          console.log('Sending request to /api/users...');
-          const response = await fetch('/api/users');
+          console.log('Sending request to /users...');
+          const response = await fetch('/users');
           const contentType = response.headers.get('content-type');
 
           console.log('Response Headers:', response.headers);
           console.log('Content-Type:', contentType);
 
           if (!response.ok) {
-            const errorDetails = await response.json();
-            console.error('Error Details:', errorDetails);
-            throw new Error(`HTTP error! status: ${response.status} - ${errorDetails.error}`);
+            throw new Error(`HTTP error! status: ${response.status}`);
           }
 
           if (contentType && contentType.includes('application/json')) {
             const data = await response.json();
             console.log('Response Data:', data);
 
-            if (data.length === 0) {
+            if (Array.isArray(data) && data.length === 0) {
               output.innerHTML = '<p>No users found.</p>';
             } else {
-              const userList = data.map(user => `<li>${user.name} (${user.email})</li>`).join('');
+              const userList = Array.isArray(data)
+                ? data.map(user => `<li>${user.name} (${user.email})</li>`).join('')
+                : `<li>${data.name} (${data.email})</li>`;
               output.innerHTML = `<ul>${userList}</ul>`;
             }
             status.textContent = 'Data fetched successfully';
@@ -84,8 +84,8 @@
   </script>
 </head>
 <body>
-  <h1>Haiilo Plugin - Users</h1>
-  <button id="fetch-btn">Fetch Users</button>
+  <h1>Haiilo Plugin - User Data</h1>
+  <button id="fetch-users-btn">Fetch User Data</button>
   <div id="status">Ready</div>
   <div id="output" style="margin-top: 20px;"></div>
 </body>
