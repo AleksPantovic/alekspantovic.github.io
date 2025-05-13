@@ -7,7 +7,7 @@ require('dotenv').config();
 // Example usage:
 async function fetchHaiiloUser() {
   try {
-    const response = await axios.get('https://asioso.coyocloud.com/api/user', {
+    const response = await axios.get('https://asioso.coyocloud.com/api/users', {
       headers: {
         'Authorization': `Bearer ${process.env.ACCESS_TOKEN}`,
         'X-Client-ID': process.env.X_COYO_CLIENT_ID,

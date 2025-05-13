@@ -2,7 +2,7 @@ const axios = require('axios');
 
 exports.handler = async (event) => {
   try {
-    const haiiloApiUrl = 'https://asioso.coyocloud.com/api/user';
+    const haiiloApiUrl = 'https://asioso.coyocloud.com/api/users';
 
     // Use environment variables for credentials
     const headers = {
@@ -21,6 +21,9 @@ exports.handler = async (event) => {
     return {
       statusCode: response.status,
       body: JSON.stringify(response.data),
+      headers: {
+        'Content-Type': 'application/json'
+      }
     };
   } catch (error) {
     console.error('Error proxying request to Haiilo API:', error.message);
