@@ -2,9 +2,7 @@ const axios = require('axios');
 
 exports.handler = async (event) => {
   try {
-    const haiiloApiUrl = 'https://asioso.coyocloud.com/api/users';
-
-    // Use environment variables for credentials
+    // Prepare headers using secrets from Netlify env vars
     const headers = {
       'Authorization': `Bearer ${process.env.ACCESS_TOKEN}`,
       'X-Client-ID': process.env.X_COYO_CLIENT_ID,
@@ -14,28 +12,24 @@ exports.handler = async (event) => {
       'Accept': 'application/json',
     };
 
-    console.log('Forwarding request to Haiilo API with headers:', headers);
+    // Make the request to Haiilo API
+    const response = await axios.get('https://asioso.coyocloud.com/api/users', { headers });
 
-    const response = await axios.get(haiiloApiUrl, { headers });
-
+    // Return the data to the frontend
     return {
       statusCode: response.status,
       body: JSON.stringify(response.data),
-      headers: {
-        'Content-Type': 'application/json'
-      }
+      headers: { 'Content-Type': 'application/json' }
     };
   } catch (error) {
-    console.error('Error proxying request to Haiilo API:', error.message);
+    // Return error info as JSON
     return {
       statusCode: error.response?.status || 500,
       body: JSON.stringify({
         error: 'Failed to fetch data from Haiilo API',
         details: error.response?.data || error.message,
       }),
-      headers: {
-        'Content-Type': 'application/json'
-      }
+      headers: { 'Content-Type': 'application/json' }
     };
   }
 };

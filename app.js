@@ -1,10 +1,6 @@
-// This file is no longer needed. All proxying and static file serving is handled by Netlify.
-// If you want to test API requests locally with axios, use the following minimal example:
-
 const axios = require('axios');
-require('dotenv').config();
+require('dotenv').config(); // Loads .env file
 
-// Example usage:
 async function fetchHaiiloUser() {
   try {
     const response = await axios.get('https://asioso.coyocloud.com/api/users', {

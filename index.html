@@ -42,17 +42,8 @@
         userList.innerHTML = '';
 
         try {
-          const response = await fetch('https://asioso.coyocloud.com/api/users', {
-            headers: {
-              'Authorization': `Bearer ${process.env.ACCESS_TOKEN}`,
-              'X-Client-ID': process.env.X_COYO_CLIENT_ID,
-              'X-Coyo-Current-User': process.env.X_COYO_CURRENT_USER,
-              'X-Csrf-Token': process.env.X_CSRF_TOKEN,
-              'Accept-Version': '1.5.0',
-              'Accept': 'application/json',
-            }
-          });
-
+          // Call the Netlify proxy function, NOT the Haiilo API directly
+          const response = await fetch('/users');
           const contentType = response.headers.get('content-type');
           if (!response.ok) {
             const errorText = await response.text();
