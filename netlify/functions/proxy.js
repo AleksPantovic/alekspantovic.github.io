@@ -4,19 +4,18 @@ exports.handler = async (event) => {
   try {
     const haiiloApiUrl = 'https://asioso.coyocloud.com/api/user';
 
-    // Forward the headers from the request
+    // Use environment variables for credentials
     const headers = {
-      'Authorization': 'Bearer <ACCESS_TOKEN>', // Replace <ACCESS_TOKEN> with a valid token
-      'X-Client-ID': '<X_COYO_CLIENT_ID>', // Replace with your client ID
-      'X-Coyo-Current-User': '<X_COYO_CURRENT_USER>', // Replace with the current user ID
-      'X-Csrf-Token': '<X_CSRF_TOKEN>', // Replace with a valid CSRF token
+      'Authorization': `Bearer ${process.env.ACCESS_TOKEN}`,
+      'X-Client-ID': process.env.X_COYO_CLIENT_ID,
+      'X-Coyo-Current-User': process.env.X_COYO_CURRENT_USER,
+      'X-Csrf-Token': process.env.X_CSRF_TOKEN,
       'Accept-Version': '1.5.0',
       'Accept': 'application/json',
     };
 
     console.log('Forwarding request to Haiilo API with headers:', headers);
 
-    // Make the request to the Haiilo API using axios
     const response = await axios.get(haiiloApiUrl, { headers });
 
     return {
@@ -31,6 +30,9 @@ exports.handler = async (event) => {
         error: 'Failed to fetch data from Haiilo API',
         details: error.response?.data || error.message,
       }),
+      headers: {
+        'Content-Type': 'application/json'
+      }
     };
   }
 };
