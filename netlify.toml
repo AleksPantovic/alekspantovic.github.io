@@ -46,24 +46,7 @@ for = "/*"
 
 [[redirects]]
   from = "/users"
-  to = "/.netlify/functions/proxy" # Route to the proxy function
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/api/*"
-  to = "https://asioso.coyocloud.com/:splat"
-  status = 200
-  force = true
-
-[[redirects]]
-  from = "/manifest.json"
-  to = "/manifest.json"
-  status = 200
-
-[[redirects]]
-  from = "/lifecycle/*"
-  to = "/.netlify/functions/lifecycle" # Route lifecycle events to a Netlify function
+  to = "/.netlify/functions/proxy"
   status = 200
   force = true
 
@@ -71,7 +54,6 @@ for = "/*"
   from = "/*"
   to = "/index.html"
   status = 200
-  conditions = { request.path != "/users" } # Exclude /users from being redirected to index.html
 
 [functions]
   directory = "netlify/functions"
