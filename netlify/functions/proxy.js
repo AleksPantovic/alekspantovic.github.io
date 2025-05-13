@@ -1,4 +1,4 @@
-const fetch = require('node-fetch');
+const axios = require('axios');
 
 exports.handler = async (event) => {
   try {
@@ -16,23 +16,21 @@ exports.handler = async (event) => {
 
     console.log('Forwarding request to Haiilo API with headers:', headers);
 
-    // Make the request to the Haiilo API
-    const response = await fetch(haiiloApiUrl, {
-      method: 'GET',
-      headers,
-    });
-
-    const data = await response.json();
+    // Make the request to the Haiilo API using axios
+    const response = await axios.get(haiiloApiUrl, { headers });
 
     return {
       statusCode: response.status,
-      body: JSON.stringify(data),
+      body: JSON.stringify(response.data),
     };
   } catch (error) {
     console.error('Error proxying request to Haiilo API:', error.message);
     return {
-      statusCode: 500,
-      body: JSON.stringify({ error: 'Failed to fetch data from Haiilo API', details: error.message }),
+      statusCode: error.response?.status || 500,
+      body: JSON.stringify({
+        error: 'Failed to fetch data from Haiilo API',
+        details: error.response?.data || error.message,
+      }),
     };
   }
 };
