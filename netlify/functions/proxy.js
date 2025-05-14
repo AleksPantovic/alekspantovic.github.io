@@ -2,6 +2,21 @@ const axios = require('axios');
 
 exports.handler = async (event) => {
   try {
+    // Optional: Validate lifecycle event type if present
+    const allowedEvents = ['install', 'uninstall', 'instance_add', 'instance_remove'];
+    let eventType;
+    if (event.httpMethod === 'POST') {
+      const body = JSON.parse(event.body || '{}');
+      eventType = body.eventType;
+      if (eventType && !allowedEvents.includes(eventType)) {
+        return {
+          statusCode: 400,
+          body: JSON.stringify({ error: `Invalid lifecycle event type: ${eventType}` }),
+          headers: { 'Content-Type': 'application/json' }
+        };
+      }
+    }
+
     // 1. Get OAuth token using client credentials
     const clientId = 'organization';
     const clientSecret = '81dd0c6a-6fd9-43ff-878c-21327b07ae1b';
