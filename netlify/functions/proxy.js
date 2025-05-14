@@ -2,29 +2,16 @@ const axios = require('axios');
 
 exports.handler = async (event) => {
   try {
-    // 1. Get JWT token from lifecycle event (assume POST with JSON body)
-    let jwtToken;
-    if (event.httpMethod === 'POST') {
-      const body = JSON.parse(event.body || '{}');
-      jwtToken = body.token;
-    } else {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: 'Lifecycle JWT token required in POST body' }),
-        headers: { 'Content-Type': 'application/json' }
-      };
-    }
-
-    // 2. Exchange JWT for OAuth access token
+    // 1. Get OAuth token using client credentials
     const clientId = 'organization';
     const clientSecret = '81dd0c6a-6fd9-43ff-878c-21327b07ae1b';
     const tokenUrl = 'https://asioso.coyocloud.com/api/oauth/token';
 
     const tokenResponse = await axios.post(tokenUrl, new URLSearchParams({
-      grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-      assertion: jwtToken,
+      grant_type: 'client_credentials',
       client_id: clientId,
       client_secret: clientSecret,
+      scope: 'plugin:notify'
     }), {
       headers: {
         'Content-Type': 'application/x-www-form-urlencoded'
@@ -33,7 +20,7 @@ exports.handler = async (event) => {
 
     const accessToken = tokenResponse.data.access_token;
 
-    // 3. Use the access token to fetch /api/users
+    // 2. Use the access token to fetch /api/users
     const haiiloApiUrl = 'https://asioso.coyocloud.com/api/users';
     const headers = {
       'Authorization': `Bearer ${accessToken}`,

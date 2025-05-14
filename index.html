@@ -42,18 +42,7 @@
         userList.innerHTML = '';
 
         try {
-          // Prompt for JWT token (for demo; in production, get it from lifecycle event)
-          const jwtToken = prompt('Enter Haiilo lifecycle JWT token:');
-          if (!jwtToken) {
-            status.textContent = 'Error: JWT token is required.';
-            return;
-          }
-
-          const response = await fetch('/users', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ token: jwtToken })
-          });
+          const response = await fetch('/users');
           const contentType = response.headers.get('content-type');
           let data;
 
