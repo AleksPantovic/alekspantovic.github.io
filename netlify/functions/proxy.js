@@ -2,16 +2,16 @@ const axios = require('axios');
 
 exports.handler = async (event) => {
   try {
-    // Optional: Validate lifecycle event type if present
+    // Validate lifecycle event type if present
     const allowedEvents = ['install', 'uninstall', 'instance_add', 'instance_remove'];
-    let eventType;
     if (event.httpMethod === 'POST') {
       const body = JSON.parse(event.body || '{}');
-      eventType = body.eventType;
-      if (eventType && !allowedEvents.includes(eventType)) {
+      if (body.eventType && !allowedEvents.includes(body.eventType)) {
         return {
           statusCode: 400,
-          body: JSON.stringify({ error: `Invalid lifecycle event type: ${eventType}` }),
+          body: JSON.stringify({
+            error: `Invalid lifecycle event type: ${body.eventType}. Must be one of: ${allowedEvents.join(', ')}`
+          }),
           headers: { 'Content-Type': 'application/json' }
         };
       }
