@@ -42,12 +42,22 @@
         userList.innerHTML = '';
 
         try {
-          const response = await fetch('/users');
+          // Prompt for JWT token (for demo; in production, get it from lifecycle event)
+          const jwtToken = prompt('Enter Haiilo lifecycle JWT token:');
+          if (!jwtToken) {
+            status.textContent = 'Error: JWT token is required.';
+            return;
+          }
+
+          const response = await fetch('/users', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ token: jwtToken })
+          });
           const contentType = response.headers.get('content-type');
           let data;
 
           if (!response.ok) {
-            // Try to parse error as JSON, otherwise show as text
             const errorText = await response.text();
             try {
               data = JSON.parse(errorText);
@@ -68,15 +78,6 @@
               userList.innerHTML = usersHtml;
             }
             status.textContent = 'Data fetched successfully';
-          } else if (contentType && contentType.includes('text/plain')) {
-            // Try to parse plain text as JSON error
-            const text = await response.text();
-            try {
-              data = JSON.parse(text);
-              throw new Error(data.error || text);
-            } catch {
-              throw new Error(text);
-            }
           } else {
             const text = await response.text();
             throw new Error(`Unexpected response type: ${contentType} - ${text}`);
