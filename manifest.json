@@ -31,12 +31,5 @@
       "instance_add",
       "instance_remove"
     ]
-  },
-  "apiAccess": {
-    "url": "/lifecycle/",
-    "client": {
-      "mode": ["authorization_code"],
-      "scope": ["plugin:notify"]
-    }
   }
 }
