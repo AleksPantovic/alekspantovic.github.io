@@ -5,35 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Haiilo Plugin - User Data</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-    }
-    h1 {
-      color: #333;
-    }
-    ul {
-      list-style-type: none;
-      padding: 0;
-    }
-    li {
-      background: #f9f9f9;
-      margin: 5px 0;
-      padding: 10px;
-      border: 1px solid #ddd;
-      border-radius: 5px;
-    }
-    .error {
-      color: red;
-    }
-    pre {
-      background: #f0f0f0;
-      padding: 10px;
-      border-radius: 5px;
-      overflow-x: auto;
-      margin-top: 20px;
-      font-size: 12px;
-    }
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    h1 { color: #333; }
+    ul { list-style-type: none; padding: 0; }
+    li { background: #f9f9f9; margin: 5px 0; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+    .error { color: red; }
+    pre { background: #f0f0f0; padding: 10px; border-radius: 5px; overflow-x: auto; margin-top: 20px; font-size: 12px; }
   </style>
   <script type="module">
     import { PluginAdapter } from 'https://cdn.jsdelivr.net/npm/@coyoapp/plugin-adapter/+esm';
@@ -42,9 +19,8 @@
       const userList = document.getElementById('user-list');
       const debugInfo = document.getElementById('debug-info');
 
-      // Debug info
+      // Show iframe debug info
       let debugText = `window.location.href: ${window.location.href}\n`;
-      debugText += `window.location.origin: ${window.location.origin}\n`;
       debugText += `document.referrer: ${document.referrer}\n`;
       try {
         debugText += `window.parent.location.href: ${window.parent.location.href}\n`;
@@ -54,13 +30,20 @@
       debugInfo.textContent = debugText;
 
       try {
-        // Initialize Haiilo Plugin Adapter
+        // Initialize Haiilo plugin
         const adapter = new PluginAdapter();
-        const data = await adapter.init();
-        // You can use data.ctx for user info, etc.
-        // console.log('Haiilo user:', data.ctx.userName, '(ID:', data.ctx.userId, ')');
+        const initResponse = await adapter.init();
 
-        // Fetch user data from your backend (must implement this endpoint)
+        // Exchange token via your backend
+        const backendRes = await fetch('/auth/init', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: initResponse.token })
+        });
+        if (!backendRes.ok) throw new Error(`Backend init failed: ${backendRes.status}`);
+        const backendToken = await backendRes.json();
+
+        // Use your backend API to fetch users, using the token (done by your backend)
         const usersRes = await fetch('/.netlify/functions/getUsers', {
           method: 'GET',
           credentials: 'include'
@@ -68,6 +51,7 @@
         if (!usersRes.ok) throw new Error(`Failed to fetch users: ${usersRes.status}`);
         const usersData = await usersRes.json();
 
+        // Render users
         userList.innerHTML = '';
         if (Array.isArray(usersData.content) && usersData.content.length > 0) {
           usersData.content.forEach(user => {
