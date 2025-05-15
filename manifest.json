@@ -31,12 +31,5 @@
       "instance_add",
       "instance_remove"
     ]
-  },
-  "apiAccess": {
-    "url": "https://your.plugin.backend/auth/token-exchange",
-    "client": {
-      "mode": ["authorization_code"],
-      "scope": ["plugin:notify"]
-    }
   }
 }
