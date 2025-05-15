@@ -26,23 +26,42 @@
     .error {
       color: red;
     }
+    pre {
+      background: #f0f0f0;
+      padding: 10px;
+      border-radius: 5px;
+      overflow-x: auto;
+      margin-top: 20px;
+      font-size: 12px;
+    }
   </style>
 </head>
 <body>
   <h1>Haiilo Plugin - User Data</h1>
   <ul id="user-list" style="margin-top: 20px;"></ul>
 
+  <h2>Iframe Debugger</h2>
+  <pre id="debug-info">Loading debug info...</pre>
+
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
       const baseURL = 'https://asioso.coyocloud.com';
+      const userList = document.getElementById('user-list');
+      const debugInfo = document.getElementById('debug-info');
 
-      if (window.location.origin !== baseURL) {
-        document.getElementById('user-list').innerHTML = '<li class="error">This plugin must be loaded inside Haiilo to access user data.</li>';
-        return;
+      // Debug info
+      let debugText = `window.location.href: ${window.location.href}\n`;
+      debugText += `window.location.origin: ${window.location.origin}\n`;
+      debugText += `document.referrer: ${document.referrer}\n`;
+      try {
+        debugText += `window.parent.location.href: ${window.parent.location.href}\n`;
+      } catch (e) {
+        debugText += `window.parent.location.href: [Access Denied - cross-origin]\n`;
       }
+      debugInfo.textContent = debugText;
 
       try {
-        // Step 1: Get OAuth2 token for current user session
+        // Step 1: Get OAuth2 token for current user session (this will only succeed inside Haiilo)
         const authRes = await fetch(`${baseURL}/web/authorization/token`, {
           method: 'GET',
           credentials: 'include'
@@ -64,7 +83,6 @@
         const data = await usersRes.json();
 
         // Step 3: Render users as a list
-        const userList = document.getElementById('user-list');
         userList.innerHTML = '';
         if (Array.isArray(data.content) && data.content.length > 0) {
           data.content.forEach(user => {
@@ -76,8 +94,7 @@
           userList.innerHTML = '<li>No users found.</li>';
         }
       } catch (err) {
-        const userList = document.getElementById('user-list');
-        userList.innerHTML = `<li class="error">Error: ${err.message}</li>`;
+        userList.innerHTML = `<li class="error">Error: ${err.message}.<br>This plugin must be loaded inside Haiilo with an active session.</li>`;
       }
     });
   </script>
