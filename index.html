@@ -34,54 +34,43 @@
     }
   </style>
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      document.getElementById('fetch-users-btn').addEventListener('click', async () => {
-        const status = document.getElementById('status');
-        const userList = document.getElementById('user-list');
-        status.textContent = 'Fetching user data...';
-        userList.innerHTML = '';
+    (async () => {
+      const baseURL = window.location.origin;
+      try {
+        // Step 1: Get OAuth2 token for current user session
+        const authRes = await fetch(`${baseURL}/web/authorization/token`, {
+          method: 'GET',
+          credentials: 'include'
+        });
+        if (!authRes.ok) throw new Error('Authorization failed');
+        const authJson = await authRes.json();
+        const accessToken = authJson.access_token || authJson.token;
 
-        try {
-          const response = await fetch('/users');
-          const contentType = response.headers.get('content-type');
-          let data;
+        // Step 2: Fetch users with the token
+        const usersRes = await fetch(`${baseURL}/api/users`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Accept': 'application/json'
+          },
+          credentials: 'include'
+        });
+        if (!usersRes.ok) throw new Error('Failed to fetch users');
+        const users = await usersRes.json();
 
-          if (!response.ok) {
-            const errorText = await response.text();
-            try {
-              data = JSON.parse(errorText);
-              throw new Error(data.error || errorText);
-            } catch {
-              throw new Error(errorText);
-            }
-          }
-
-          if (contentType && contentType.includes('application/json')) {
-            data = await response.json();
-            if (Array.isArray(data) && data.length === 0) {
-              userList.innerHTML = '<li>No users found.</li>';
-            } else {
-              const usersHtml = Array.isArray(data)
-                ? data.map(user => `<li>${user.name} (${user.email})</li>`).join('')
-                : `<li>${data.name} (${data.email})</li>`;
-              userList.innerHTML = usersHtml;
-            }
-            status.textContent = 'Data fetched successfully';
-          } else {
-            const text = await response.text();
-            throw new Error(`Unexpected response type: ${contentType} - ${text}`);
-          }
-        } catch (error) {
-          status.textContent = `Error: ${error.message}`;
-          userList.innerHTML = `<li class="error">${error.message}</li>`;
-        }
-      });
-    });
+        // Step 3: Render users (simple)
+        const pre = document.createElement('pre');
+        pre.textContent = JSON.stringify(users, null, 2);
+        document.body.appendChild(pre);
+      } catch (err) {
+        document.body.textContent = 'Error: ' + err.message;
+      }
+    })();
   </script>
 </head>
 <body>
   <h1>Haiilo Plugin - User Data</h1>
-  <button id="fetch-users-btn">Fetch User Data</button>
+  <!-- You can remove the button and user-list if not using the /users proxy -->
   <div id="status">Ready</div>
   <ul id="user-list" style="margin-top: 20px;"></ul>
 </body>
