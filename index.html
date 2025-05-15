@@ -26,18 +26,10 @@
     .error {
       color: red;
     }
-    button {
-      margin: 10px 0;
-      padding: 10px 20px;
-      font-size: 16px;
-      cursor: pointer;
-    }
   </style>
   <script>
     (async () => {
-      // Set your Haiilo base URL here
       const baseURL = 'https://asioso.coyocloud.com';
-      // Optionally, check if running inside Haiilo
       if (window.location.origin !== baseURL) {
         document.body.textContent = 'This plugin must be loaded inside Haiilo to access user data.';
         return;
@@ -62,18 +54,23 @@
           credentials: 'include'
         });
         if (!usersRes.ok) throw new Error('Failed to fetch users');
-        const users = await usersRes.json();
+        const data = await usersRes.json();
 
-        // Step 3: Render users (simple)
+        // Step 3: Render users as a list
         const userList = document.getElementById('user-list');
-        if (userList) userList.remove();
-        const pre = document.createElement('pre');
-        pre.textContent = JSON.stringify(users, null, 2);
-        document.body.appendChild(pre);
+        userList.innerHTML = '';
+        if (Array.isArray(data.content) && data.content.length > 0) {
+          data.content.forEach(user => {
+            const li = document.createElement('li');
+            li.textContent = `${user.name || user.displayName || 'No Name'}${user.email ? ' (' + user.email + ')' : ''}`;
+            userList.appendChild(li);
+          });
+        } else {
+          userList.innerHTML = '<li>No users found.</li>';
+        }
       } catch (err) {
         const userList = document.getElementById('user-list');
-        if (userList) userList.remove();
-        document.body.textContent = 'Error: ' + err.message;
+        userList.innerHTML = `<li class="error">Error: ${err.message}</li>`;
       }
     })();
   </script>
