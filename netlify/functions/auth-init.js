@@ -35,10 +35,9 @@ exports.handler = async (event) => {
       { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
     );
 
-    // Store the access token somewhere (in-memory for demo; use a DB for production)
-    // For demo, just return it
+    // Always return HTTP 200 and a simple JSON body for Haiilo compatibility
     return {
-      statusCode: 201,
+      statusCode: 200,
       body: JSON.stringify({ access_token: tokenRes.data.access_token })
     };
   } catch (err) {

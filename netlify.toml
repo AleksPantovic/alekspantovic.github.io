@@ -55,5 +55,10 @@ for = "/*"
   to = "/index.html"
   status = 200
 
+[[redirects]]
+  from = "/auth/init"
+  to = "/.netlify/functions/auth-init"
+  status = 200
+
 [functions]
   directory = "netlify/functions"
