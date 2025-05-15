@@ -10,63 +10,41 @@ exports.handler = async (event) => {
     if (event.httpMethod !== 'POST') {
       return {
         statusCode: 405,
-        body: JSON.stringify({ error: 'Method Not Allowed' }),
-        headers: { 'Content-Type': 'application/json' }
+        body: 'Method Not Allowed'
       };
     }
 
-    const { token } = JSON.parse(event.body || '{}');
-    if (!token) {
+    const body = JSON.parse(event.body);
+    const code = body.token || body.code;
+    if (!code) {
       return {
         statusCode: 400,
-        body: JSON.stringify({ error: 'Missing JWT token' }),
-        headers: { 'Content-Type': 'application/json' }
+        body: JSON.stringify({ error: 'Missing authorization code/token' })
       };
     }
 
-    // OPTIONAL: Validate JWT signature using jku header
-    const decoded = jwt.decode(token, { complete: true });
-    const jku = decoded?.header?.jku;
-    if (!jku || !JKU_WHITELIST.some(url => jku.startsWith(url))) {
-      return {
-        statusCode: 400,
-        body: JSON.stringify({ error: 'Invalid or untrusted jku URL' }),
-        headers: { 'Content-Type': 'application/json' }
-      };
-    }
-    // You can fetch the public key from jku and verify the signature here if needed
-
-    // Exchange JWT for OAuth access token
-    const clientId = 'organization';
-    const clientSecret = '81dd0c6a-6fd9-43ff-878c-21327b07ae1b';
-    const tokenUrl = 'https://asioso.coyocloud.com/api/oauth/token';
-
-    const tokenResponse = await axios.post(tokenUrl, new URLSearchParams({
-      grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
-      assertion: token,
-      client_id: clientId,
-      client_secret: clientSecret,
-    }), {
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
-      }
-    });
-
-    const accessToken = tokenResponse.data.access_token;
-
-    return {
-      statusCode: 200,
-      body: JSON.stringify({ accessToken }),
-      headers: { 'Content-Type': 'application/json' }
-    };
-  } catch (error) {
-    return {
-      statusCode: error.response?.status || 500,
-      body: JSON.stringify({
-        error: 'Failed to exchange JWT for access token',
-        details: error.response?.data || error.message,
+    // Exchange the code for an access token
+    const tokenRes = await axios.post(
+      'https://asioso.coyocloud.com/api/oauth/token',
+      new URLSearchParams({
+        grant_type: 'authorization_code',
+        code: code,
+        client_id: process.env.HAIILO_CLIENT_ID,
+        client_secret: process.env.HAIILO_CLIENT_SECRET
       }),
-      headers: { 'Content-Type': 'application/json' }
+      { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
+    );
+
+    // Store the access token somewhere (in-memory for demo; use a DB for production)
+    // For demo, just return it
+    return {
+      statusCode: 201,
+      body: JSON.stringify({ access_token: tokenRes.data.access_token })
+    };
+  } catch (err) {
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: err.message, details: err.response?.data })
     };
   }
 };
