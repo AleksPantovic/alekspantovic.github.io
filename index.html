@@ -59,15 +59,15 @@
       }
       debugInfo.textContent = debugText;
 
-      // Check if inside Haiilo by checking the referrer
+      // Only run if inside Haiilo (iframe loaded from asioso.coyocloud.com)
       if (!document.referrer.includes('asioso.coyocloud.com')) {
-        userList.innerHTML = '<li class="error">This plugin must be loaded inside Haiilo with an active session.</li>';
+        userList.innerHTML = '<li class="error">This plugin must be loaded inside Haiilo with an active session.<br>If you see "Unexpected token &lt;", you are running outside Haiilo and the API call returns HTML, not JSON.</li>';
         return;
       }
 
       try {
-        // Use relative URL - works only inside Haiilo iframe
-        const usersRes = await fetch('/api/users?page=0&size=10', {
+        // This will only work inside Haiilo iframe
+        const usersRes = await fetch('https://asioso.coyocloud.com/api/users?page=0&size=10', {
           method: 'GET',
           credentials: 'include'
         });
@@ -76,7 +76,6 @@
 
         const data = await usersRes.json();
 
-        // Render users
         userList.innerHTML = '';
         if (Array.isArray(data.content) && data.content.length > 0) {
           data.content.forEach(user => {
