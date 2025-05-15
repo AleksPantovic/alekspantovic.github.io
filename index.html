@@ -45,6 +45,7 @@
 
   <script>
     document.addEventListener('DOMContentLoaded', async () => {
+      const baseURL = 'https://asioso.coyocloud.com';
       const userList = document.getElementById('user-list');
       const debugInfo = document.getElementById('debug-info');
 
@@ -60,9 +61,22 @@
       debugInfo.textContent = debugText;
 
       try {
-        // Call your Netlify proxy function instead of Haiilo directly
-        const usersRes = await fetch('/.netlify/functions/proxy-users', {
+        // Step 1: Get OAuth2 token for current user session
+        const authRes = await fetch(`${baseURL}/web/authorization/token`, {
           method: 'GET',
+          credentials: 'include'
+        });
+        if (!authRes.ok) throw new Error('Authorization failed');
+        const authJson = await authRes.json();
+        const accessToken = authJson.access_token || authJson.token;
+
+        // Step 2: Fetch users with the token
+        const usersRes = await fetch(`${baseURL}/api/users?page=0&size=10`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Accept': 'application/json'
+          },
           credentials: 'include'
         });
         if (!usersRes.ok) throw new Error('Failed to fetch users');
@@ -80,7 +94,7 @@
           userList.innerHTML = '<li>No users found.</li>';
         }
       } catch (err) {
-        userList.innerHTML = `<li class="error">Error: ${err.message}.<br>This plugin must be loaded inside Haiilo with an active session.</li>`;
+        userList.innerHTML = `<li class="error">Error: ${err.message}.<br>This plugin must be loaded inside Haiilo with an active session and CORS enabled.</li>`;
       }
     });
   </script>
