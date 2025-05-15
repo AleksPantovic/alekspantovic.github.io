@@ -35,15 +35,9 @@
       font-size: 12px;
     }
   </style>
-</head>
-<body>
-  <h1>Haiilo Plugin - User Data</h1>
-  <ul id="user-list" style="margin-top: 20px;"></ul>
+  <script type="module">
+    import { PluginAdapter } from 'https://cdn.jsdelivr.net/npm/@coyoapp/plugin-adapter/+esm';
 
-  <h2>Iframe Debugger</h2>
-  <pre id="debug-info">Loading debug info...</pre>
-
-  <script>
     document.addEventListener('DOMContentLoaded', async () => {
       const userList = document.getElementById('user-list');
       const debugInfo = document.getElementById('debug-info');
@@ -59,39 +53,24 @@
       }
       debugInfo.textContent = debugText;
 
-      // Only run if inside Haiilo (iframe loaded from asioso.coyocloud.com)
-      if (!window.location.origin.includes('asioso.coyocloud.com')) {
-        userList.innerHTML = '<li class="error">This plugin must be loaded inside Haiilo (on asioso.coyocloud.com) with an active session.<br>If you see CORS or "Failed to fetch" errors, you are running outside Haiilo and the API call is blocked.</li>';
-        return;
-      }
-
       try {
-        // Use relative URLs so requests go to Haiilo backend when loaded inside Haiilo
-        const tokenRes = await fetch('/web/authorization/token', {
+        // Initialize Haiilo Plugin Adapter
+        const adapter = new PluginAdapter();
+        const data = await adapter.init();
+        // You can use data.ctx for user info, etc.
+        // console.log('Haiilo user:', data.ctx.userName, '(ID:', data.ctx.userId, ')');
+
+        // Fetch user data from your backend (must implement this endpoint)
+        const usersRes = await fetch('/.netlify/functions/getUsers', {
           method: 'GET',
           credentials: 'include'
         });
-        if (!tokenRes.ok) throw new Error('Failed to get authorization token');
-        const tokenJson = await tokenRes.json();
-        const accessToken = tokenJson.access_token || tokenJson.token;
-        if (!accessToken) throw new Error('No access token received');
-
-        const usersRes = await fetch('/api/users?page=0&size=10', {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${accessToken}`,
-            'Accept': 'application/json'
-          },
-          credentials: 'include'
-        });
-
         if (!usersRes.ok) throw new Error(`Failed to fetch users: ${usersRes.status}`);
-
-        const data = await usersRes.json();
+        const usersData = await usersRes.json();
 
         userList.innerHTML = '';
-        if (Array.isArray(data.content) && data.content.length > 0) {
-          data.content.forEach(user => {
+        if (Array.isArray(usersData.content) && usersData.content.length > 0) {
+          usersData.content.forEach(user => {
             const li = document.createElement('li');
             li.textContent = `${user.name || user.displayName || 'No Name'}${user.email ? ' (' + user.email + ')' : ''}`;
             userList.appendChild(li);
@@ -100,9 +79,15 @@
           userList.innerHTML = '<li>No users found.</li>';
         }
       } catch (err) {
-        userList.innerHTML = `<li class="error">Error: ${err.message}.<br>This plugin must be loaded inside Haiilo with an active session.</li>`;
+        userList.innerHTML = `<li class="error">Error: ${err.message}.<br>This plugin must be loaded inside Haiilo with an active session and your backend must provide user data.</li>`;
       }
     });
   </script>
+</head>
+<body>
+  <h1>Haiilo Plugin - User Data</h1>
+  <ul id="user-list" style="margin-top: 20px;"></ul>
+  <h2>Iframe Debugger</h2>
+  <pre id="debug-info">Loading debug info...</pre>
 </body>
 </html>
