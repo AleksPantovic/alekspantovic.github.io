@@ -59,10 +59,15 @@
         const users = await usersRes.json();
 
         // Step 3: Render users (simple)
+        // Remove status and user-list, just show the data
+        document.getElementById('user-list').remove();
         const pre = document.createElement('pre');
         pre.textContent = JSON.stringify(users, null, 2);
         document.body.appendChild(pre);
       } catch (err) {
+        // Remove status and user-list, show error
+        const userList = document.getElementById('user-list');
+        if (userList) userList.remove();
         document.body.textContent = 'Error: ' + err.message;
       }
     })();
@@ -70,8 +75,6 @@
 </head>
 <body>
   <h1>Haiilo Plugin - User Data</h1>
-  <!-- You can remove the button and user-list if not using the /users proxy -->
-  <div id="status">Ready</div>
   <ul id="user-list" style="margin-top: 20px;"></ul>
 </body>
 </html>
