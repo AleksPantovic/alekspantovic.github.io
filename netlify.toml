@@ -59,6 +59,7 @@ for = "/*"
   from = "/auth/init"
   to = "/.netlify/functions/auth-init"
   status = 200
+  force = true
 
 [functions]
   directory = "netlify/functions"
