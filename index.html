@@ -66,9 +66,23 @@
       }
 
       try {
-        // This will only work inside Haiilo iframe
+        // Step 1: Get OAuth2 token for current user session
+        const tokenRes = await fetch('https://asioso.coyocloud.com/web/authorization/token', {
+          method: 'GET',
+          credentials: 'include'
+        });
+        if (!tokenRes.ok) throw new Error('Failed to get authorization token');
+        const tokenJson = await tokenRes.json();
+        const accessToken = tokenJson.access_token || tokenJson.token;
+        if (!accessToken) throw new Error('No access token received');
+
+        // Step 2: Fetch users with the token
         const usersRes = await fetch('https://asioso.coyocloud.com/api/users?page=0&size=10', {
           method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Accept': 'application/json'
+          },
           credentials: 'include'
         });
 
