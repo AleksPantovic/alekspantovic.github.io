@@ -35,7 +35,13 @@
   </style>
   <script>
     (async () => {
-      const baseURL = window.location.origin;
+      // Set your Haiilo base URL here
+      const baseURL = 'https://asioso.coyocloud.com';
+      // Optionally, check if running inside Haiilo
+      if (window.location.origin !== baseURL) {
+        document.body.textContent = 'This plugin must be loaded inside Haiilo to access user data.';
+        return;
+      }
       try {
         // Step 1: Get OAuth2 token for current user session
         const authRes = await fetch(`${baseURL}/web/authorization/token`, {
@@ -59,13 +65,12 @@
         const users = await usersRes.json();
 
         // Step 3: Render users (simple)
-        // Remove status and user-list, just show the data
-        document.getElementById('user-list').remove();
+        const userList = document.getElementById('user-list');
+        if (userList) userList.remove();
         const pre = document.createElement('pre');
         pre.textContent = JSON.stringify(users, null, 2);
         document.body.appendChild(pre);
       } catch (err) {
-        // Remove status and user-list, show error
         const userList = document.getElementById('user-list');
         if (userList) userList.remove();
         document.body.textContent = 'Error: ' + err.message;
