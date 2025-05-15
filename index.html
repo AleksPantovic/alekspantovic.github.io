@@ -60,14 +60,14 @@
       debugInfo.textContent = debugText;
 
       // Only run if inside Haiilo (iframe loaded from asioso.coyocloud.com)
-      if (!document.referrer.includes('asioso.coyocloud.com')) {
-        userList.innerHTML = '<li class="error">This plugin must be loaded inside Haiilo with an active session.<br>If you see "Unexpected token &lt;", you are running outside Haiilo and the API call returns HTML, not JSON.</li>';
+      if (!window.location.origin.includes('asioso.coyocloud.com')) {
+        userList.innerHTML = '<li class="error">This plugin must be loaded inside Haiilo (on asioso.coyocloud.com) with an active session.<br>If you see CORS or "Failed to fetch" errors, you are running outside Haiilo and the API call is blocked.</li>';
         return;
       }
 
       try {
-        // Step 1: Get OAuth2 token for current user session
-        const tokenRes = await fetch('https://asioso.coyocloud.com/web/authorization/token', {
+        // Use relative URLs so requests go to Haiilo backend when loaded inside Haiilo
+        const tokenRes = await fetch('/web/authorization/token', {
           method: 'GET',
           credentials: 'include'
         });
@@ -76,8 +76,7 @@
         const accessToken = tokenJson.access_token || tokenJson.token;
         if (!accessToken) throw new Error('No access token received');
 
-        // Step 2: Fetch users with the token
-        const usersRes = await fetch('https://asioso.coyocloud.com/api/users?page=0&size=10', {
+        const usersRes = await fetch('/api/users?page=0&size=10', {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${accessToken}`,
