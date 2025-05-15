@@ -27,13 +27,20 @@
       color: red;
     }
   </style>
+</head>
+<body>
+  <h1>Haiilo Plugin - User Data</h1>
+  <ul id="user-list" style="margin-top: 20px;"></ul>
+
   <script>
-    (async () => {
+    document.addEventListener('DOMContentLoaded', async () => {
       const baseURL = 'https://asioso.coyocloud.com';
+
       if (window.location.origin !== baseURL) {
-        document.body.textContent = 'This plugin must be loaded inside Haiilo to access user data.';
+        document.getElementById('user-list').innerHTML = '<li class="error">This plugin must be loaded inside Haiilo to access user data.</li>';
         return;
       }
+
       try {
         // Step 1: Get OAuth2 token for current user session
         const authRes = await fetch(`${baseURL}/web/authorization/token`, {
@@ -45,7 +52,7 @@
         const accessToken = authJson.access_token || authJson.token;
 
         // Step 2: Fetch users with the token
-        const usersRes = await fetch(`${baseURL}/api/users`, {
+        const usersRes = await fetch(`${baseURL}/api/users?page=0&size=10`, {
           method: 'GET',
           headers: {
             'Authorization': `Bearer ${accessToken}`,
@@ -72,11 +79,7 @@
         const userList = document.getElementById('user-list');
         userList.innerHTML = `<li class="error">Error: ${err.message}</li>`;
       }
-    })();
+    });
   </script>
-</head>
-<body>
-  <h1>Haiilo Plugin - User Data</h1>
-  <ul id="user-list" style="margin-top: 20px;"></ul>
 </body>
 </html>
