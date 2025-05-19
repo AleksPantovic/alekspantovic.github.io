@@ -48,7 +48,7 @@
         const backendToken = await backendRes.json();
         console.log('[PluginAdapter] Backend /auth/init response:', backendToken);
 
-        // Use your backend API to fetch users, using the token (done by your backend)
+        // Fetch users from your backend API
         console.log('[PluginAdapter] Fetching users from /.netlify/functions/getUsers...');
         const usersRes = await fetch('/.netlify/functions/getUsers', {
           method: 'GET',
@@ -56,9 +56,21 @@
         });
         if (!usersRes.ok) throw new Error(`Failed to fetch users: ${usersRes.status}`);
         const usersData = await usersRes.json();
-        console.log('[PluginAdapter] Users data:', usersData);
+        console.log('[PluginAdapter] Users data from /.netlify/functions/getUsers:', usersData);
 
-        // Render users
+        // 👇 Fetch from Haiilo API and log only (as per your request)
+        const haiiloUsersRes = await fetch('https://asioso.coyocloud.com/api/users?page=0&size=10', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${initResponse.token}`,
+            'Accept': 'application/json'
+          }
+        });
+        if (!haiiloUsersRes.ok) throw new Error(`Failed to fetch Haiilo users: ${haiiloUsersRes.status}`);
+        const haiiloUsers = await haiiloUsersRes.json();
+        console.log('[PluginAdapter] Users data from Haiilo API:', haiiloUsers);
+
+        // Render users from your backend (not Haiilo API)
         userList.innerHTML = '';
         if (Array.isArray(usersData.content) && usersData.content.length > 0) {
           usersData.content.forEach(user => {
@@ -70,16 +82,18 @@
           userList.innerHTML = '<li>No users found.</li>';
         }
 
-        // Render all plugin adapter/init/backend data for debugging
+        // Debugging full state
         const allDataPre = document.createElement('pre');
         allDataPre.textContent = JSON.stringify({
           adapterInit: initResponse,
           backendToken,
-          usersData
+          usersData,
+          haiiloUsers
         }, null, 2);
         document.body.appendChild(allDataPre);
 
       } catch (err) {
+        console.error('[PluginAdapter] Error:', err);
         userList.innerHTML = `<li class="error">Error: ${err.message}.<br>This plugin must be loaded inside Haiilo with an active session and your backend must provide user data.</li>`;
       }
     });
