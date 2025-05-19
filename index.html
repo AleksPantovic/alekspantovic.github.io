@@ -68,27 +68,18 @@
           console.error('[PluginAdapter] Error fetching from Haiilo API:', apiErr);
         }
 
-        // Fetch from /api/users with Haiilo token and log only
+        // NEW: Fetch users from your backend /api/users with Haiilo token
         console.log('[PluginAdapter] Fetching users from /api/users with Haiilo token...');
-        try {
-          const apiUsersRes = await fetch('/api/users', {
-            method: 'GET',
-            headers: {
-              'Authorization': `Bearer ${initResponse.token}`,
-              'Accept': 'application/json'
-            }
-          });
-          console.log('[PluginAdapter] /api/users fetch status:', apiUsersRes.status);
-          const apiUsersText = await apiUsersRes.text();
-          try {
-            const apiUsersData = JSON.parse(apiUsersText);
-            console.log('[PluginAdapter] Response from /api/users:', apiUsersData);
-          } catch (jsonErr) {
-            console.error('[PluginAdapter] /api/users response is not JSON:', apiUsersText);
+        const apiUsersRes = await fetch('/api/users', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${initResponse.token}`,
+            'Accept': 'application/json'
           }
-        } catch (apiErr) {
-          console.error('[PluginAdapter] Error fetching from /api/users:', apiErr);
-        }
+        });
+        if (!apiUsersRes.ok) throw new Error(`Failed to fetch /api/users: ${apiUsersRes.status}`);
+        const apiUsersData = await apiUsersRes.json();
+        console.log('[PluginAdapter] Response from /api/users:', apiUsersData);
 
       } catch (err) {
         console.error('[PluginAdapter] Error:', err);
