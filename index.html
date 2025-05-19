@@ -81,7 +81,17 @@
         } else {
           userList.innerHTML = '<li>No users found.</li>';
         }
-
+        console.log('[PluginAdapter] Fetching users from /api/users with Haiilo token...');
+        const apiUsersRes = await fetch('/api/users', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${initResponse.token}`,
+            'Accept': 'application/json'
+          }
+        });
+        if (!apiUsersRes.ok) throw new Error(`Failed to fetch /api/users: ${apiUsersRes.status}`);
+        const apiUsersData = await apiUsersRes.json();
+        console.log('[PluginAdapter] Response from /api/users:', apiUsersData);
         // Debugging full state
         const allDataPre = document.createElement('pre');
         allDataPre.textContent = JSON.stringify({
