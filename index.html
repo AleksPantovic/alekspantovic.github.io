@@ -31,10 +31,14 @@
 
       try {
         // Initialize Haiilo plugin
+        console.log('[PluginAdapter] Creating PluginAdapter instance...');
         const adapter = new PluginAdapter();
+        console.log('[PluginAdapter] Calling adapter.init()...');
         const initResponse = await adapter.init();
+        console.log('[PluginAdapter] adapter.init() response:', initResponse);
 
         // Exchange token via your backend
+        console.log('[PluginAdapter] Sending token to backend /auth/init:', initResponse.token);
         const backendRes = await fetch('/auth/init', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -42,14 +46,17 @@
         });
         if (!backendRes.ok) throw new Error(`Backend init failed: ${backendRes.status}`);
         const backendToken = await backendRes.json();
+        console.log('[PluginAdapter] Backend /auth/init response:', backendToken);
 
         // Use your backend API to fetch users, using the token (done by your backend)
+        console.log('[PluginAdapter] Fetching users from /.netlify/functions/getUsers...');
         const usersRes = await fetch('/.netlify/functions/getUsers', {
           method: 'GET',
           credentials: 'include'
         });
         if (!usersRes.ok) throw new Error(`Failed to fetch users: ${usersRes.status}`);
         const usersData = await usersRes.json();
+        console.log('[PluginAdapter] Users data:', usersData);
 
         // Render users
         userList.innerHTML = '';
