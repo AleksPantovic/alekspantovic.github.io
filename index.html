@@ -3,31 +3,19 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Haiilo Plugin - User Data</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    h1 { color: #333; }
-    ul { list-style-type: none; padding: 0; }
-    li { background: #f9f9f9; margin: 5px 0; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
-    .error { color: red; }
-    pre { background: #f0f0f0; padding: 10px; border-radius: 5px; overflow-x: auto; margin-top: 20px; font-size: 12px; }
-  </style>
+  <title>Haiilo Plugin - User Data (Console Debug Only)</title>
   <script type="module">
     import { PluginAdapter } from 'https://cdn.jsdelivr.net/npm/@coyoapp/plugin-adapter/+esm';
 
     document.addEventListener('DOMContentLoaded', async () => {
-      const userList = document.getElementById('user-list');
-      const debugInfo = document.getElementById('debug-info');
-
-      // Show iframe debug info
-      let debugText = `window.location.href: ${window.location.href}\n`;
-      debugText += `document.referrer: ${document.referrer}\n`;
+      // Debug info
+      console.log('[PluginAdapter] window.location.href:', window.location.href);
+      console.log('[PluginAdapter] document.referrer:', document.referrer);
       try {
-        debugText += `window.parent.location.href: ${window.parent.location.href}\n`;
+        console.log('[PluginAdapter] window.parent.location.href:', window.parent.location.href);
       } catch (e) {
-        debugText += `window.parent.location.href: [Access Denied - cross-origin]\n`;
+        console.log('[PluginAdapter] window.parent.location.href: [Access Denied - cross-origin]');
       }
-      debugInfo.textContent = debugText;
 
       try {
         // Initialize Haiilo plugin
@@ -58,61 +46,56 @@
         const usersData = await usersRes.json();
         console.log('[PluginAdapter] Users data from /.netlify/functions/getUsers:', usersData);
 
-        // 👇 Fetch from Haiilo API and log only (as per your request)
-        const haiiloUsersRes = await fetch('https://asioso.coyocloud.com/api/users?page=0&size=10', {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${initResponse.token}`,
-            'Accept': 'application/json'
-          }
-        });
-        if (!haiiloUsersRes.ok) throw new Error(`Failed to fetch Haiilo users: ${haiiloUsersRes.status}`);
-        const haiiloUsers = await haiiloUsersRes.json();
-        console.log('[PluginAdapter] Users data from Haiilo API:', haiiloUsers);
-
-        // Render users from your backend (not Haiilo API)
-        userList.innerHTML = '';
-        if (Array.isArray(usersData.content) && usersData.content.length > 0) {
-          usersData.content.forEach(user => {
-            const li = document.createElement('li');
-            li.textContent = `${user.name || user.displayName || 'No Name'}${user.email ? ' (' + user.email + ')' : ''}`;
-            userList.appendChild(li);
+        // Fetch from Haiilo API and log only
+        console.log('[PluginAdapter] Fetching users from Haiilo API with token...');
+        try {
+          const haiiloUsersRes = await fetch('https://asioso.coyocloud.com/api/users?page=0&size=10', {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${initResponse.token}`,
+              'Accept': 'application/json'
+            }
           });
-        } else {
-          userList.innerHTML = '<li>No users found.</li>';
-        }
-        console.log('[PluginAdapter] Fetching users from /api/users with Haiilo token...');
-        const apiUsersRes = await fetch('/api/users', {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${initResponse.token}`,
-            'Accept': 'application/json'
+          console.log('[PluginAdapter] Haiilo API fetch status:', haiiloUsersRes.status);
+          const haiiloUsersText = await haiiloUsersRes.text();
+          try {
+            const haiiloUsers = JSON.parse(haiiloUsersText);
+            console.log('[PluginAdapter] Users data from Haiilo API:', haiiloUsers);
+          } catch (jsonErr) {
+            console.error('[PluginAdapter] Haiilo API response is not JSON:', haiiloUsersText);
           }
-        });
-        if (!apiUsersRes.ok) throw new Error(`Failed to fetch /api/users: ${apiUsersRes.status}`);
-        const apiUsersData = await apiUsersRes.json();
-        console.log('[PluginAdapter] Response from /api/users:', apiUsersData);
-        // Debugging full state
-        const allDataPre = document.createElement('pre');
-        allDataPre.textContent = JSON.stringify({
-          adapterInit: initResponse,
-          backendToken,
-          usersData,
-          haiiloUsers
-        }, null, 2);
-        document.body.appendChild(allDataPre);
+        } catch (apiErr) {
+          console.error('[PluginAdapter] Error fetching from Haiilo API:', apiErr);
+        }
+
+        // Fetch from /api/users with Haiilo token and log only
+        console.log('[PluginAdapter] Fetching users from /api/users with Haiilo token...');
+        try {
+          const apiUsersRes = await fetch('/api/users', {
+            method: 'GET',
+            headers: {
+              'Authorization': `Bearer ${initResponse.token}`,
+              'Accept': 'application/json'
+            }
+          });
+          console.log('[PluginAdapter] /api/users fetch status:', apiUsersRes.status);
+          const apiUsersText = await apiUsersRes.text();
+          try {
+            const apiUsersData = JSON.parse(apiUsersText);
+            console.log('[PluginAdapter] Response from /api/users:', apiUsersData);
+          } catch (jsonErr) {
+            console.error('[PluginAdapter] /api/users response is not JSON:', apiUsersText);
+          }
+        } catch (apiErr) {
+          console.error('[PluginAdapter] Error fetching from /api/users:', apiErr);
+        }
 
       } catch (err) {
         console.error('[PluginAdapter] Error:', err);
-        userList.innerHTML = `<li class="error">Error: ${err.message}.<br>This plugin must be loaded inside Haiilo with an active session and your backend must provide user data.</li>`;
       }
     });
   </script>
 </head>
 <body>
-  <h1>Haiilo Plugin - User Data</h1>
-  <ul id="user-list" style="margin-top: 20px;"></ul>
-  <h2>Iframe Debugger</h2>
-  <pre id="debug-info">Loading debug info...</pre>
 </body>
 </html>
