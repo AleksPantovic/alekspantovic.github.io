@@ -69,6 +69,16 @@
         } else {
           userList.innerHTML = '<li>No users found.</li>';
         }
+
+        // Render all plugin adapter/init/backend data for debugging
+        const allDataPre = document.createElement('pre');
+        allDataPre.textContent = JSON.stringify({
+          adapterInit: initResponse,
+          backendToken,
+          usersData
+        }, null, 2);
+        document.body.appendChild(allDataPre);
+
       } catch (err) {
         userList.innerHTML = `<li class="error">Error: ${err.message}.<br>This plugin must be loaded inside Haiilo with an active session and your backend must provide user data.</li>`;
       }
