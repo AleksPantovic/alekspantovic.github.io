@@ -1,8 +1,8 @@
-import { PluginAdapter } from '@coyoapp/plugin-adapter';
-import axios from 'axios';
+import { PluginAdapter } from 'https://cdn.jsdelivr.net/npm/@coyoapp/plugin-adapter/+esm';
+import axios from 'https://cdn.jsdelivr.net/npm/axios/+esm';
 
-const PLUGIN_BACKEND_INIT = '/auth/init'; // Your backend endpoint to exchange the Haiilo init token
-const PLUGIN_BACKEND_USERS = '/.netlify/functions/get-users'; // Use Netlify function directly
+const PLUGIN_BACKEND_INIT = '/.netlify/functions/auth-init'; // Token exchange
+const PLUGIN_BACKEND_USERS = '/.netlify/functions/get-users'; // User fetch
 
 export class PatchedPluginAdapter extends PluginAdapter {
   async initAndPatch() {
@@ -11,64 +11,56 @@ export class PatchedPluginAdapter extends PluginAdapter {
     return initResponse;
   }
 
-  async getUsers() {
-    if (!this._initResponse) {
-      await this.initAndPatch();
+  async getUsers(apiToken) {
+    console.log('[PatchedPluginAdapter] Fetching users with token:', apiToken);
+
+    const res = await fetch(PLUGIN_BACKEND_USERS, {
+      headers: {
+        Authorization: `Bearer ${apiToken}`
+      }
+    });
+
+    const text = await res.text();
+    console.log('[PatchedPluginAdapter] Raw response:', text);
+
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}: ${text}`);
     }
-    const token = this._initResponse.token;
-    console.log('[PatchedPluginAdapter] getUsers() using token:', token);
+
     try {
-      const res = await fetch(PLUGIN_BACKEND_USERS, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
-      const text = await res.text();
-      console.log('[PatchedPluginAdapter] getUsers() raw response:', text);
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status}: ${text}`);
-      }
-      try {
-        return JSON.parse(text);
-      } catch (e) {
-        console.error('[PatchedPluginAdapter] getUsers() failed to parse JSON:', e);
-        throw e;
-      }
-    } catch (err) {
-      console.error('[PatchedPluginAdapter] getUsers() error:', err);
-      throw err;
+      return JSON.parse(text);
+    } catch (e) {
+      console.error('[PatchedPluginAdapter] Failed to parse JSON:', e);
+      throw e;
     }
   }
 }
 
-// Initialize the plugin adapter and send the init token to your backend
 export async function initializePlugin() {
-  try {
-    console.log('[PluginAdapter] Initializing plugin adapter...');
-    const adapter = new PatchedPluginAdapter();
-    console.log('[PluginAdapter] Created PatchedPluginAdapter instance');
-    const initResponse = await adapter.initAndPatch();
-    console.log('[PluginAdapter] adapter.init() response:', initResponse);
+  const adapter = new PatchedPluginAdapter();
 
-    // Send the init token to your backend to get an API token
-    console.log(`[PluginAdapter] Sending token to backend: ${PLUGIN_BACKEND_INIT}`, initResponse.token);
-    const backendRes = await axios.post(PLUGIN_BACKEND_INIT, { token: initResponse.token });
-    console.log('[PluginAdapter] Backend /auth/init response:', backendRes);
+  console.log('[PluginAdapter] Calling adapter.init()...');
+  const initResponse = await adapter.initAndPatch();
+  console.log('[PluginAdapter] Init response:', initResponse);
 
-    // Fetch users from your backend proxy endpoint
-    console.log(`[PluginAdapter] Fetching users from backend: ${PLUGIN_BACKEND_USERS}`);
-    const usersRes = await adapter.getUsers();
-    console.log('[PluginAdapter] Backend /.netlify/functions/get-users response:', usersRes);
+  const initToken = initResponse.token;
 
-    // Return all results, including users
-    return {
-      adapter,
-      initResponse,
-      backendAccessToken: backendRes.data,
-      backendFetchedUsers: usersRes
-    };
-  } catch (err) {
-    console.error('[PluginAdapter] Initialization Error:', err.message, err);
-    throw err;
-  }
+  // Step 1: Exchange init token for API token
+  console.log(`[PluginAdapter] Exchanging init token at ${PLUGIN_BACKEND_INIT}`);
+  const { data: accessTokenResponse } = await axios.post(PLUGIN_BACKEND_INIT, {
+    token: initToken
+  });
+
+  const accessToken = accessTokenResponse.access_token || accessTokenResponse.token;
+  console.log('[PluginAdapter] Received access token:', accessToken);
+
+  // Step 2: Fetch users with real token
+  const users = await adapter.getUsers(accessToken);
+
+  return {
+    adapter,
+    initResponse,
+    backendAccessToken: accessToken,
+    backendFetchedUsers: users
+  };
 }
