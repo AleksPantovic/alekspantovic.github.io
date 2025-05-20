@@ -6,6 +6,11 @@ const PLUGIN_BACKEND_USERS = '/api/users'; // Your backend endpoint to fetch use
 
 // Always add/override getUsers method to PluginAdapter prototype
 PluginAdapter.prototype.getUsers = async function () {
+  // Debug: show prototype patching
+  if (!window.__pluginAdapterGetUsersPatched) {
+    console.log('[PluginAdapter.getUsers] (prototype patched)');
+    window.__pluginAdapterGetUsersPatched = true;
+  }
   console.log('[PluginAdapter.getUsers] Called');
   // Use the token from the last init call, or re-init if needed
   if (!this._initResponse) {
