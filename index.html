@@ -24,8 +24,8 @@
       const initResponse = await adapter.init();
       console.log('6. [PluginAdapter] adapter.init() response:', initResponse);
 
-      // 7. Fetch users directly from Haiilo API with the token, no try/catch, no proxies
-      const usersRes = await fetch('https://asioso.coyocloud.com/api/users', {
+      // 7. Fetch users via Netlify proxy function with the token
+      const usersRes = await fetch('/.netlify/functions/get-users', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${initResponse.token}`,
@@ -33,7 +33,7 @@
         }
       });
       const usersData = await usersRes.json();
-      console.log('7. [PluginAdapter] Users data from Haiilo API:', usersData);
+      console.log('7. [PluginAdapter] Users data from Netlify proxy:', usersData);
     });
   </script>
 </head>
