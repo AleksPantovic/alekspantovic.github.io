@@ -2,7 +2,7 @@ import { PluginAdapter } from '@coyoapp/plugin-adapter';
 import axios from 'axios';
 
 const PLUGIN_BACKEND_INIT = '/auth/init'; // Your backend endpoint to exchange the Haiilo init token
-const PLUGIN_BACKEND_USERS = '/.netlify/functions/get-users'; // Use the correct Netlify function path
+const PLUGIN_BACKEND_USERS = '/.netlify/functions/get-users'; // Use Netlify function directly
 
 export class PatchedPluginAdapter extends PluginAdapter {
   async initAndPatch() {

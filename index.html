@@ -35,8 +35,8 @@
       adapter.getUsers = async function () {
         const token = initResponse.token;
         console.log('[PluginAdapter] getUsers() using token:', token);
-        // Fetch users from your backend proxy
-        const res = await fetch('/api/users', {
+        // Fetch users from your Netlify function proxy
+        const res = await fetch('/.netlify/functions/get-users', {
           headers: {
             Authorization: `Bearer ${token}`
           }
