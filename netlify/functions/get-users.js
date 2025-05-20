@@ -34,7 +34,7 @@ export async function handler(event, context) {
     // Log outgoing Authorization header
     console.log('[Netlify get-users] Outgoing Authorization:', `Bearer ${token}`);
 
-    const response = await fetch('https://asioso.coyocloud.com/api/users', {
+    const response = await fetch('https://asioso.coyocloud.com/api/users?page=0&size=50', {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Accept': 'application/json'
