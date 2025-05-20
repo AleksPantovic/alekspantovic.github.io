@@ -8,67 +8,46 @@
     import { PluginAdapter } from 'https://cdn.jsdelivr.net/npm/@coyoapp/plugin-adapter/+esm';
 
     document.addEventListener('DOMContentLoaded', async () => {
-      // 1. Debug info
-      console.log('1. [PluginAdapter] window.location.href:', window.location.href);
-      console.log('2. [PluginAdapter] document.referrer:', document.referrer);
-      try {
-        console.log('3. [PluginAdapter] window.parent.location.href:', window.parent.location.href);
-      } catch (e) {
-        console.log('3. [PluginAdapter] window.parent.location.href: [Access Denied - cross-origin]');
-      }
+      console.log('[PluginAdapter] Initializing...');
 
-      // 4. Initialize Haiilo plugin
-      console.log('4. [PluginAdapter] Creating PluginAdapter instance...');
       const adapter = new PluginAdapter();
-      console.log('5. [PluginAdapter] Calling adapter.init()...');
       const initResponse = await adapter.init();
-      console.log('6. [PluginAdapter] adapter.init() response:', initResponse);
 
-      // 7. Log all available data from PluginAdapter
-      if (initResponse && typeof initResponse === 'object') {
-        Object.keys(initResponse).forEach(key => {
-          console.log(`[PluginAdapter] initResponse.${key}:`, initResponse[key]);
-        });
+      if (!initResponse || !initResponse.token) {
+        console.error('[PluginAdapter] No token found in initResponse:', initResponse);
+        return;
       }
 
-      // 8. Add getUsers directly to the adapter instance and call it
-      adapter.getUsers = async function () {
-        const token = initResponse.token;
-        console.log('[PluginAdapter] getUsers() using token:', token);
-        // Fetch users from your Netlify function proxy
+      const token = initResponse.token;
+      console.log('[PluginAdapter] Token obtained:', token);
+
+      try {
         const res = await fetch('/.netlify/functions/get-users', {
+          method: 'GET',
           headers: {
-            Authorization: `Bearer ${token}`
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
           }
         });
-        // Debug: log status and content-type
-        console.log('[PluginAdapter] getUsers() response status:', res.status);
-        console.log('[PluginAdapter] getUsers() response content-type:', res.headers.get('content-type'));
-        const text = await res.text();
-        if (!res.ok) {
-          console.error('[PluginAdapter] getUsers() HTTP error:', res.status, text);
-          throw new Error(`HTTP ${res.status}: ${text}`);
-        }
+
+        const contentType = res.headers.get('content-type');
+        const responseText = await res.text();
+        console.log('[PluginAdapter] Response status:', res.status);
+        console.log('[PluginAdapter] Response body:', responseText);
+
+        if (!res.ok) throw new Error(`HTTP ${res.status}: ${responseText}`);
+
+        let data;
         try {
-          // Try to parse as JSON, but also log if it's a wrapped error
-          const data = JSON.parse(text);
-          // If backend returns {status: 500, response: "..."} (wrapped error), log it
-          if (data && data.status && data.status !== 200 && data.response) {
-            console.error('[PluginAdapter] getUsers() backend error:', data.response);
-          }
-          return data;
+          data = JSON.parse(responseText);
         } catch (e) {
-          console.error('[PluginAdapter] getUsers() response is not JSON:', text);
+          console.error('[PluginAdapter] Failed to parse JSON:', e);
           throw e;
         }
-      };
 
-      // 9. Call getUsers and log the result
-      try {
-        const users = await adapter.getUsers();
-        console.log('[PluginAdapter] Users from adapter.getUsers():', users);
+        console.log('[PluginAdapter] Retrieved users:', data);
       } catch (err) {
-        console.error('[PluginAdapter] getUsers() error:', err);
+        console.error('[PluginAdapter] Failed to fetch users:', err);
       }
     });
   </script>
