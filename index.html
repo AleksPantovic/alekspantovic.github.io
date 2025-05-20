@@ -35,13 +35,20 @@
       adapter.getUsers = async function () {
         const token = initResponse.token;
         console.log('[PluginAdapter] getUsers() using token:', token);
-        // Example: fetch users from your backend proxy
+        // Fetch users from your backend proxy
         const res = await fetch('/api/users', {
           headers: {
             Authorization: `Bearer ${token}`
           }
         });
+        // Debug: log status and content-type
+        console.log('[PluginAdapter] getUsers() response status:', res.status);
+        console.log('[PluginAdapter] getUsers() response content-type:', res.headers.get('content-type'));
         const text = await res.text();
+        if (!res.ok) {
+          console.error('[PluginAdapter] getUsers() HTTP error:', res.status, text);
+          throw new Error(`HTTP ${res.status}: ${text}`);
+        }
         try {
           const data = JSON.parse(text);
           return data;
