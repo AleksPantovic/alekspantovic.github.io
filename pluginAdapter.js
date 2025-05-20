@@ -17,13 +17,27 @@ export class PatchedPluginAdapter extends PluginAdapter {
     }
     const token = this._initResponse.token;
     console.log('[PatchedPluginAdapter] getUsers() using token:', token);
-    // Use the Netlify function endpoint for CORS-safe backend proxy
-    const res = await axios.get(PLUGIN_BACKEND_USERS, {
-      headers: {
-        Authorization: `Bearer ${token}`
+    try {
+      const res = await fetch(PLUGIN_BACKEND_USERS, {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      const text = await res.text();
+      console.log('[PatchedPluginAdapter] getUsers() raw response:', text);
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}: ${text}`);
       }
-    });
-    return res.data;
+      try {
+        return JSON.parse(text);
+      } catch (e) {
+        console.error('[PatchedPluginAdapter] getUsers() failed to parse JSON:', e);
+        throw e;
+      }
+    } catch (err) {
+      console.error('[PatchedPluginAdapter] getUsers() error:', err);
+      throw err;
+    }
   }
 }
 
