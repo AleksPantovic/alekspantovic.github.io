@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Haiilo Plugin - User Data (Console Debug Only)</title>
   <script type="module">
-    import { initializePlugin } from './pluginAdapter.js';
+    import { PluginAdapter } from 'https://cdn.jsdelivr.net/npm/@coyoapp/plugin-adapter/+esm';
 
     document.addEventListener('DOMContentLoaded', async () => {
       // 1. Debug info
@@ -17,22 +17,26 @@
         console.log('3. [PluginAdapter] window.parent.location.href: [Access Denied - cross-origin]');
       }
 
-      // 4. Initialize plugin and call getUsers
-      try {
-        console.log('4. [PluginAdapter] Calling initializePlugin()...');
-        const { adapter, initResponse } = await initializePlugin();
-        console.log('5. [PluginAdapter] initializePlugin() finished.');
+      // 4. Initialize Haiilo plugin
+      console.log('4. [PluginAdapter] Creating PluginAdapter instance...');
+      const adapter = new PluginAdapter();
+      console.log('5. [PluginAdapter] Calling adapter.init()...');
+      const initResponse = await adapter.init();
+      console.log('6. [PluginAdapter] adapter.init() response:', initResponse);
 
-        // Call getUsers and log the result
-        if (typeof adapter.getUsers === 'function') {
-          console.log('6. [PluginAdapter] Calling adapter.getUsers()...');
-          const users = await adapter.getUsers();
-          console.log('7. [PluginAdapter] adapter.getUsers() result:', users);
-        } else {
-          console.log('6. [PluginAdapter] No getUsers() method available on PluginAdapter.');
-        }
-      } catch (err) {
-        console.error('[PluginAdapter] Error in index.html:', err);
+      // 7. Log all available data from PluginAdapter
+      if (initResponse && typeof initResponse === 'object') {
+        Object.keys(initResponse).forEach(key => {
+          console.log(`[PluginAdapter] initResponse.${key}:`, initResponse[key]);
+        });
+      }
+
+      // 8. If adapter provides a method to get users, call it and log the result
+      if (typeof adapter.getUsers === 'function') {
+        const users = await adapter.getUsers();
+        console.log('[PluginAdapter] Users from adapter.getUsers():', users);
+      } else {
+        console.log('[PluginAdapter] No getUsers() method available on PluginAdapter.');
       }
     });
   </script>
