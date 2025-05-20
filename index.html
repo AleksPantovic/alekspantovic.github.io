@@ -8,63 +8,63 @@
     import { PluginAdapter } from 'https://cdn.jsdelivr.net/npm/@coyoapp/plugin-adapter/+esm';
 
     document.addEventListener('DOMContentLoaded', async () => {
-      // Debug info
-      console.log('[PluginAdapter] window.location.href:', window.location.href);
-      console.log('[PluginAdapter] document.referrer:', document.referrer);
+      // 1. Debug info
+      console.log('1. [PluginAdapter] window.location.href:', window.location.href);
+      console.log('2. [PluginAdapter] document.referrer:', document.referrer);
       try {
-        console.log('[PluginAdapter] window.parent.location.href:', window.parent.location.href);
+        console.log('3. [PluginAdapter] window.parent.location.href:', window.parent.location.href);
       } catch (e) {
-        console.log('[PluginAdapter] window.parent.location.href: [Access Denied - cross-origin]');
+        console.log('3. [PluginAdapter] window.parent.location.href: [Access Denied - cross-origin]');
       }
 
       try {
-        // Initialize Haiilo plugin
-        console.log('[PluginAdapter] Creating PluginAdapter instance...');
+        // 4. Initialize Haiilo plugin
+        console.log('4. [PluginAdapter] Creating PluginAdapter instance...');
         const adapter = new PluginAdapter();
-        console.log('[PluginAdapter] Calling adapter.init()...');
+        console.log('5. [PluginAdapter] Calling adapter.init()...');
         const initResponse = await adapter.init();
-        console.log('[PluginAdapter] adapter.init() response:', initResponse);
+        console.log('6. [PluginAdapter] adapter.init() response:', initResponse);
 
-        // Exchange token via your backend
-        console.log('[PluginAdapter] Sending token to backend /auth/init:', initResponse.token);
+        // 7. Exchange token via your backend
+        console.log('7. [PluginAdapter] Sending token to backend /auth/init:', initResponse.token);
         const backendRes = await fetch('/auth/init', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ token: initResponse.token })
         });
         // Log content-type for debugging
-        console.log('[PluginAdapter] /auth/init content-type:', backendRes.headers.get('content-type'));
+        console.log('8. [PluginAdapter] /auth/init content-type:', backendRes.headers.get('content-type'));
         if (!backendRes.ok) throw new Error(`Backend init failed: ${backendRes.status}`);
         let backendToken;
         try {
           backendToken = await backendRes.json();
         } catch (e) {
           const text = await backendRes.text();
-          console.error('[PluginAdapter] /auth/init response is not JSON:', text);
+          console.error('9. [PluginAdapter] /auth/init response is not JSON:', text);
           throw e;
         }
-        console.log('[PluginAdapter] Backend /auth/init response:', backendToken);
+        console.log('10. [PluginAdapter] Backend /auth/init response:', backendToken);
 
-        // Fetch users from your backend API
-        console.log('[PluginAdapter] Fetching users from /.netlify/functions/getUsers...');
+        // 11. Fetch users from your backend API
+        console.log('11. [PluginAdapter] Fetching users from /.netlify/functions/getUsers...');
         const usersRes = await fetch('/.netlify/functions/getUsers', {
           method: 'GET',
           credentials: 'include'
         });
-        console.log('[PluginAdapter] /.netlify/functions/getUsers content-type:', usersRes.headers.get('content-type'));
+        console.log('12. [PluginAdapter] /.netlify/functions/getUsers content-type:', usersRes.headers.get('content-type'));
         if (!usersRes.ok) throw new Error(`Failed to fetch users: ${usersRes.status}`);
         let usersData;
         try {
           usersData = await usersRes.json();
         } catch (e) {
           const text = await usersRes.text();
-          console.error('[PluginAdapter] /.netlify/functions/getUsers response is not JSON:', text);
+          console.error('13. [PluginAdapter] /.netlify/functions/getUsers response is not JSON:', text);
           throw e;
         }
-        console.log('[PluginAdapter] Users data from /.netlify/functions/getUsers:', usersData);
+        console.log('14. [PluginAdapter] Users data from /.netlify/functions/getUsers:', usersData);
 
-        // Fetch from Haiilo API and log only
-        console.log('[PluginAdapter] Fetching users from Haiilo API with token...');
+        // 15. Fetch from Haiilo API and log only
+        console.log('15. [PluginAdapter] Fetching users from Haiilo API with token...');
         try {
           const haiiloUsersRes = await fetch('https://asioso.coyocloud.com/api/users?page=0&size=10', {
             method: 'GET',
@@ -73,21 +73,21 @@
               'Accept': 'application/json'
             }
           });
-          console.log('[PluginAdapter] Haiilo API fetch status:', haiiloUsersRes.status);
-          console.log('[PluginAdapter] Haiilo API content-type:', haiiloUsersRes.headers.get('content-type'));
+          console.log('16. [PluginAdapter] Haiilo API fetch status:', haiiloUsersRes.status);
+          console.log('17. [PluginAdapter] Haiilo API content-type:', haiiloUsersRes.headers.get('content-type'));
           const haiiloUsersText = await haiiloUsersRes.text();
           try {
             const haiiloUsers = JSON.parse(haiiloUsersText);
-            console.log('[PluginAdapter] Users data from Haiilo API:', haiiloUsers);
+            console.log('18. [PluginAdapter] Users data from Haiilo API:', haiiloUsers);
           } catch (jsonErr) {
-            console.error('[PluginAdapter] Haiilo API response is not JSON:', haiiloUsersText);
+            console.error('19. [PluginAdapter] Haiilo API response is not JSON:', haiiloUsersText);
           }
         } catch (apiErr) {
-          console.error('[PluginAdapter] Error fetching from Haiilo API:', apiErr);
+          console.error('20. [PluginAdapter] Error fetching from Haiilo API:', apiErr);
         }
 
-        // Fetch from /api/users with Haiilo token and log only
-        console.log('[PluginAdapter] Fetching users from /api/users with Haiilo token...');
+        // 21. Fetch from /api/users with Haiilo token and log only
+        console.log('21. [PluginAdapter] Fetching users from /api/users with Haiilo token...');
         try {
           const apiUsersRes = await fetch('/api/users', {
             method: 'GET',
@@ -96,27 +96,27 @@
               'Accept': 'application/json'
             }
           });
-          console.log('[PluginAdapter] /api/users fetch status:', apiUsersRes.status);
-          console.log('[PluginAdapter] /api/users content-type:', apiUsersRes.headers.get('content-type'));
+          console.log('22. [PluginAdapter] /api/users fetch status:', apiUsersRes.status);
+          console.log('23. [PluginAdapter] /api/users content-type:', apiUsersRes.headers.get('content-type'));
           const apiUsersText = await apiUsersRes.text();
           try {
             const apiUsersData = JSON.parse(apiUsersText);
-            console.log('[PluginAdapter] Response from /api/users:', apiUsersData);
+            console.log('24. [PluginAdapter] Response from /api/users:', apiUsersData);
             // Defensive: check for topicResult
             if (apiUsersData && apiUsersData.topicResult) {
-              console.log('[PluginAdapter] topicResult:', apiUsersData.topicResult);
+              console.log('25. [PluginAdapter] topicResult:', apiUsersData.topicResult);
             } else {
-              console.log('[PluginAdapter] topicResult is missing or null.');
+              console.log('25. [PluginAdapter] topicResult is missing or null.');
             }
           } catch (jsonErr) {
-            console.error('[PluginAdapter] /api/users response is not JSON:', apiUsersText);
+            console.error('26. [PluginAdapter] /api/users response is not JSON:', apiUsersText);
           }
         } catch (apiErr) {
-          console.error('[PluginAdapter] Error fetching from /api/users:', apiErr);
+          console.error('27. [PluginAdapter] Error fetching from /api/users:', apiErr);
         }
 
       } catch (err) {
-        console.error('[PluginAdapter] Error:', err);
+        console.error('28. [PluginAdapter] Error:', err);
       }
     });
   </script>
