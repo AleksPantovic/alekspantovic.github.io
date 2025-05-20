@@ -41,13 +41,23 @@
             Authorization: `Bearer ${token}`
           }
         });
-        const data = await res.json();
-        return data;
+        const text = await res.text();
+        try {
+          const data = JSON.parse(text);
+          return data;
+        } catch (e) {
+          console.error('[PluginAdapter] getUsers() response is not JSON:', text);
+          throw e;
+        }
       };
 
       // 9. Call getUsers and log the result
-      const users = await adapter.getUsers();
-      console.log('[PluginAdapter] Users from adapter.getUsers():', users);
+      try {
+        const users = await adapter.getUsers();
+        console.log('[PluginAdapter] Users from adapter.getUsers():', users);
+      } catch (err) {
+        console.error('[PluginAdapter] getUsers() error:', err);
+      }
     });
   </script>
 </head>
