@@ -24,16 +24,20 @@
       const initResponse = await adapter.init();
       console.log('6. [PluginAdapter] adapter.init() response:', initResponse);
 
-      // 7. Fetch users via Netlify proxy function with the token
-      const usersRes = await fetch('/.netlify/functions/get-users', {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${initResponse.token}`,
-          'Accept': 'application/json'
-        }
-      });
-      const usersData = await usersRes.json();
-      console.log('7. [PluginAdapter] Users data from Netlify proxy:', usersData);
+      // 7. Log all available data from PluginAdapter
+      if (initResponse && typeof initResponse === 'object') {
+        Object.keys(initResponse).forEach(key => {
+          console.log(`[PluginAdapter] initResponse.${key}:`, initResponse[key]);
+        });
+      }
+
+      // 8. If adapter provides a method to get users, call it and log the result
+      if (typeof adapter.getUsers === 'function') {
+        const users = await adapter.getUsers();
+        console.log('[PluginAdapter] Users from adapter.getUsers():', users);
+      } else {
+        console.log('[PluginAdapter] No getUsers() method available on PluginAdapter.');
+      }
     });
   </script>
 </head>

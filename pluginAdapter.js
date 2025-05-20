@@ -2,6 +2,7 @@ import { PluginAdapter } from '@coyoapp/plugin-adapter';
 import axios from 'axios';
 
 const PLUGIN_BACKEND_INIT = '/auth/init'; // Your backend endpoint to exchange the Haiilo init token
+const PLUGIN_BACKEND_FETCH = '/api/fetch'; // Your backend endpoint to fetch data from Haiilo API
 
 // Initialize the plugin adapter and send the init token to your backend
 export async function initializePlugin() {
@@ -16,11 +17,21 @@ export async function initializePlugin() {
     const backendRes = await axios.post(PLUGIN_BACKEND_INIT, { token: initResponse.token });
     console.log('[PluginAdapter] Backend /auth/init response:', backendRes);
 
-    // Return both the adapter and backend token
+    // Fetch data from your backend proxy endpoint (e.g., users)
+    console.log(`[PluginAdapter] Fetching data from backend: ${PLUGIN_BACKEND_FETCH}`);
+    const fetchRes = await axios.get(PLUGIN_BACKEND_FETCH, {
+      headers: {
+        Authorization: `Bearer ${initResponse.token}`
+      }
+    });
+    console.log('[PluginAdapter] Backend /api/fetch response:', fetchRes);
+
+    // Return both the adapter, backend token, and fetched data
     return {
       adapter,
       initResponse,
-      backendAccessToken: backendRes.data
+      backendAccessToken: backendRes.data,
+      backendFetchedData: fetchRes.data
     };
   } catch (err) {
     console.error('Initialization Error:', err.message, err);
