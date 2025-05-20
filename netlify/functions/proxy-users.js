@@ -1,45 +1,40 @@
 const axios = require('axios');
 
-exports.handler = async (event) => {
+exports.handler = async function(event) {
   try {
-    // Step 1: Get OAuth2 token for current user session (using cookies from the browser)
-    const tokenRes = await axios.get('https://asioso.coyocloud.com/web/authorization/token', {
-      headers: {
-        cookie: event.headers.cookie || '',
-      },
-      withCredentials: true,
-    });
+    // Get the Authorization header from the incoming request (forward the Bearer token)
+    const authHeader = event.headers['authorization'] || event.headers['Authorization'];
+    if (!authHeader) {
+      return {
+        statusCode: 401,
+        body: JSON.stringify({ error: 'Missing Authorization header' })
+      };
+    }
 
-    const accessToken = tokenRes.data.access_token || tokenRes.data.token;
-
-    // Step 2: Fetch users with the token
-    const usersRes = await axios.get('https://asioso.coyocloud.com/api/users?page=0&size=10', {
+    // Forward the request to Haiilo API
+    const haiiloRes = await axios.get('https://asioso.coyocloud.com/api/users', {
       headers: {
-        'Authorization': `Bearer ${accessToken}`,
-        'Accept': 'application/json',
-        cookie: event.headers.cookie || '',
-      },
-      withCredentials: true,
+        'Authorization': authHeader,
+        'Accept': 'application/json'
+      }
     });
 
     return {
       statusCode: 200,
-      body: JSON.stringify(usersRes.data),
       headers: {
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': event.headers.origin || '*',
-        'Access-Control-Allow-Credentials': 'true',
+        'Access-Control-Allow-Origin': '*'
       },
+      body: JSON.stringify(haiiloRes.data)
     };
   } catch (err) {
     return {
       statusCode: err.response?.status || 500,
-      body: JSON.stringify({ error: err.message }),
       headers: {
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': event.headers.origin || '*',
-        'Access-Control-Allow-Credentials': 'true',
+        'Access-Control-Allow-Origin': '*'
       },
+      body: JSON.stringify({ error: err.message, details: err.response?.data })
     };
   }
 };
