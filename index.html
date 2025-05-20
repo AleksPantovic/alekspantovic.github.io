@@ -31,13 +31,23 @@
         });
       }
 
-      // 8. If adapter provides a method to get users, call it and log the result
-      if (typeof adapter.getUsers === 'function') {
-        const users = await adapter.getUsers();
-        console.log('[PluginAdapter] Users from adapter.getUsers():', users);
-      } else {
-        console.log('[PluginAdapter] No getUsers() method available on PluginAdapter.');
-      }
+      // 8. Add getUsers directly to the adapter instance and call it
+      adapter.getUsers = async function () {
+        const token = initResponse.token;
+        console.log('[PluginAdapter] getUsers() using token:', token);
+        // Example: fetch users from your backend proxy
+        const res = await fetch('/api/users', {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        });
+        const data = await res.json();
+        return data;
+      };
+
+      // 9. Call getUsers and log the result
+      const users = await adapter.getUsers();
+      console.log('[PluginAdapter] Users from adapter.getUsers():', users);
     });
   </script>
 </head>
