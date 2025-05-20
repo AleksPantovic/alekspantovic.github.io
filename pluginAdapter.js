@@ -2,7 +2,7 @@ import { PluginAdapter } from '@coyoapp/plugin-adapter';
 import axios from 'axios';
 
 const PLUGIN_BACKEND_INIT = '/auth/init'; // Your backend endpoint to exchange the Haiilo init token
-const PLUGIN_BACKEND_USERS = '/api/users'; // Your backend endpoint to fetch users from Haiilo API
+const PLUGIN_BACKEND_USERS = '/.netlify/functions/get-users'; // Use the correct Netlify function path
 
 export class PatchedPluginAdapter extends PluginAdapter {
   async initAndPatch() {
@@ -17,6 +17,7 @@ export class PatchedPluginAdapter extends PluginAdapter {
     }
     const token = this._initResponse.token;
     console.log('[PatchedPluginAdapter] getUsers() using token:', token);
+    // Use the Netlify function endpoint for CORS-safe backend proxy
     const res = await axios.get(PLUGIN_BACKEND_USERS, {
       headers: {
         Authorization: `Bearer ${token}`
@@ -43,7 +44,7 @@ export async function initializePlugin() {
     // Fetch users from your backend proxy endpoint
     console.log(`[PluginAdapter] Fetching users from backend: ${PLUGIN_BACKEND_USERS}`);
     const usersRes = await adapter.getUsers();
-    console.log('[PluginAdapter] Backend /api/users response:', usersRes);
+    console.log('[PluginAdapter] Backend /.netlify/functions/get-users response:', usersRes);
 
     // Return all results, including users
     return {
