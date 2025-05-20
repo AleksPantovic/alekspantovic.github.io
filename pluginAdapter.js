@@ -6,18 +6,28 @@ const PLUGIN_BACKEND_USERS = '/api/users'; // Your backend endpoint to fetch use
 
 // Always add/override getUsers method to PluginAdapter prototype
 PluginAdapter.prototype.getUsers = async function () {
+  console.log('[PluginAdapter.getUsers] Called');
   // Use the token from the last init call, or re-init if needed
   if (!this._initResponse) {
+    console.log('[PluginAdapter.getUsers] No _initResponse, calling init()');
     this._initResponse = await this.init();
   }
   const token = this._initResponse.token;
+  console.log('[PluginAdapter.getUsers] Using token:', token);
   // Fetch users from your backend proxy endpoint
-  const res = await axios.get(PLUGIN_BACKEND_USERS, {
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
-  });
-  return res.data;
+  try {
+    console.log(`[PluginAdapter.getUsers] Fetching users from ${PLUGIN_BACKEND_USERS}`);
+    const res = await axios.get(PLUGIN_BACKEND_USERS, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+    console.log('[PluginAdapter.getUsers] Success:', res.data);
+    return res.data;
+  } catch (err) {
+    console.error('[PluginAdapter.getUsers] Error:', err.message, err);
+    throw err;
+  }
 };
 
 // Initialize the plugin adapter and send the init token to your backend
@@ -25,6 +35,7 @@ export async function initializePlugin() {
   try {
     console.log('[PluginAdapter] Initializing plugin adapter...');
     const adapter = new PluginAdapter();
+    console.log('[PluginAdapter] Created PluginAdapter instance');
     const initResponse = await adapter.init();
     // Store initResponse for getUsers
     adapter._initResponse = initResponse;
@@ -52,7 +63,7 @@ export async function initializePlugin() {
       backendFetchedUsers: usersRes.data
     };
   } catch (err) {
-    console.error('Initialization Error:', err.message, err);
+    console.error('[PluginAdapter] Initialization Error:', err.message, err);
     throw err;
   }
 }
