@@ -17,119 +17,23 @@
         console.log('3. [PluginAdapter] window.parent.location.href: [Access Denied - cross-origin]');
       }
 
-      try {
-        // 4. Initialize Haiilo plugin
-        console.log('4. [PluginAdapter] Creating PluginAdapter instance...');
-        const adapter = new PluginAdapter();
-        console.log('5. [PluginAdapter] Calling adapter.init()...');
-        const initResponse = await adapter.init();
-        console.log('6. [PluginAdapter] adapter.init() response:', initResponse);
+      // 4. Initialize Haiilo plugin
+      console.log('4. [PluginAdapter] Creating PluginAdapter instance...');
+      const adapter = new PluginAdapter();
+      console.log('5. [PluginAdapter] Calling adapter.init()...');
+      const initResponse = await adapter.init();
+      console.log('6. [PluginAdapter] adapter.init() response:', initResponse);
 
-        // 7. Exchange token via your backend
-        console.log('7. [PluginAdapter] Sending token to backend /auth/init:', initResponse.token);
-        const backendRes = await fetch('/auth/init', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token: initResponse.token })
-        });
-        // Log content-type for debugging
-        const backendContentType = backendRes.headers.get('content-type');
-        console.log('8. [PluginAdapter] /auth/init content-type:', backendContentType);
-        if (!backendRes.ok) throw new Error(`Backend init failed: ${backendRes.status}`);
-        let backendToken;
-        if (backendContentType && backendContentType.includes('application/json')) {
-          backendToken = await backendRes.json();
-        } else {
-          const text = await backendRes.text();
-          console.error('9. [PluginAdapter] /auth/init response is not JSON:', text);
-          throw new Error('/auth/init did not return JSON');
+      // 7. Fetch users directly from Haiilo API with the token, no try/catch, no proxies
+      const usersRes = await fetch('https://asioso.coyocloud.com/api/users', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${initResponse.token}`,
+          'Accept': 'application/json'
         }
-        console.log('10. [PluginAdapter] Backend /auth/init response:', backendToken);
-
-        // 11. Fetch users from your backend API
-        console.log('11. [PluginAdapter] Fetching users from /.netlify/functions/getUsers...');
-        const usersRes = await fetch('/.netlify/functions/getUsers', {
-          method: 'GET',
-          credentials: 'include'
-        });
-        const usersContentType = usersRes.headers.get('content-type');
-        console.log('12. [PluginAdapter] /.netlify/functions/getUsers content-type:', usersContentType);
-        if (!usersRes.ok) throw new Error(`Failed to fetch users: ${usersRes.status}`);
-        let usersData;
-        if (usersContentType && usersContentType.includes('application/json')) {
-          usersData = await usersRes.json();
-        } else {
-          const text = await usersRes.text();
-          console.error('13. [PluginAdapter] /.netlify/functions/getUsers response is not JSON:', text);
-          throw new Error('/.netlify/functions/getUsers did not return JSON');
-        }
-        console.log('14. [PluginAdapter] Users data from /.netlify/functions/getUsers:', usersData);
-
-        // 15. Fetch from Haiilo API and log only
-        console.log('15. [PluginAdapter] Fetching users from Haiilo API with token...');
-        try {
-          const haiiloUsersRes = await fetch('https://asioso.coyocloud.com/api/users?page=0&size=10', {
-            method: 'GET',
-            headers: {
-              'Authorization': `Bearer ${initResponse.token}`,
-              'Accept': 'application/json'
-            }
-          });
-          const haiiloContentType = haiiloUsersRes.headers.get('content-type');
-          console.log('16. [PluginAdapter] Haiilo API fetch status:', haiiloUsersRes.status);
-          console.log('17. [PluginAdapter] Haiilo API content-type:', haiiloContentType);
-          const haiiloUsersText = await haiiloUsersRes.text();
-          if (haiiloContentType && haiiloContentType.includes('application/json')) {
-            try {
-              const haiiloUsers = JSON.parse(haiiloUsersText);
-              console.log('18. [PluginAdapter] Users data from Haiilo API:', haiiloUsers);
-            } catch (jsonErr) {
-              console.error('19. [PluginAdapter] Haiilo API response is not JSON:', haiiloUsersText);
-            }
-          } else {
-            console.error('19. [PluginAdapter] Haiilo API response is not JSON:', haiiloUsersText);
-          }
-        } catch (apiErr) {
-          console.error('20. [PluginAdapter] Error fetching from Haiilo API:', apiErr);
-        }
-
-        // 21. Fetch from /api/users with Haiilo token and log only
-        console.log('21. [PluginAdapter] Fetching users from /api/users with Haiilo token...');
-        try {
-          const apiUsersRes = await fetch('/api/users', {
-            method: 'GET',
-            headers: {
-              'Authorization': `Bearer ${initResponse.token}`,
-              'Accept': 'application/json'
-            }
-          });
-          const apiUsersContentType = apiUsersRes.headers.get('content-type');
-          console.log('22. [PluginAdapter] /api/users fetch status:', apiUsersRes.status);
-          console.log('23. [PluginAdapter] /api/users content-type:', apiUsersContentType);
-          const apiUsersText = await apiUsersRes.text();
-          if (apiUsersContentType && apiUsersContentType.includes('application/json')) {
-            try {
-              const apiUsersData = JSON.parse(apiUsersText);
-              console.log('24. [PluginAdapter] Response from /api/users:', apiUsersData);
-              // Defensive: check for topicResult
-              if (apiUsersData && apiUsersData.topicResult) {
-                console.log('25. [PluginAdapter] topicResult:', apiUsersData.topicResult);
-              } else {
-                console.log('25. [PluginAdapter] topicResult is missing or null.');
-              }
-            } catch (jsonErr) {
-              console.error('26. [PluginAdapter] /api/users response is not JSON:', apiUsersText);
-            }
-          } else {
-            console.error('26. [PluginAdapter] /api/users response is not JSON:', apiUsersText);
-          }
-        } catch (apiErr) {
-          console.error('27. [PluginAdapter] Error fetching from /api/users:', apiErr);
-        }
-
-      } catch (err) {
-        console.error('28. [PluginAdapter] Error:', err);
-      }
+      });
+      const usersData = await usersRes.json();
+      console.log('7. [PluginAdapter] Users data from Haiilo API:', usersData);
     });
   </script>
 </head>
