@@ -1,26 +1,57 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Haiilo Plugin - User Data</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Haiilo Plugin - User Data (Console Debug Only)</title>
   <script type="module">
-    import { initializePlugin } from './adapter.js';
+    import { PluginAdapter } from 'https://cdn.jsdelivr.net/npm/@coyoapp/plugin-adapter/+esm';
 
     document.addEventListener('DOMContentLoaded', async () => {
+      console.log('[PluginAdapter] Initializing...');
+
+      const adapter = new PluginAdapter();
+      const initResponse = await adapter.init();
+
+      if (!initResponse || !initResponse.token) {
+        console.error('[PluginAdapter] No token found in initResponse:', initResponse);
+        return;
+      }
+
+      const token = initResponse.token;
+      console.log('[PluginAdapter] Token obtained:', token);
+
       try {
-        console.log('[index] Initializing plugin...');
-        const result = await initializePlugin();
-        console.log('[index] Initialization successful:', result);
-        console.log('[index] Users from backend:', result.backendFetchedUsers);
+        const res = await fetch('/.netlify/functions/get-users', {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        const contentType = res.headers.get('content-type');
+        const responseText = await res.text();
+        console.log('[PluginAdapter] Response status:', res.status);
+        console.log('[PluginAdapter] Response body:', responseText);
+
+        if (!res.ok) throw new Error(`HTTP ${res.status}: ${responseText}`);
+
+        let data;
+        try {
+          data = JSON.parse(responseText);
+        } catch (e) {
+          console.error('[PluginAdapter] Failed to parse JSON:', e);
+          throw e;
+        }
+
+        console.log('[PluginAdapter] Retrieved users:', data);
       } catch (err) {
-        console.error('[index] Initialization failed:', err.message, err);
+        console.error('[PluginAdapter] Failed to fetch users:', err);
       }
     });
   </script>
 </head>
 <body>
-  <h1>Haiilo Plugin</h1>
-  <p>Open the console to debug plugin initialization and user fetch.</p>
 </body>
 </html>
