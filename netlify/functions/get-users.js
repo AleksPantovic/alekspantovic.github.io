@@ -8,10 +8,27 @@ export async function handler(event, context) {
       }
     });
 
-    const data = await response.json();
+    // Log the response status and body for debugging
+    const text = await response.text();
+    console.log('[Netlify get-users] Haiilo API status:', response.status);
+    console.log('[Netlify get-users] Haiilo API response:', text);
+
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch (e) {
+      return {
+        statusCode: 502,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+        },
+        body: JSON.stringify({ error: 'Haiilo API did not return JSON', raw: text })
+      };
+    }
 
     return {
-      statusCode: 200,
+      statusCode: response.status,
       headers: {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Headers': 'Content-Type, Authorization',
@@ -21,6 +38,10 @@ export async function handler(event, context) {
   } catch (error) {
     return {
       statusCode: 500,
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+      },
       body: JSON.stringify({ error: error.message })
     };
   }
