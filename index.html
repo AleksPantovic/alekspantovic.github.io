@@ -50,7 +50,12 @@
           throw new Error(`HTTP ${res.status}: ${text}`);
         }
         try {
+          // Try to parse as JSON, but also log if it's a wrapped error
           const data = JSON.parse(text);
+          // If backend returns {status: 500, response: "..."} (wrapped error), log it
+          if (data && data.status && data.status !== 200 && data.response) {
+            console.error('[PluginAdapter] getUsers() backend error:', data.response);
+          }
           return data;
         } catch (e) {
           console.error('[PluginAdapter] getUsers() response is not JSON:', text);
