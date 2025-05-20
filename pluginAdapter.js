@@ -4,13 +4,35 @@ import axios from 'axios';
 const PLUGIN_BACKEND_INIT = '/auth/init'; // Your backend endpoint to exchange the Haiilo init token
 const PLUGIN_BACKEND_USERS = '/api/users'; // Your backend endpoint to fetch users from Haiilo API
 
+export class PatchedPluginAdapter extends PluginAdapter {
+  async initAndPatch() {
+    const initResponse = await this.init();
+    this._initResponse = initResponse;
+    return initResponse;
+  }
+
+  async getUsers() {
+    if (!this._initResponse) {
+      await this.initAndPatch();
+    }
+    const token = this._initResponse.token;
+    console.log('[PatchedPluginAdapter] getUsers() using token:', token);
+    const res = await axios.get(PLUGIN_BACKEND_USERS, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    });
+    return res.data;
+  }
+}
+
 // Initialize the plugin adapter and send the init token to your backend
 export async function initializePlugin() {
   try {
     console.log('[PluginAdapter] Initializing plugin adapter...');
-    const adapter = new PluginAdapter();
-    console.log('[PluginAdapter] Created PluginAdapter instance');
-    const initResponse = await adapter.init();
+    const adapter = new PatchedPluginAdapter();
+    console.log('[PluginAdapter] Created PatchedPluginAdapter instance');
+    const initResponse = await adapter.initAndPatch();
     console.log('[PluginAdapter] adapter.init() response:', initResponse);
 
     // Send the init token to your backend to get an API token
@@ -20,11 +42,7 @@ export async function initializePlugin() {
 
     // Fetch users from your backend proxy endpoint
     console.log(`[PluginAdapter] Fetching users from backend: ${PLUGIN_BACKEND_USERS}`);
-    const usersRes = await axios.get(PLUGIN_BACKEND_USERS, {
-      headers: {
-        Authorization: `Bearer ${initResponse.token}`
-      }
-    });
+    const usersRes = await adapter.getUsers();
     console.log('[PluginAdapter] Backend /api/users response:', usersRes);
 
     // Return all results, including users
@@ -32,16 +50,7 @@ export async function initializePlugin() {
       adapter,
       initResponse,
       backendAccessToken: backendRes.data,
-      backendFetchedUsers: usersRes.data,
-      getUsers: async () => {
-        console.log('[PluginAdapter] getUsers() called from init result');
-        const res = await axios.get(PLUGIN_BACKEND_USERS, {
-          headers: {
-            Authorization: `Bearer ${initResponse.token}`
-          }
-        });
-        return res.data;
-      }
+      backendFetchedUsers: usersRes
     };
   } catch (err) {
     console.error('[PluginAdapter] Initialization Error:', err.message, err);
