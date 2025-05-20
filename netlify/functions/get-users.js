@@ -15,7 +15,6 @@ export async function handler(event, context) {
     };
   }
 
-  // Remove Bearer prefix if present, then re-add it (to avoid double Bearer or missing Bearer)
   token = token.replace(/^Bearer\s+/i, '');
 
   try {
@@ -34,13 +33,17 @@ export async function handler(event, context) {
     console.log('[Haiilo API] Body:', rawText);
     console.log('[Haiilo API] Headers:', JSON.stringify([...response.headers]));
 
+    // Wrap the response for easier debugging in the frontend
     return {
       statusCode: response.status,
       headers: {
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Headers': 'Content-Type, Authorization',
       },
-      body: rawText // Pass through the raw response from Haiilo
+      body: JSON.stringify({
+        status: response.status,
+        response: rawText
+      })
     };
   } catch (error) {
     console.error('[Netlify get-users] Fetch Error:', error.message);
