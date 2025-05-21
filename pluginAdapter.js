@@ -34,6 +34,11 @@ export class PatchedPluginAdapter extends PluginAdapter {
     console.log('[PatchedPluginAdapter] Response status:', res.status);
     console.log('[PatchedPluginAdapter] Response content-type:', res.headers.get('content-type'));
 
+    // Extra debug: log the token sent to the backend
+    if (res.status === 500) {
+      console.error('[PatchedPluginAdapter] 500 error - token sent:', apiToken);
+    }
+
     if (!res.ok) {
       // Log the error body for debugging
       console.error('[PatchedPluginAdapter] HTTP error:', res.status, text);
