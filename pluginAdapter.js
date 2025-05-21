@@ -1,30 +1,23 @@
 import { PluginAdapter } from 'https://cdn.jsdelivr.net/npm/@coyoapp/plugin-adapter/+esm';
 
 const HAIILO_SESSION_TOKEN_URL = 'https://asioso.coyocloud.com/web/authorization/token';
-const PLUGIN_BACKEND_USERS = '/.netlify/functions/get-users'; // User fetch
+const PLUGIN_BACKEND_USERS = '/.netlify/functions/get-users';
 
 export class PatchedPluginAdapter extends PluginAdapter {
   async initAndPatch() {
-    const initResponse = await this.init();
-    this._initResponse = initResponse;
-    return initResponse;
+    this._initResponse = await this.init();
+    return this._initResponse;
   }
 
-  // Fetch the session token exactly as you do in the browser console
   async getHaiiloSessionToken() {
-    console.log('[PatchedPluginAdapter] Fetching Haiilo session token from:', HAIILO_SESSION_TOKEN_URL);
     const res = await fetch(HAIILO_SESSION_TOKEN_URL, { credentials: 'include' });
-    const data = await res.json();
-    // Log the full response for debugging
-    console.log('[PatchedPluginAdapter] Full /web/authorization/token response:', data);
-    // Return the token property directly (do not try to guess or fallback)
-    return data.token;
+    const { token } = await res.json();
+    if (!token) throw new Error('No Haiilo session token returned');
+    return token;
   }
 
   async getUsers() {
-    // Always fetch the session token before fetching users
     const sessionToken = await this.getHaiiloSessionToken();
-    console.log('[PatchedPluginAdapter] Fetching users with session token:', sessionToken);
 
     const res = await fetch(PLUGIN_BACKEND_USERS, {
       headers: {
@@ -33,43 +26,23 @@ export class PatchedPluginAdapter extends PluginAdapter {
     });
 
     const text = await res.text();
-    console.log('[PatchedPluginAdapter] Raw response:', text);
-
-    // Log status and content-type for debugging
-    console.log('[PatchedPluginAdapter] Response status:', res.status);
-    console.log('[PatchedPluginAdapter] Response content-type:', res.headers.get('content-type'));
-
     if (!res.ok) {
-      console.error('[PatchedPluginAdapter] HTTP error:', res.status, text);
-      throw new Error(`HTTP ${res.status}: ${text}`);
+      throw new Error(`Failed to fetch users: ${res.status} - ${text}`);
     }
 
     try {
-      const data = JSON.parse(text);
-      if (data && data.status && data.status !== 200 && data.response) {
-        console.error('[PatchedPluginAdapter] Backend error:', data.response);
-      }
-      return data;
-    } catch (e) {
-      console.error('[PatchedPluginAdapter] Failed to parse JSON:', e, text);
-      throw e;
+      return JSON.parse(text);
+    } catch (err) {
+      console.error('Failed to parse JSON from get-users:', err);
+      throw err;
     }
   }
 }
 
 export async function initializePlugin() {
   const adapter = new PatchedPluginAdapter();
-
-  console.log('[PluginAdapter] Calling adapter.init()...');
   const initResponse = await adapter.initAndPatch();
-  console.log('[PluginAdapter] Init response:', initResponse);
+  const backendFetchedUsers = await adapter.getUsers();
 
-  // Step 1: Fetch users (getHaiiloSessionToken is called inside getUsers)
-  const users = await adapter.getUsers();
-
-  return {
-    adapter,
-    initResponse,
-    backendFetchedUsers: users
-  };
+  return { adapter, initResponse, backendFetchedUsers };
 }
