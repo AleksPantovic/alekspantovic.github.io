@@ -10,34 +10,15 @@ export class PatchedPluginAdapter extends PluginAdapter {
     return initResponse;
   }
 
+  // Fetch the session token exactly as you do in the browser console
   async getHaiiloSessionToken() {
     console.log('[PatchedPluginAdapter] Fetching Haiilo session token from:', HAIILO_SESSION_TOKEN_URL);
     const res = await fetch(HAIILO_SESSION_TOKEN_URL, { credentials: 'include' });
-    // Try to extract the correct token from the response
-    const text = await res.text();
-    let sessionToken = null;
-    try {
-      // Try to parse as JSON
-      const data = JSON.parse(text);
-      // Try common keys
-      sessionToken = data.token || data.access_token;
-      // If not found, try to find a JWT-like string in any value
-      if (!sessionToken && typeof data === 'object') {
-        for (const v of Object.values(data)) {
-          if (typeof v === 'string' && v.split('.').length === 3) {
-            sessionToken = v;
-            break;
-          }
-        }
-      }
-    } catch {
-      // If not JSON, maybe it's a raw token string
-      if (typeof text === 'string' && text.split('.').length === 3) {
-        sessionToken = text;
-      }
-    }
-    console.log('[PatchedPluginAdapter] Haiilo session token:', sessionToken);
-    return sessionToken;
+    const data = await res.json();
+    // Log the full response for debugging
+    console.log('[PatchedPluginAdapter] Full /web/authorization/token response:', data);
+    // Return the token property directly (do not try to guess or fallback)
+    return data.token;
   }
 
   async getUsers() {
