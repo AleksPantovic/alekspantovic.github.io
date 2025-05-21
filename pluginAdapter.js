@@ -14,6 +14,13 @@ export class PatchedPluginAdapter extends PluginAdapter {
   async getUsers(apiToken) {
     console.log('[PatchedPluginAdapter] Fetching users with token:', apiToken);
 
+    // DEBUG: Show where the call is coming from
+    if (typeof window !== "undefined") {
+      console.log('[PatchedPluginAdapter] getUsers() called from browser');
+    } else {
+      console.log('[PatchedPluginAdapter] getUsers() called from serverless function');
+    }
+
     const res = await fetch(PLUGIN_BACKEND_USERS, {
       headers: {
         Authorization: `Bearer ${apiToken}`
@@ -23,14 +30,25 @@ export class PatchedPluginAdapter extends PluginAdapter {
     const text = await res.text();
     console.log('[PatchedPluginAdapter] Raw response:', text);
 
+    // Log status and content-type for debugging
+    console.log('[PatchedPluginAdapter] Response status:', res.status);
+    console.log('[PatchedPluginAdapter] Response content-type:', res.headers.get('content-type'));
+
     if (!res.ok) {
+      // Log the error body for debugging
+      console.error('[PatchedPluginAdapter] HTTP error:', res.status, text);
       throw new Error(`HTTP ${res.status}: ${text}`);
     }
 
     try {
-      return JSON.parse(text);
+      const data = JSON.parse(text);
+      // If backend returns a wrapped error, log it
+      if (data && data.status && data.status !== 200 && data.response) {
+        console.error('[PatchedPluginAdapter] Backend error:', data.response);
+      }
+      return data;
     } catch (e) {
-      console.error('[PatchedPluginAdapter] Failed to parse JSON:', e);
+      console.error('[PatchedPluginAdapter] Failed to parse JSON:', e, text);
       throw e;
     }
   }
