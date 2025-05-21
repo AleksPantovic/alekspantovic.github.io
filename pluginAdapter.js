@@ -4,11 +4,13 @@ const HAIILO_SESSION_TOKEN_URL = 'https://asioso.coyocloud.com/web/authorization
 const PLUGIN_BACKEND_USERS = '/.netlify/functions/get-users';
 
 export class PatchedPluginAdapter extends PluginAdapter {
+  // Only for plugin context, not for backend auth
   async initAndPatch() {
     this._initResponse = await this.init();
     return this._initResponse;
   }
 
+  // Always use this for backend/API calls
   async getHaiiloSessionToken() {
     const res = await fetch(HAIILO_SESSION_TOKEN_URL, { credentials: 'include' });
     const { token } = await res.json();
@@ -41,8 +43,8 @@ export class PatchedPluginAdapter extends PluginAdapter {
 
 export async function initializePlugin() {
   const adapter = new PatchedPluginAdapter();
-  const initResponse = await adapter.initAndPatch();
-  const backendFetchedUsers = await adapter.getUsers();
+  const initResponse = await adapter.initAndPatch(); // only for plugin context
+  const backendFetchedUsers = await adapter.getUsers(); // uses correct session token
 
   return { adapter, initResponse, backendFetchedUsers };
 }
