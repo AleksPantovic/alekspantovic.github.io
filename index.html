@@ -5,62 +5,34 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Haiilo Plugin - User Data (Console Debug Only)</title>
   <script type="module">
-    import { PluginAdapter } from 'https://cdn.jsdelivr.net/npm/@coyoapp/plugin-adapter/+esm';
+    // 1. Import the initializePlugin function from your pluginAdapter.js
+    import { initializePlugin } from './pluginAdapter.js';
 
     document.addEventListener('DOMContentLoaded', async () => {
       console.log('[index.html] Entered DOMContentLoaded');
 
-      const adapter = new PluginAdapter();
-      console.log('5. [PluginAdapter] Calling adapter.init()...');
-      const initResponse = await adapter.init();
-      console.log('6. [PluginAdapter] adapter.init() response:', initResponse);
-
-      if (!initResponse || !initResponse.token) {
-        console.error('[PluginAdapter] No token found in initResponse:', initResponse);
-        return;
-      }
-
-      const token = initResponse.token;
-      console.log('[PluginAdapter] Token obtained:', token);
-
-      adapter.getUsers = async function () {
-        console.log('[index.html] Entered adapter.getUsers');
-        const token = initResponse.token;
-        console.log('[PluginAdapter] getUsers() using token:', token);
-        // Fetch users from your Netlify function proxy
-        const res = await fetch('/.netlify/functions/get-users', {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-        // Debug: log status and content-type
-        console.log('[PluginAdapter] getUsers() response status:', res.status);
-        console.log('[PluginAdapter] getUsers() response content-type:', res.headers.get('content-type'));
-        const text = await res.text();
-        if (!res.ok) {
-          console.error('[PluginAdapter] getUsers() HTTP error:', res.status, text);
-          throw new Error(`HTTP ${res.status}: ${text}`);
-        }
-        try {
-          const data = JSON.parse(text);
-          // If backend returns {status: 500, response: "..."} (wrapped error), log it
-          if (data && data.status && data.status !== 200 && data.response) {
-            console.error('[PluginAdapter] getUsers() backend error:', data.response);
-          }
-          return data;
-        } catch (e) {
-          console.error('[PluginAdapter] getUsers() response is not JSON:', text);
-          throw e;
-        }
-      };
-
-      // 9. Call getUsers and log the result
       try {
-        console.log('[index.html] Calling adapter.getUsers()');
-        const users = await adapter.getUsers();
-        console.log('[PluginAdapter] Users from adapter.getUsers():', users);
+        console.log('[index.html] Calling initializePlugin() from PatchedPluginAdapter...');
+        // 2. Call the initializePlugin function.
+        //    This function handles the adapter initialization and the getUsers call internally,
+        //    ensuring the correct session token is used for backend API calls.
+        const { adapter, initResponse, backendFetchedUsers } = await initializePlugin();
+
+        console.log('6. [PluginAdapter] adapter.init() response:', initResponse);
+        console.log('[PluginAdapter] Users from adapter.getUsers():', backendFetchedUsers);
+
+        if (!initResponse || !initResponse.token) {
+          console.error('[PluginAdapter] No init token found in initResponse:', initResponse);
+          return;
+        }
+
+        // The token logged here (initResponse.token) is still the init token,
+        // but the backendFetchedUsers result should now be correct because
+        // PatchedPluginAdapter.getUsers() used the session token.
+        console.log('[PluginAdapter] Init Token obtained (for context):', initResponse.token);
+
       } catch (err) {
-        console.error('[PluginAdapter] getUsers() error:', err);
+        console.error('[PluginAdapter] Error during plugin initialization or user fetch:', err);
       }
     });
   </script>
