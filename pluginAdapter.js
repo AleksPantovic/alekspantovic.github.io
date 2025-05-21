@@ -1,25 +1,26 @@
 import { PluginAdapter } from 'https://cdn.jsdelivr.net/npm/@coyoapp/plugin-adapter/+esm';
 
-const HAIILO_SESSION_TOKEN_URL = 'https://asioso.coyocloud.com/web/authorization/token';
 const PLUGIN_BACKEND_PROXY = '/.netlify/functions/haiilo-proxy';
 
 export class PatchedPluginAdapter extends PluginAdapter {
-  async getHaiiloSessionToken() {
-    const res = await fetch(HAIILO_SESSION_TOKEN_URL, { credentials: 'include' });
-    const { token } = await res.json();
-    if (!token) throw new Error('No Haiilo session token returned');
-    return token;
-  }
-
-  async proxyHaiiloRequest(endpoint) {
-    const sessionToken = await this.getHaiiloSessionToken();
+  /**
+   * Proxy any Haiilo API request through Netlify Function to avoid CORS.
+   * @param {string} endpoint - The Haiilo API endpoint (e.g. '/api/users')
+   * @param {object} options - { method, body, headers }
+   * @returns {Promise<any>}
+   */
+  async proxyHaiiloRequest(endpoint, options = {}) {
     const res = await fetch(PLUGIN_BACKEND_PROXY, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${sessionToken}`,
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        ...(options.headers || {})
       },
-      body: JSON.stringify({ endpoint })
+      body: JSON.stringify({
+        endpoint,
+        method: options.method || 'GET',
+        body: options.body || null
+      })
     });
     const text = await res.text();
     if (!res.ok) {
@@ -34,14 +35,15 @@ export class PatchedPluginAdapter extends PluginAdapter {
   }
 
   async getUsers() {
-    // Use the proxy to fetch users from Haiilo API
+    // Always use the proxy to fetch users from Haiilo API
     return this.proxyHaiiloRequest('/api/users');
   }
 }
 
 export async function initializePlugin() {
   const adapter = new PatchedPluginAdapter();
-  const initResponse = await adapter.initAndPatch();
-  const backendFetchedUsers = await adapter.getUsers();
+  const initResponse = await adapter.init(); // Only for plugin context
+  const backendFetchedUsers = await adapter.getUsers(); // Uses proxy, no CORS issues
+
   return { adapter, initResponse, backendFetchedUsers };
 }
