@@ -9,21 +9,6 @@ for = "/*.mjs"
   Content-Type = "application/javascript"
 
 [[headers]]
-for = "*.js"
-[headers.values]
-  Content-Type = "application/javascript"
-
-[[headers]]
-for = "*.mjs"
-[headers.values]
-  Content-Type = "application/javascript"
-
-[[headers]]
-for = "*.jsx"
-[headers.values]
-  Content-Type = "application/javascript"
-
-[[headers]]
 for = "*.json"
 [headers.values]
   Content-Type = "application/json"
