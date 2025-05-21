@@ -1,35 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Haiilo Plugin - User Data (Console Debug Only)</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Haiilo Plugin - User Data</title>
   <script type="module">
-    import { initializePlugin } from './pluginAdapter.js';
+    import { PatchedPluginAdapter, initializePlugin } from './pluginAdapter.js';
 
     document.addEventListener('DOMContentLoaded', async () => {
+      console.log('[index.html] DOM loaded');
+
       try {
-        console.log('[index.html] Entered DOMContentLoaded');
-
-        // Fetch the session token directly as in your working manual fetch
-        const sessionRes = await fetch('https://asioso.coyocloud.com/web/authorization/token', { credentials: 'include' });
-        const sessionData = await sessionRes.json();
-        console.log('[index.html] Direct session token fetch:', sessionData);
-
-        // Optionally, try using this token directly to fetch users (bypass pluginAdapter)
-        if (sessionData.token) {
-          const userRes = await fetch('/.netlify/functions/get-users', {
-            headers: { Authorization: `Bearer ${sessionData.token}` }
-          });
-          const userText = await userRes.text();
-          console.log('[index.html] Direct user fetch response:', userText);
-        }
-
-        // Now run the plugin logic as before
-        const { backendFetchedUsers } = await initializePlugin();
-        console.log('[index.html] Users fetched via pluginAdapter:', backendFetchedUsers);
+        const { adapter, initResponse, backendFetchedUsers } = await initializePlugin();
+        console.log('[index.html] Init response:', initResponse);
+        console.log('[index.html] Fetched users:', backendFetchedUsers);
       } catch (err) {
-        console.error('[index.html] Initialization failed:', err);
+        console.error('[index.html] Plugin initialization failed:', err);
       }
     });
   </script>
