@@ -14,8 +14,19 @@ export class PatchedPluginAdapter extends PluginAdapter {
     console.log('[PatchedPluginAdapter] Fetching Haiilo session token from:', HAIILO_SESSION_TOKEN_URL);
     const res = await fetch(HAIILO_SESSION_TOKEN_URL, { credentials: 'include' });
     const data = await res.json();
-    console.log('[PatchedPluginAdapter] Haiilo session token:', data.token || data.access_token || data);
-    return data.token || data.access_token || data;
+    // If the token is nested, extract it, otherwise use as is
+    let sessionToken = data.token || data.access_token || (typeof data === 'string' ? data : null);
+    if (!sessionToken && typeof data === 'object') {
+      // Try to find a JWT-like string in any value
+      for (const v of Object.values(data)) {
+        if (typeof v === 'string' && v.split('.').length === 3) {
+          sessionToken = v;
+          break;
+        }
+      }
+    }
+    console.log('[PatchedPluginAdapter] Haiilo session token:', sessionToken);
+    return sessionToken;
   }
 
   async getUsers(sessionToken) {
