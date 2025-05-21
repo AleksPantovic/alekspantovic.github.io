@@ -14,22 +14,15 @@ export class PatchedPluginAdapter extends PluginAdapter {
     console.log('[PatchedPluginAdapter] Fetching Haiilo session token from:', HAIILO_SESSION_TOKEN_URL);
     const res = await fetch(HAIILO_SESSION_TOKEN_URL, { credentials: 'include' });
     const data = await res.json();
-    // If the token is nested, extract it, otherwise use as is
+    // Extract the session token from the response
     let sessionToken = data.token || data.access_token || (typeof data === 'string' ? data : null);
-    if (!sessionToken && typeof data === 'object') {
-      // Try to find a JWT-like string in any value
-      for (const v of Object.values(data)) {
-        if (typeof v === 'string' && v.split('.').length === 3) {
-          sessionToken = v;
-          break;
-        }
-      }
-    }
     console.log('[PatchedPluginAdapter] Haiilo session token:', sessionToken);
     return sessionToken;
   }
 
-  async getUsers(sessionToken) {
+  async getUsers() {
+    // Always fetch the session token before fetching users
+    const sessionToken = await this.getHaiiloSessionToken();
     console.log('[PatchedPluginAdapter] Fetching users with session token:', sessionToken);
 
     const res = await fetch(PLUGIN_BACKEND_USERS, {
@@ -70,17 +63,12 @@ export async function initializePlugin() {
   const initResponse = await adapter.initAndPatch();
   console.log('[PluginAdapter] Init response:', initResponse);
 
-  // Step 1: Get Haiilo session token (not plugin JWT, not OAuth)
-  const sessionToken = await adapter.getHaiiloSessionToken();
-  console.log('[PluginAdapter] Using Haiilo session token:', sessionToken);
-
-  // Step 2: Fetch users with session token
-  const users = await adapter.getUsers(sessionToken);
+  // Step 1: Fetch users (getHaiiloSessionToken is called inside getUsers)
+  const users = await adapter.getUsers();
 
   return {
     adapter,
     initResponse,
-    haiiloSessionToken: sessionToken,
     backendFetchedUsers: users
   };
 }
