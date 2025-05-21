@@ -1,7 +1,6 @@
 import { PluginAdapter } from 'https://cdn.jsdelivr.net/npm/@coyoapp/plugin-adapter/+esm';
-import axios from 'https://cdn.jsdelivr.net/npm/axios/+esm';
 
-const PLUGIN_BACKEND_INIT = '/.netlify/functions/auth-init'; // Token exchange
+const HAIILO_SESSION_TOKEN_URL = 'https://asioso.coyocloud.com/web/authorization/token';
 const PLUGIN_BACKEND_USERS = '/.netlify/functions/get-users'; // User fetch
 
 export class PatchedPluginAdapter extends PluginAdapter {
@@ -11,19 +10,20 @@ export class PatchedPluginAdapter extends PluginAdapter {
     return initResponse;
   }
 
-  async getUsers(apiToken) {
-    console.log('[PatchedPluginAdapter] Fetching users with token:', apiToken);
+  async getHaiiloSessionToken() {
+    console.log('[PatchedPluginAdapter] Fetching Haiilo session token from:', HAIILO_SESSION_TOKEN_URL);
+    const res = await fetch(HAIILO_SESSION_TOKEN_URL, { credentials: 'include' });
+    const data = await res.json();
+    console.log('[PatchedPluginAdapter] Haiilo session token:', data.token || data.access_token || data);
+    return data.token || data.access_token || data;
+  }
 
-    // DEBUG: Show where the call is coming from
-    if (typeof window !== "undefined") {
-      console.log('[PatchedPluginAdapter] getUsers() called from browser');
-    } else {
-      console.log('[PatchedPluginAdapter] getUsers() called from serverless function');
-    }
+  async getUsers(sessionToken) {
+    console.log('[PatchedPluginAdapter] Fetching users with session token:', sessionToken);
 
     const res = await fetch(PLUGIN_BACKEND_USERS, {
       headers: {
-        Authorization: `Bearer ${apiToken}`
+        Authorization: `Bearer ${sessionToken}`
       }
     });
 
@@ -34,20 +34,13 @@ export class PatchedPluginAdapter extends PluginAdapter {
     console.log('[PatchedPluginAdapter] Response status:', res.status);
     console.log('[PatchedPluginAdapter] Response content-type:', res.headers.get('content-type'));
 
-    // Extra debug: log the token sent to the backend
-    if (res.status === 500) {
-      console.error('[PatchedPluginAdapter] 500 error - token sent:', apiToken);
-    }
-
     if (!res.ok) {
-      // Log the error body for debugging
       console.error('[PatchedPluginAdapter] HTTP error:', res.status, text);
       throw new Error(`HTTP ${res.status}: ${text}`);
     }
 
     try {
       const data = JSON.parse(text);
-      // If backend returns a wrapped error, log it
       if (data && data.status && data.status !== 200 && data.response) {
         console.error('[PatchedPluginAdapter] Backend error:', data.response);
       }
@@ -66,25 +59,17 @@ export async function initializePlugin() {
   const initResponse = await adapter.initAndPatch();
   console.log('[PluginAdapter] Init response:', initResponse);
 
-  const initToken = initResponse.token;
-  console.log('[PluginAdapter] PluginAdapter.init() token:', initToken);
+  // Step 1: Get Haiilo session token (not plugin JWT, not OAuth)
+  const sessionToken = await adapter.getHaiiloSessionToken();
+  console.log('[PluginAdapter] Using Haiilo session token:', sessionToken);
 
-  // Step 1: Exchange init token for API token
-  console.log(`[PluginAdapter] Exchanging init token at ${PLUGIN_BACKEND_INIT}`);
-  const { data: accessTokenResponse } = await axios.post(PLUGIN_BACKEND_INIT, {
-    token: initToken
-  });
-
-  const accessToken = accessTokenResponse.access_token || accessTokenResponse.token;
-  console.log('[PluginAdapter] Received access token from backend:', accessToken);
-
-  // Step 2: Fetch users with real token
-  const users = await adapter.getUsers(accessToken);
+  // Step 2: Fetch users with session token
+  const users = await adapter.getUsers(sessionToken);
 
   return {
     adapter,
     initResponse,
-    backendAccessToken: accessToken,
+    haiiloSessionToken: sessionToken,
     backendFetchedUsers: users
   };
 }
