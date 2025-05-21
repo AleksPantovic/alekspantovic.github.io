@@ -1,41 +1,42 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Haiilo Plugin - User Data (Console Debug Only)</title>
-  <script type="module">
-    // 1. Import the initializePlugin function from your pluginAdapter.js
-    import { initializePlugin } from './pluginAdapter.js';
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Haiilo Plugin - User Data (Console Debug Only)</title>
+  <script type="module">
+    // 1. Import the initializePlugin function from your pluginadapter.js
+    //    Ensure 'pluginadapter.js' is the correct path to your file.
+    import { initializePlugin } from './pluginadapter.js';
 
-    document.addEventListener('DOMContentLoaded', async () => {
-      console.log('[index.html] Entered DOMContentLoaded');
+    document.addEventListener('DOMContentLoaded', async () => {
+      console.log('[index.html] Entered DOMContentLoaded');
 
-      try {
-        console.log('[index.html] Calling initializePlugin() from PatchedPluginAdapter...');
-        // 2. Call the initializePlugin function.
-        //    This function handles the adapter initialization and the getUsers call internally,
-        //    ensuring the correct session token is used for backend API calls.
-        const { adapter, initResponse, backendFetchedUsers } = await initializePlugin();
+      try {
+        console.log('[index.html] Calling initializePlugin() from PatchedPluginAdapter...');
+        // 2. Call the initializePlugin function.
+        //    This function handles the adapter initialization and the getUsers call internally,
+        //    ensuring the correct session token is used for backend API calls.
+        const { adapter, initResponse, backendFetchedUsers } = await initializePlugin();
 
-        console.log('6. [PluginAdapter] adapter.init() response:', initResponse);
-        console.log('[PluginAdapter] Users from adapter.getUsers():', backendFetchedUsers);
+        console.log('6. [PluginAdapter] adapter.init() response:', initResponse);
+        console.log('[PluginAdapter] Users from adapter.getUsers():', backendFetchedUsers);
 
-        if (!initResponse || !initResponse.token) {
-          console.error('[PluginAdapter] No init token found in initResponse:', initResponse);
-          return;
-        }
+        if (!initResponse ||!initResponse.token) {
+          console.error('[PluginAdapter] No init token found in initResponse:', initResponse);
+          return;
+        }
 
-        // The token logged here (initResponse.token) is still the init token,
-        // but the backendFetchedUsers result should now be correct because
-        // PatchedPluginAdapter.getUsers() used the session token.
-        console.log('[PluginAdapter] Init Token obtained (for context):', initResponse.token);
+        // The token logged here (initResponse.token) is still the init token,
+        // but the backendFetchedUsers result should now be correct because
+        // PatchedPluginAdapter.getUsers() used the session token.
+        console.log('[PluginAdapter] Init Token obtained (for context):', initResponse.token);
 
-      } catch (err) {
-        console.error('[PluginAdapter] Error during plugin initialization or user fetch:', err);
-      }
-    });
-  </script>
+      } catch (err) {
+        console.error('[PluginAdapter] Error during plugin initialization or user fetch:', err);
+      }
+    });
+  </script>
 </head>
 <body>
 </body>
