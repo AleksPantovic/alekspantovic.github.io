@@ -26,24 +26,24 @@ exports.handler = async (event) => {
       };
     }
 
-    // Exchange the code for an access token
-    console.log('[auth-init] Exchanging code for access token...');
-    const tokenRes = await axios.post(
-      'https://asioso.coyocloud.com/api/oauth/token',
-      new URLSearchParams({
-        grant_type: 'authorization_code',
-        code: code,
-        client_id: process.env.HAIILO_CLIENT_ID,
-        client_secret: process.env.HAIILO_CLIENT_SECRET
-      }),
-      { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
+    // Fetch session token from Haiilo using the user's session cookie
+    console.log('[auth-init] Fetching session token from /web/authorization/token...');
+    const haiiloRes = await axios.get(
+      'https://asioso.coyocloud.com/web/authorization/token',
+      {
+        headers: {
+          // Forward the user's cookies if present (for SSR/serverless only)
+          Cookie: event.headers.cookie || ''
+        },
+        withCredentials: true
+      }
     );
 
     // Always return HTTP 200 and a simple JSON body for Haiilo compatibility
-    console.log('[auth-init] Token exchange successful');
+    console.log('[auth-init] Session token fetch successful');
     return {
       statusCode: 200,
-      body: JSON.stringify({ access_token: tokenRes.data.access_token })
+      body: JSON.stringify(haiiloRes.data)
     };
   } catch (err) {
     console.log('[auth-init] Error:', err.message);

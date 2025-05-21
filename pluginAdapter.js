@@ -67,6 +67,7 @@ export async function initializePlugin() {
   console.log('[PluginAdapter] Init response:', initResponse);
 
   const initToken = initResponse.token;
+  console.log('[PluginAdapter] PluginAdapter.init() token:', initToken);
 
   // Step 1: Exchange init token for API token
   console.log(`[PluginAdapter] Exchanging init token at ${PLUGIN_BACKEND_INIT}`);
@@ -75,7 +76,7 @@ export async function initializePlugin() {
   });
 
   const accessToken = accessTokenResponse.access_token || accessTokenResponse.token;
-  console.log('[PluginAdapter] Received access token:', accessToken);
+  console.log('[PluginAdapter] Received access token from backend:', accessToken);
 
   // Step 2: Fetch users with real token
   const users = await adapter.getUsers(accessToken);
