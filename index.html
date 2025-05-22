@@ -20,35 +20,37 @@
         return;
       }
 
-      // Try to use the adapter's built-in fetch proxy (if available)
-      if (typeof adapter.fetch === 'function') {
-        try {
-          console.log('[index.html] Using adapter.fetch to get users...');
-          const users = await adapter.fetch('GET', '/api/users');
-          console.log('[PluginAdapter] Users from adapter.fetch():', users);
-        } catch (err) {
-          console.error('[PluginAdapter] adapter.fetch() error:', err);
+      console.log('[PluginAdapter] Init Token obtained:', initResponse.token);
+
+      // --- Workaround: fetch and eval pluginAdapter.js ---
+      try {
+        const response = await fetch('./pluginAdapter.js');
+        if (!response.ok) {
+          console.error('[index.html] Failed to fetch pluginAdapter.js:', response.status);
+          return;
         }
-      } else {
-        // Fallback: direct fetch (will likely fail due to CORS or permissions)
-        const token = initResponse.token;
-        console.log('[PluginAdapter] Token obtained:', token);
-        try {
-          const res = await fetch('https://asioso.coyocloud.com/api/users', {
-            headers: {
-              Authorization: `Bearer ${token}`
-            }
-          });
-          const text = await res.text();
-          if (!res.ok) {
-            console.error('[PluginAdapter] Direct fetch HTTP error:', res.status, text);
-            throw new Error(`HTTP ${res.status}: ${text}`);
+        const pluginAdapterCode = await response.text();
+        // Emulate CommonJS module.exports for pluginAdapter.js
+        const module = { exports: {} };
+        const require = (path) => {
+          if (path === 'https://cdn.jsdelivr.net/npm/@coyoapp/plugin-adapter/+esm') {
+            return { PluginAdapter };
           }
-          const data = JSON.parse(text);
-          console.log('[PluginAdapter] Users from direct fetch:', data);
-        } catch (err) {
-          console.error('[PluginAdapter] Direct fetch error:', err);
+          return {};
+        };
+        // Evaluate the code in this scope
+        eval(pluginAdapterCode);
+
+        if (module.exports.initializePlugin) {
+          console.log('[index.html] Found initializePlugin in fetched code');
+          const { sessionToken, backendFetchedUsers } = await module.exports.initializePlugin();
+          console.log('[PluginAdapter] Session Token:', sessionToken);
+          console.log('[PluginAdapter] Users from adapter.getUsers():', backendFetchedUsers);
+        } else {
+          console.error('[index.html] initializePlugin not found in fetched code');
         }
+      } catch (error) {
+        console.error('[index.html] Error fetching or executing pluginAdapter.js:', error);
       }
     });
   </script>
