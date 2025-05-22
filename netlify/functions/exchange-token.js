@@ -38,30 +38,13 @@ export const handler = async (event) => {
   }
 
   try {
-    // TODO: Replace this with the real Haiilo token exchange endpoint and logic.
-    // Example (pseudo-code, adjust as needed for Haiilo's API):
-    /*
-    const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
-    const response = await fetch('https://asioso.coyocloud.com/api/token/exchange', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${initToken}`,
-        'Content-Type': 'application/json'
-      }
-    });
-    if (!response.ok) {
-      const errorBody = await response.text();
-      return {
-        statusCode: response.status,
-        headers: { 'Access-Control-Allow-Origin': '*' },
-        body: `Failed to exchange token: ${errorBody}`
-      };
-    }
-    const { accessToken } = await response.json();
-    */
+    // There is no public Haiilo token exchange endpoint available at
+    // /web/authorization/token/exchange (404 Not Found).
+    // You cannot exchange the plugin init token for a backend API token automatically.
 
-    // For demonstration, just echo back the init token as the "accessToken"
-    // Replace this with the real accessToken from Haiilo when available.
+    // For now, you can only echo back the init token (not recommended for production).
+    // If Haiilo provides a real token exchange endpoint in the future, update here.
+
     return {
       statusCode: 200,
       headers: {
