@@ -5,22 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Haiilo Plugin - User Data (Console Debug Only)</title>
   <script type="module">
-    import { PluginAdapter } from 'https://cdn.jsdelivr.net/npm/@coyoapp/plugin-adapter/+esm';
-
+    // No need to import PluginAdapter or call adapter.init()
     document.addEventListener('DOMContentLoaded', async () => {
       console.log('[index.html] Entered DOMContentLoaded');
-
-      const adapter = new PluginAdapter();
-      console.log('5. [PluginAdapter] Calling adapter.init()...');
-      const initResponse = await adapter.init();
-      console.log('6. [PluginAdapter] adapter.init() response:', initResponse);
-
-      if (!initResponse || !initResponse.token) {
-        console.error('[PluginAdapter] No token found in initResponse:', initResponse);
-        return;
-      }
-
-      console.log('[PluginAdapter] Init Token obtained:', initResponse.token);
 
       // --- Workaround: fetch and eval pluginAdapter.js ---
       try {
@@ -31,12 +18,8 @@
         }
         const pluginAdapterCode = await response.text();
         const module = { exports: {} };
-        const require = (path) => {
-          if (path === 'https://cdn.jsdelivr.net/npm/@coyoapp/plugin-adapter/+esm') {
-            return { PluginAdapter };
-          }
-          return {};
-        };
+        // Provide a dummy require for compatibility
+        const require = (path) => ({});
         try {
           eval(pluginAdapterCode);
         } catch (evalError) {
@@ -51,7 +34,7 @@
           console.log('[PluginAdapter] Session Token:', sessionToken);
           console.log('[PluginAdapter] Users from adapter.getUsers():', backendFetchedUsers);
           if (sessionToken === null) {
-            console.error('[index.html] CORS error: Could not fetch session token. The browser was blocked by CORS when trying to access https://asioso.coyocloud.com/web/authorization/token. This endpoint must allow your plugin origin or you must use a backend proxy.');
+            console.error('[index.html] CORS error: Could not fetch session token. The browser was blocked by CORS when trying to access the Haiilo endpoint. This endpoint must allow your plugin origin or you must use a backend proxy.');
           }
         } else {
           console.error('[index.html] initializePlugin not found in fetched code');
