@@ -5,11 +5,15 @@ class PatchedPluginAdapter extends PluginAdapter {
   async getSessionToken() {
     // Call your Netlify proxy function to fetch the session token server-side
     const res = await fetch('/.netlify/functions/get-session-token');
-    if (res.ok) {
-      const data = await res.json();
-      return data.token;
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`[PatchedPluginAdapter] Could not fetch session token via backend proxy: ${res.status} - ${text}`);
     }
-    throw new Error('[PatchedPluginAdapter] Could not fetch session token via backend proxy');
+    const data = await res.json();
+    if (!data.token) {
+      throw new Error('[PatchedPluginAdapter] No token property in backend proxy response');
+    }
+    return data.token;
   }
 
   /**
