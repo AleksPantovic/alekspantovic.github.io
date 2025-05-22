@@ -20,47 +20,35 @@
         return;
       }
 
-      const token = initResponse.token;
-      console.log('[PluginAdapter] Token obtained:', token);
-
-      adapter.getUsers = async function () {
-        console.log('[index.html] Entered adapter.getUsers');
-        const token = initResponse.token;
-        console.log('[PluginAdapter] getUsers() using token:', token);
-        // Fetch users from your Netlify function proxy
-        const res = await fetch('/.netlify/functions/get-users', {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        });
-        // Debug: log status and content-type
-        console.log('[PluginAdapter] getUsers() response status:', res.status);
-        console.log('[PluginAdapter] getUsers() response content-type:', res.headers.get('content-type'));
-        const text = await res.text();
-        if (!res.ok) {
-          console.error('[PluginAdapter] getUsers() HTTP error:', res.status, text);
-          throw new Error(`HTTP ${res.status}: ${text}`);
-        }
+      // Try to use the adapter's built-in fetch proxy (if available)
+      if (typeof adapter.fetch === 'function') {
         try {
-          const data = JSON.parse(text);
-          // If backend returns {status: 500, response: "..."} (wrapped error), log it
-          if (data && data.status && data.status !== 200 && data.response) {
-            console.error('[PluginAdapter] getUsers() backend error:', data.response);
-          }
-          return data;
-        } catch (e) {
-          console.error('[PluginAdapter] getUsers() response is not JSON:', text);
-          throw e;
+          console.log('[index.html] Using adapter.fetch to get users...');
+          const users = await adapter.fetch('GET', '/api/users');
+          console.log('[PluginAdapter] Users from adapter.fetch():', users);
+        } catch (err) {
+          console.error('[PluginAdapter] adapter.fetch() error:', err);
         }
-      };
-
-      // 9. Call getUsers and log the result
-      try {
-        console.log('[index.html] Calling adapter.getUsers()');
-        const users = await adapter.getUsers();
-        console.log('[PluginAdapter] Users from adapter.getUsers():', users);
-      } catch (err) {
-        console.error('[PluginAdapter] getUsers() error:', err);
+      } else {
+        // Fallback: direct fetch (will likely fail due to CORS or permissions)
+        const token = initResponse.token;
+        console.log('[PluginAdapter] Token obtained:', token);
+        try {
+          const res = await fetch('https://asioso.coyocloud.com/api/users', {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          });
+          const text = await res.text();
+          if (!res.ok) {
+            console.error('[PluginAdapter] Direct fetch HTTP error:', res.status, text);
+            throw new Error(`HTTP ${res.status}: ${text}`);
+          }
+          const data = JSON.parse(text);
+          console.log('[PluginAdapter] Users from direct fetch:', data);
+        } catch (err) {
+          console.error('[PluginAdapter] Direct fetch error:', err);
+        }
       }
     });
   </script>
