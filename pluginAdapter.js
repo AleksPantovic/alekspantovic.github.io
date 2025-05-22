@@ -6,7 +6,6 @@ export class PatchedPluginAdapter extends PluginAdapter {
    * Only works if the endpoint is exposed to plugins.
    */
   async getSessionToken() {
-    // This will proxy the request via the parent Haiilo window, bypassing CORS
     const response = await this.fetch('GET', '/web/authorization/token');
     if (response && response.token) {
       return response.token;
@@ -15,20 +14,18 @@ export class PatchedPluginAdapter extends PluginAdapter {
   }
 
   /**
-   * Use the plugin adapter's built-in proxy to avoid CORS (no server access needed).
-   * This will only work for endpoints that Haiilo exposes to plugins via the parent window.
+   * Fetch users via your Netlify proxy, passing the session token.
+   * This avoids CORS and works even if /api/users is not exposed to plugins.
    */
   async getUsers() {
-    // Use the built-in proxy, but handle error responses
-    const response = await this.fetch('GET', '/api/users');
-    if (response && response.status && response.status !== 200) {
-      // Log backend error details if present
-      console.error('[PatchedPluginAdapter] Backend error:', response.response || response);
-      throw new Error(
-        `Haiilo API error: ${response.status} - ${JSON.stringify(response.response || response)}`
-      );
-    }
-    return response;
+    const sessionToken = await this.getSessionToken();
+    const res = await fetch('/.netlify/functions/get-users', {
+      headers: {
+        Authorization: `Bearer ${sessionToken}`
+      }
+    });
+    // Return the full response so the caller can check status and parse as needed
+    return res;
   }
 }
 
