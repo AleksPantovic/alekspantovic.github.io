@@ -1,22 +1,19 @@
 class PatchedPluginAdapter extends PluginAdapter {
   /**
-   * Fetch the Haiilo session token directly from Haiilo using credentials: 'include'.
-   * This will only work if CORS is allowed for your plugin origin.
+   * Fetch the Haiilo session token via the Netlify backend proxy to avoid CORS issues.
    */
   async getSessionToken() {
     try {
-      const response = await fetch('https://asioso.coyocloud.com/web/authorization/token', {
-        credentials: 'include'
-      });
+      const response = await fetch('/.netlify/functions/get-session-token');
       if (!response.ok) {
         const errorBody = await response.text();
-        console.error('Error fetching session token from Haiilo:', response.status, errorBody);
-        throw new Error(`Failed to fetch session token: ${errorBody}`);
+        console.error('Error fetching session token from Netlify proxy:', response.status, errorBody);
+        throw new Error(`Failed to fetch session token from proxy: ${errorBody}`);
       }
       const data = await response.json();
       return data.token;
     } catch (error) {
-      console.error('Error fetching session token:', error);
+      console.error('Error fetching session token from proxy:', error);
       throw error;
     }
   }
