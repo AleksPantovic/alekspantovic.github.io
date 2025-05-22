@@ -1,15 +1,31 @@
 class PatchedPluginAdapter extends PluginAdapter {
   /**
-   * Fetch the current Haiilo session token via your Netlify backend proxy to avoid CORS.
+   * Fetch the Haiilo session token via your Netlify backend proxy (exchange-token).
    */
   async getSessionToken() {
-    // Call your Netlify proxy function to fetch the session token server-side
-    const res = await fetch('/.netlify/functions/get-session-token');
-    if (res.ok) {
-      const data = await res.json();
-      return data.token;
+    // Ensure adapter is initialized to have the init token
+    const initResponse = this._initResponse || await this.init();
+    const initToken = initResponse?.token;
+    if (!initToken) {
+      throw new Error('[PatchedPluginAdapter] Could not get init token.');
     }
-    throw new Error('[PatchedPluginAdapter] Could not fetch session token via backend proxy');
+
+    const response = await fetch('/.netlify/functions/exchange-token', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${initToken}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorBody = await response.text();
+      console.error('[PatchedPluginAdapter] Error from exchange-token:', response.status, errorBody);
+      throw new Error(`Failed to exchange token: ${errorBody}`);
+    }
+
+    const data = await response.json();
+    return data.accessToken; // The session token from the backend
   }
 
   /**
