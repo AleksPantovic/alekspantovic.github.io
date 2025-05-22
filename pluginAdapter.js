@@ -2,29 +2,49 @@ import { PluginAdapter } from 'https://cdn.jsdelivr.net/npm/@coyoapp/plugin-adap
 
 export class PatchedPluginAdapter extends PluginAdapter {
   /**
-   * Fetch the current Haiilo session token via the parent window proxy.
-   * Only works if the endpoint is exposed to plugins.
+   * Get the plugin init token (for plugin context).
    */
-  async getSessionToken() {
-    const response = await this.fetch('GET', '/web/authorization/token');
-    if (response && response.token) {
-      return response.token;
+  async getInitToken() {
+    if (!this._initResponse) {
+      this._initResponse = await this.init();
     }
-    throw new Error('[PatchedPluginAdapter] Could not fetch session token');
+    return this._initResponse.token;
   }
 
   /**
-   * Fetch users via your Netlify proxy, passing the session token.
-   * This avoids CORS and works even if /api/users is not exposed to plugins.
+   * Exchange the init token for a backend API token via your Netlify function.
+   * Assumes your Netlify function implements the token exchange logic.
+   */
+  async exchangeTokenForBackendToken() {
+    const initToken = await this.getInitToken();
+    const res = await fetch('/.netlify/functions/exchange-token', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${initToken}`,
+        'Content-Type': 'application/json'
+      }
+      // Optionally, include pluginId or other context in the body if needed
+      // body: JSON.stringify({ pluginId: 'YOUR_PLUGIN_ID' })
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`[PatchedPluginAdapter] Token exchange failed: ${res.status} - ${text}`);
+    }
+    const data = await res.json();
+    if (!data.accessToken) throw new Error('[PatchedPluginAdapter] No backend access token returned');
+    return data.accessToken;
+  }
+
+  /**
+   * Fetch users via your Netlify proxy, using the backend API token.
    */
   async getUsers() {
-    const sessionToken = await this.getSessionToken();
+    const backendToken = await this.exchangeTokenForBackendToken();
     const res = await fetch('/.netlify/functions/get-users', {
       headers: {
-        Authorization: `Bearer ${sessionToken}`
+        Authorization: `Bearer ${backendToken}`
       }
     });
-    // Return the full response so the caller can check status and parse as needed
     return res;
   }
 }
@@ -33,14 +53,14 @@ export async function initializePlugin() {
   const adapter = new PatchedPluginAdapter();
   const initResponse = await adapter.init();
   let backendFetchedUsers;
-  let sessionToken;
+  let backendToken;
   try {
-    sessionToken = await adapter.getSessionToken();
+    backendToken = await adapter.exchangeTokenForBackendToken();
     backendFetchedUsers = await adapter.getUsers();
   } catch (err) {
     console.error('[initializePlugin] Failed to fetch users or token:', err);
     backendFetchedUsers = null;
-    sessionToken = null;
+    backendToken = null;
   }
-  return { adapter, initResponse, sessionToken, backendFetchedUsers };
+  return { adapter, initResponse, backendToken, backendFetchedUsers };
 }
