@@ -1,5 +1,20 @@
 class PatchedPluginAdapter extends PluginAdapter {
   /**
+   * Fetch the Haiilo session token directly from Haiilo using credentials: 'include'.
+   * WARNING: This will only work if CORS is allowed for your plugin origin.
+   */
+  async getSessionTokenDirect() {
+    const response = await fetch('https://asioso.coyocloud.com/web/authorization/token', {
+      credentials: 'include'
+    });
+    if (response.ok) {
+      const data = await response.json();
+      return data.token;
+    }
+    throw new Error('[PatchedPluginAdapter] Could not fetch session token (direct)');
+  }
+
+  /**
    * Fetch the Haiilo session token via your Netlify backend proxy (exchange-token).
    */
   async getSessionToken() {
@@ -51,6 +66,34 @@ class PatchedPluginAdapter extends PluginAdapter {
    */
   async testDirectHaiiloApiCall(sessionToken) {
     try {
+      const res = await fetch('https://asioso.coyocloud.com/api/users', {
+        headers: {
+          Authorization: `Bearer ${sessionToken}`,
+        },
+      });
+      const text = await res.text();
+      if (!res.ok) {
+        console.error('[PatchedPluginAdapter] Direct /api/users error:', res.status, text);
+        throw new Error(`HTTP ${res.status}: ${text}`);
+      }
+      try {
+        return JSON.parse(text);
+      } catch {
+        return text;
+      }
+    } catch (err) {
+      console.error('[PatchedPluginAdapter] Direct /api/users fetch failed:', err);
+      return null;
+    }
+  }
+
+  /**
+   * Test direct call to /api/users with the session token (for debugging only).
+   * This will likely fail due to CORS if called from the browser.
+   */
+  async testDirectHaiiloApiCallWithDirectSessionToken() {
+    try {
+      const sessionToken = await this.getSessionTokenDirect();
       const res = await fetch('https://asioso.coyocloud.com/api/users', {
         headers: {
           Authorization: `Bearer ${sessionToken}`,
