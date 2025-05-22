@@ -1,3 +1,6 @@
+// UNUSED FUNCTION: This Netlify function is not used by the current plugin logic.
+// To enable later, uncomment the code below.
+/*
 export async function handler(event) {
   const { queryStringParameters } = event;
 
@@ -31,3 +34,4 @@ export async function handler(event) {
     };
   }
 }
+*/

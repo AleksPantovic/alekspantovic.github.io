@@ -1,3 +1,6 @@
+// UNUSED FUNCTION: This Netlify function is not used by the current plugin logic.
+// To enable later, uncomment the code below.
+/*
 exports.handler = async (event, context) => {
     return {
         statusCode: 200,
@@ -9,3 +12,4 @@ exports.handler = async (event, context) => {
         body: JSON.stringify({ message: 'Hello from Netlify Function!' }),
     };
 };
+*/

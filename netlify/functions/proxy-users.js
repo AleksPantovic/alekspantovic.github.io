@@ -1,3 +1,6 @@
+// UNUSED FUNCTION: This Netlify function is not used by the current plugin logic.
+// To enable later, uncomment the code below.
+/*
 const axios = require('axios');
 
 exports.handler = async function(event) {
@@ -38,3 +41,4 @@ exports.handler = async function(event) {
     };
   }
 };
+*/

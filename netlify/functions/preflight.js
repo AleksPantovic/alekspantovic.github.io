@@ -1,3 +1,6 @@
+// UNUSED FUNCTION: This Netlify function is not used by the current plugin logic.
+// To enable later, uncomment the code below.
+/*
 exports.handler = async (event, context) => {
     if (event.httpMethod === 'OPTIONS') {
         return {
@@ -16,3 +19,4 @@ exports.handler = async (event, context) => {
         body: 'Method Not Allowed',
     };
 };
+*/

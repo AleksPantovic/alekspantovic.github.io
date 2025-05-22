@@ -1,4 +1,4 @@
-const axios = require('axios');
+/*const axios = require('axios');
 
 exports.handler = async function (event) {
   try {
@@ -38,3 +38,4 @@ exports.handler = async function (event) {
     };
   }
 };
+*/
