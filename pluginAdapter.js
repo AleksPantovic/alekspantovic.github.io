@@ -1,4 +1,4 @@
-export class PatchedPluginAdapter extends PluginAdapter {
+class PatchedPluginAdapter extends PluginAdapter {
   /**
    * Fetch the current Haiilo session token directly from Haiilo.
    */
@@ -31,7 +31,7 @@ export class PatchedPluginAdapter extends PluginAdapter {
   }
 }
 
-export async function initializePlugin() {
+async function initializePlugin() {
   const adapter = new PatchedPluginAdapter();
   const initResponse = await adapter.init();
   let backendFetchedUsers = null;
@@ -47,4 +47,10 @@ export async function initializePlugin() {
   }
 
   return { adapter, initResponse, sessionToken, backendFetchedUsers };
+}
+
+// Attach to module.exports for CommonJS-style eval usage
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports.PatchedPluginAdapter = PatchedPluginAdapter;
+  module.exports.initializePlugin = initializePlugin;
 }
