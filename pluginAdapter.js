@@ -44,6 +44,33 @@ class PatchedPluginAdapter extends PluginAdapter {
     }
     return res.json();
   }
+
+  /**
+   * Test direct call to /api/users with the session token (for debugging only).
+   * This will likely fail due to CORS if called from the browser.
+   */
+  async testDirectHaiiloApiCall(sessionToken) {
+    try {
+      const res = await fetch('https://asioso.coyocloud.com/api/users', {
+        headers: {
+          Authorization: `Bearer ${sessionToken}`,
+        },
+      });
+      const text = await res.text();
+      if (!res.ok) {
+        console.error('[PatchedPluginAdapter] Direct /api/users error:', res.status, text);
+        throw new Error(`HTTP ${res.status}: ${text}`);
+      }
+      try {
+        return JSON.parse(text);
+      } catch {
+        return text;
+      }
+    } catch (err) {
+      console.error('[PatchedPluginAdapter] Direct /api/users fetch failed:', err);
+      return null;
+    }
+  }
 }
 
 async function initializePlugin() {
