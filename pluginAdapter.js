@@ -1,5 +1,3 @@
-import { PluginAdapter } from 'https://cdn.jsdelivr.net/npm/@coyoapp/plugin-adapter/+esm';
-
 export class PatchedPluginAdapter extends PluginAdapter {
   /**
    * Fetch the current Haiilo session token directly from Haiilo.
