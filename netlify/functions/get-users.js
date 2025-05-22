@@ -1,3 +1,6 @@
+// This function must be called from your frontend as: /.netlify/functions/get-users
+// with the Authorization header set to the Haiilo JWT token.
+
 export const handler = async (event) => {
   // Handle CORS preflight
   if (event.httpMethod === 'OPTIONS') {
@@ -37,6 +40,8 @@ export const handler = async (event) => {
   }
 
   try {
+    // Server-side fetch to Haiilo API (no CORS issue here)
+    const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
     const response = await fetch('https://asioso.coyocloud.com/api/users', {
       headers: {
         Authorization: `Bearer ${token}`,
