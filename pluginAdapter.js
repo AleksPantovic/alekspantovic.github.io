@@ -1,10 +1,21 @@
 class PatchedPluginAdapter extends PluginAdapter {
   /**
+   * Ensure credentials (cookies/session) are present before fetching the session token.
+   * This can be done by first making a simple GET request to Haiilo (e.g. /web or /login)
+   * with credentials: 'include' to establish the session, then fetch the token.
+   */
+  async ensureHaiiloSession() {
+    // This request should set the necessary cookies if not already present.
+    await fetch('https://asioso.coyocloud.com/web', { credentials: 'include', mode: 'cors' });
+  }
+
+  /**
    * Fetch the Haiilo session token directly from Haiilo using credentials: 'include'.
    * This will only work if CORS is allowed for your plugin origin.
    */
   async getSessionToken() {
     try {
+      await this.ensureHaiiloSession();
       const response = await fetch('https://asioso.coyocloud.com/web/authorization/token', {
         credentials: 'include'
       });
