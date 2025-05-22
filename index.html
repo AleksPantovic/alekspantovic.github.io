@@ -39,7 +39,13 @@
           return {};
         };
         // Evaluate the code in this scope
-        eval(pluginAdapterCode);
+        try {
+          eval(pluginAdapterCode);
+        } catch (evalError) {
+          console.error('[index.html] Error during eval of pluginAdapter.js:', evalError);
+          console.error('[index.html] pluginAdapter.js code was:', pluginAdapterCode);
+          throw evalError;
+        }
 
         if (module.exports.initializePlugin) {
           console.log('[index.html] Found initializePlugin in fetched code');
