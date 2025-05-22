@@ -1,21 +1,31 @@
 class PatchedPluginAdapter extends PluginAdapter {
   /**
-   * Fetch the Haiilo session token via the Netlify backend proxy to avoid CORS issues.
+   * Fetch the Haiilo session token via your Netlify backend proxy (exchange-token).
    */
   async getSessionToken() {
-    try {
-      const response = await fetch('/.netlify/functions/get-session-token');
-      if (!response.ok) {
-        const errorBody = await response.text();
-        console.error('Error fetching session token from Netlify proxy:', response.status, errorBody);
-        throw new Error(`Failed to fetch session token from proxy: ${errorBody}`);
-      }
-      const data = await response.json();
-      return data.token;
-    } catch (error) {
-      console.error('Error fetching session token from proxy:', error);
-      throw error;
+    // Ensure adapter is initialized to have the init token
+    const initResponse = this._initResponse || await this.init();
+    const initToken = initResponse?.token;
+    if (!initToken) {
+      throw new Error('[PatchedPluginAdapter] Could not get init token.');
     }
+
+    const response = await fetch('/.netlify/functions/exchange-token', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${initToken}`,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      const errorBody = await response.text();
+      console.error('[PatchedPluginAdapter] Error from exchange-token:', response.status, errorBody);
+      throw new Error(`Failed to exchange token: ${errorBody}`);
+    }
+
+    const data = await response.json();
+    return data.accessToken; // The session token from the backend
   }
 
   /**
@@ -33,6 +43,33 @@ class PatchedPluginAdapter extends PluginAdapter {
       throw new Error(`HTTP ${res.status}: ${text}`);
     }
     return res.json();
+  }
+
+  /**
+   * Test direct call to /api/users with the session token (for debugging only).
+   * This will likely fail due to CORS if called from the browser.
+   */
+  async testDirectHaiiloApiCall(sessionToken) {
+    try {
+      const res = await fetch('https://asioso.coyocloud.com/api/users', {
+        headers: {
+          Authorization: `Bearer ${sessionToken}`,
+        },
+      });
+      const text = await res.text();
+      if (!res.ok) {
+        console.error('[PatchedPluginAdapter] Direct /api/users error:', res.status, text);
+        throw new Error(`HTTP ${res.status}: ${text}`);
+      }
+      try {
+        return JSON.parse(text);
+      } catch {
+        return text;
+      }
+    } catch (err) {
+      console.error('[PatchedPluginAdapter] Direct /api/users fetch failed:', err);
+      return null;
+    }
   }
 }
 
