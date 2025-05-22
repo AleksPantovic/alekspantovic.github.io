@@ -30,7 +30,6 @@
           return;
         }
         const pluginAdapterCode = await response.text();
-        // Emulate CommonJS module.exports for pluginAdapter.js
         const module = { exports: {} };
         const require = (path) => {
           if (path === 'https://cdn.jsdelivr.net/npm/@coyoapp/plugin-adapter/+esm') {
@@ -38,7 +37,6 @@
           }
           return {};
         };
-        // Evaluate the code in this scope
         try {
           eval(pluginAdapterCode);
         } catch (evalError) {
@@ -52,6 +50,9 @@
           const { sessionToken, backendFetchedUsers } = await module.exports.initializePlugin();
           console.log('[PluginAdapter] Session Token:', sessionToken);
           console.log('[PluginAdapter] Users from adapter.getUsers():', backendFetchedUsers);
+          if (sessionToken === null) {
+            console.error('[index.html] CORS error: Could not fetch session token. The browser was blocked by CORS when trying to access https://asioso.coyocloud.com/web/authorization/token. This endpoint must allow your plugin origin or you must use a backend proxy.');
+          }
         } else {
           console.error('[index.html] initializePlugin not found in fetched code');
         }
