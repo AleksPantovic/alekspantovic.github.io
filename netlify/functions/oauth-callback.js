@@ -10,6 +10,7 @@ exports.handler = async function (event) {
 
     // Store it to a file (for demo; use secure storage in production)
     fs.writeFileSync(path.join('/tmp', 'haiilo-token.txt'), accessToken);
+    console.log('[oauth-callback] Token written to /tmp/haiilo-token.txt');
 
     return {
       statusCode: 200,

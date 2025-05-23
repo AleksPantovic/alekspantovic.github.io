@@ -1,6 +1,9 @@
 // Netlify Function: exchange-token.js
 // Receives the Haiilo plugin init token, exchanges it for a backend API token (if Haiilo provides such an endpoint), and returns it.
 
+const fs = require('fs');
+const path = require('path');
+
 export const handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') {
     return {
@@ -44,6 +47,20 @@ export const handler = async (event) => {
 
     // For now, you can only echo back the init token (not recommended for production).
     // If Haiilo provides a real token exchange endpoint in the future, update here.
+
+    // Try to return a real OAuth token if available
+    const storedTokenPath = path.join('/tmp', 'haiilo-token.txt');
+    if (fs.existsSync(storedTokenPath)) {
+      const realToken = fs.readFileSync(storedTokenPath, 'utf-8');
+      return {
+        statusCode: 200,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ accessToken: realToken })
+      };
+    }
 
     return {
       statusCode: 200,
