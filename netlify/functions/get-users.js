@@ -73,6 +73,9 @@ exports.handler = async function (event) {
       }),
       { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
     );
+    console.log('[get-users] tokenRes.status:', tokenRes.status);
+    console.log('[get-users] tokenRes.headers:', tokenRes.headers);
+    console.log('[get-users] tokenRes.data:', tokenRes.data);
     console.log('[get-users] Received Haiilo access token');
     const haiiloAccessToken = tokenRes.data.access_token;
     console.log('[get-users] Fetching users from Haiilo API...');
