@@ -57,7 +57,7 @@ exports.handler = async function (event) {
       };
     }
 
-    // Get access token from Haiilo
+    // Option 1: Use OAuth2 client credentials to get access token and fetch users (default)
     const tokenRes = await axios.post(
       tokenUrl,
       new URLSearchParams({
@@ -68,14 +68,10 @@ exports.handler = async function (event) {
       }),
       { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
     );
-
     const haiiloAccessToken = tokenRes.data.access_token;
-
-    // Fetch users from Haiilo API
     const usersRes = await axios.get(usersApiUrl, {
       headers: { Authorization: `Bearer ${haiiloAccessToken}` },
     });
-
     return {
       statusCode: 200,
       headers: {
@@ -84,6 +80,24 @@ exports.handler = async function (event) {
       },
       body: JSON.stringify(usersRes.data),
     };
+
+    if (token) {
+      const haiiloRes = await axios.get(usersApiUrl, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Accept': 'application/json',
+        },
+      });
+      return {
+        statusCode: 200,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(haiiloRes.data),
+      };
+    }
+    
   } catch (err) {
     console.error('Backend error:', err.response?.data || err.message);
     return {
