@@ -42,6 +42,7 @@ exports.handler = async function (event) {
   }
 
   try {
+    console.log('[get-users] Starting user fetch');
     // Load credentials from environment variables
     const clientId = process.env.CLIENT_ID;
     const clientSecret = process.env.CLIENT_SECRET;
@@ -50,7 +51,10 @@ exports.handler = async function (event) {
     const tokenUrl = `${apiBaseUrl}/auth/realms/coyo/protocol/openid-connect/token`;
     const usersApiUrl = `${apiBaseUrl}/api/users?page=0&size=10`;
 
+    console.log('[get-users] Using tokenUrl:', tokenUrl);
+    console.log('[get-users] Using usersApiUrl:', usersApiUrl);
     if (!clientId || !clientSecret) {
+      console.error('[get-users] Missing CLIENT_ID or CLIENT_SECRET');
       return {
         statusCode: 500,
         body: JSON.stringify({ error: 'Missing CLIENT_ID or CLIENT_SECRET in environment variables.' }),
@@ -58,6 +62,7 @@ exports.handler = async function (event) {
     }
 
     // Option 1: Use OAuth2 client credentials to get access token and fetch users (default)
+    console.log('[get-users] Requesting Haiilo access token...');
     const tokenRes = await axios.post(
       tokenUrl,
       new URLSearchParams({
@@ -68,10 +73,13 @@ exports.handler = async function (event) {
       }),
       { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
     );
+    console.log('[get-users] Received Haiilo access token');
     const haiiloAccessToken = tokenRes.data.access_token;
+    console.log('[get-users] Fetching users from Haiilo API...');
     const usersRes = await axios.get(usersApiUrl, {
       headers: { Authorization: `Bearer ${haiiloAccessToken}` },
     });
+    console.log('[get-users] Users fetch successful, count:', Array.isArray(usersRes.data) ? usersRes.data.length : (usersRes.data?.content?.length || 0));
     return {
       statusCode: 200,
       headers: {
@@ -81,13 +89,18 @@ exports.handler = async function (event) {
       body: JSON.stringify(usersRes.data),
     };
 
+    // Option 2: If a valid Authorization token is provided, proxy the request using it
+    // (Uncomment below to enable this logic)
+    /*
     if (token) {
+      console.log('[get-users] Proxying with provided token');
       const haiiloRes = await axios.get(usersApiUrl, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Accept': 'application/json',
         },
       });
+      console.log('[get-users] Proxy fetch successful, count:', Array.isArray(haiiloRes.data) ? haiiloRes.data.length : (haiiloRes.data?.content?.length || 0));
       return {
         statusCode: 200,
         headers: {
@@ -97,9 +110,15 @@ exports.handler = async function (event) {
         body: JSON.stringify(haiiloRes.data),
       };
     }
-    
+    */
   } catch (err) {
-    console.error('Backend error:', err.response?.data || err.message);
+    console.error('[get-users] Backend error:', err.response?.data || err.message);
+    if (err.response) {
+      console.error('[get-users] Error response headers:', err.response.headers);
+      console.error('[get-users] Error response data:', err.response.data);
+      console.error('[get-users] Error response status:', err.response.status);
+      console.error('[get-users] Error response config:', err.response.config);
+    }
     return {
       statusCode: 500,
       headers: {
