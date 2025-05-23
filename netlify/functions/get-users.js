@@ -1,7 +1,9 @@
+const axios = require('axios');
+
 // This function must be called from your frontend as: /.netlify/functions/get-users
 // with the Authorization header set to the Haiilo JWT token.
 
-export const handler = async (event) => {
+exports.handler = async function (event) {
   // Handle CORS preflight
   if (event.httpMethod === 'OPTIONS') {
     return {
@@ -40,32 +42,56 @@ export const handler = async (event) => {
   }
 
   try {
-    // Server-side fetch to Haiilo API (no CORS issue here)
-    const fetch = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
-    const response = await fetch('https://asioso.coyocloud.com/api/users', {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
+    // Load credentials from environment variables
+    const clientId = process.env.CLIENT_ID;
+    const clientSecret = process.env.CLIENT_SECRET;
+    const scope = process.env.SCOPE || 'plugin:notify';
+    const apiBaseUrl = process.env.API_BASE_URL || 'https://asioso.coyocloud.com';
+    const tokenUrl = `${apiBaseUrl}/auth/realms/coyo/protocol/openid-connect/token`;
+    const usersApiUrl = `${apiBaseUrl}/api/users?page=0&size=10`;
+
+    if (!clientId || !clientSecret) {
+      return {
+        statusCode: 500,
+        body: JSON.stringify({ error: 'Missing CLIENT_ID or CLIENT_SECRET in environment variables.' }),
+      };
+    }
+
+    // Get access token from Haiilo
+    const tokenRes = await axios.post(
+      tokenUrl,
+      new URLSearchParams({
+        grant_type: 'client_credentials',
+        client_id: clientId,
+        client_secret: clientSecret,
+        scope,
+      }),
+      { headers: { 'Content-Type': 'application/x-www-form-urlencoded' } }
+    );
+
+    const haiiloAccessToken = tokenRes.data.access_token;
+
+    // Fetch users from Haiilo API
+    const usersRes = await axios.get(usersApiUrl, {
+      headers: { Authorization: `Bearer ${haiiloAccessToken}` },
     });
 
-    const data = await response.text();
-
     return {
-      statusCode: response.status,
+      statusCode: 200,
       headers: {
         'Access-Control-Allow-Origin': '*',
         'Content-Type': 'application/json',
       },
-      body: data,
+      body: JSON.stringify(usersRes.data),
     };
   } catch (err) {
+    console.error('Backend error:', err.response?.data || err.message);
     return {
       statusCode: 500,
       headers: {
         'Access-Control-Allow-Origin': '*',
       },
-      body: JSON.stringify({ error: 'Failed to fetch users', details: err.message }),
+      body: JSON.stringify({ error: err.message, details: err.response?.data }),
     };
   }
 };
