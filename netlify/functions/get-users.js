@@ -1,3 +1,5 @@
+const fs = require('fs');
+const path = require('path');
 const axios = require('axios');
 
 // This function must be called from your frontend as: /.netlify/functions/get-users
@@ -27,18 +29,18 @@ exports.handler = async function (event) {
 
   try {
     console.log('[get-users] Starting user fetch');
-    // Load the access token from environment or secure storage
-    const haiiloAccessToken = process.env.HAIILO_ACCESS_TOKEN;
-    const apiBaseUrl = process.env.API_BASE_URL || 'https://asioso.coyocloud.com';
-    const usersApiUrl = `${apiBaseUrl}/api/users?page=0&size=10`;
-
-    if (!haiiloAccessToken) {
-      console.error('[get-users] Missing HAIILO_ACCESS_TOKEN. Complete the OAuth2 webhook flow first.');
+    // TEMP: Read token from file
+    const tokenPath = path.join('/tmp', 'haiilo-token.txt');
+    if (!fs.existsSync(tokenPath)) {
       return {
         statusCode: 500,
-        body: JSON.stringify({ error: 'Missing Haiilo access token. Complete the OAuth2 webhook flow first.' }),
+        body: JSON.stringify({ error: 'Access token not available yet.' }),
       };
     }
+
+    const haiiloAccessToken = fs.readFileSync(tokenPath, 'utf-8');
+    const apiBaseUrl = process.env.API_BASE_URL || 'https://asioso.coyocloud.com';
+    const usersApiUrl = `${apiBaseUrl}/api/users?page=0&size=10`;
 
     console.log('[get-users] Fetching users from Haiilo API...');
     const usersRes = await axios.get(usersApiUrl, {
