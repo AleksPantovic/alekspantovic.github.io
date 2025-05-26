@@ -1,11 +1,9 @@
 // Netlify Function: exchange-token.js
 // Receives the Haiilo plugin init token, exchanges it for a backend API token (if Haiilo provides such an endpoint), and returns it.
 
-const fs = require('fs');
-const path = require('path');
-const axios = require('axios'); // Add axios for HTTP requests
+const axios = require('axios');
 
-export const handler = async (event) => {
+exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') {
     return {
       statusCode: 204,
@@ -28,51 +26,44 @@ export const handler = async (event) => {
     };
   }
 
-  const authHeader = event.headers['authorization'] || '';
-  const initToken = authHeader.replace('Bearer ', '');
-
-  if (!initToken) {
-    return {
-      statusCode: 401,
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-      },
-      body: 'Missing init token',
-    };
-  }
-
   try {
-    // Extract client credentials from environment variables
-    const clientId = process.env.HAIILO_CLIENT_ID;
-    const clientSecret = process.env.HAIILO_CLIENT_SECRET;
+    const { initToken } = JSON.parse(event.body);
 
-    if (!clientId || !clientSecret) {
+    if (!initToken) {
+      return {
+        statusCode: 400,
+        headers: {
+          'Access-Control-Allow-Origin': '*',
+        },
+        body: JSON.stringify({ error: 'Missing initToken' }),
+      };
+    }
+
+    // Hypothetical Haiilo endpoint for token exchange
+    const haiiloTokenExchangeUrl = 'https://asioso.coyocloud.com/api/oauth/token/exchange';
+
+    const response = await axios.post(
+      haiiloTokenExchangeUrl,
+      {}, // Adjust body if required by the API
+      {
+        headers: {
+          Authorization: `Bearer ${initToken}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    const sessionToken = response.data.access_token;
+
+    if (!sessionToken) {
       return {
         statusCode: 500,
         headers: {
           'Access-Control-Allow-Origin': '*',
         },
-        body: 'Missing client credentials',
+        body: JSON.stringify({ error: 'No session token returned' }),
       };
     }
-
-    // Exchange the init token for an access token
-    const tokenResponse = await axios.post(
-      'https://your-haiilo-instance.com/api/oauth/token',
-      new URLSearchParams({
-        grant_type: 'password',
-        username: 'test@haiilo.com', // Replace with dynamic username if needed
-        password: 'secret', // Replace with dynamic password if needed
-      }),
-      {
-        headers: {
-          Authorization: `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString('base64')}`,
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-      }
-    );
-
-    const { access_token } = tokenResponse.data;
 
     return {
       statusCode: 200,
@@ -80,15 +71,19 @@ export const handler = async (event) => {
         'Access-Control-Allow-Origin': '*',
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ accessToken: access_token }),
+      body: JSON.stringify({ sessionToken }),
     };
   } catch (error) {
+    console.error('Token exchange failed:', error.response?.data || error.message);
     return {
-      statusCode: 500,
+      statusCode: error.response?.status || 500,
       headers: {
         'Access-Control-Allow-Origin': '*',
       },
-      body: JSON.stringify({ error: 'Failed to exchange token', details: error.message }),
+      body: JSON.stringify({
+        error: 'Token exchange failed',
+        details: error.response?.data || error.message,
+      }),
     };
   }
 };
