@@ -39,6 +39,8 @@ exports.handler = async (event) => {
       };
     }
 
+    console.log('[exchange-token.js] Received initToken:', initToken);
+
     // Hypothetical Haiilo endpoint for token exchange
     const haiiloTokenExchangeUrl = 'https://asioso.coyocloud.com/api/oauth/token/exchange';
 
@@ -56,6 +58,7 @@ exports.handler = async (event) => {
     const sessionToken = response.data.access_token;
 
     if (!sessionToken) {
+      console.error('[exchange-token.js] No session token returned from Haiilo API');
       return {
         statusCode: 500,
         headers: {
@@ -64,6 +67,8 @@ exports.handler = async (event) => {
         body: JSON.stringify({ error: 'No session token returned' }),
       };
     }
+
+    console.log('[exchange-token.js] Successfully exchanged token. Session Token:', sessionToken);
 
     return {
       statusCode: 200,
@@ -74,7 +79,7 @@ exports.handler = async (event) => {
       body: JSON.stringify({ sessionToken }),
     };
   } catch (error) {
-    console.error('Token exchange failed:', error.response?.data || error.message);
+    console.error('[exchange-token.js] Token exchange failed:', error.response?.data || error.message);
     return {
       statusCode: error.response?.status || 500,
       headers: {
