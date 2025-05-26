@@ -1,6 +1,6 @@
 class PatchedPluginAdapter extends PluginAdapter {
   /**
-   * Fetch the Haiilo session token via the OAuth flow.
+   * Fetch the Haiilo session token via your Netlify backend proxy (exchange-token).
    */
   async getSessionToken() {
     // Ensure adapter is initialized to have the init token
@@ -12,30 +12,29 @@ class PatchedPluginAdapter extends PluginAdapter {
 
     console.log('[PatchedPluginAdapter] Init Token:', initToken);
 
-    // Exchange initToken for access token
-    const tokenResponse = await fetch('https://asioso.coyocloud.com/api/oauth/token', {
+    // Call the Netlify function to exchange the init token for a session token
+    const response = await fetch('/.netlify/functions/exchange-token', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        Authorization: `Basic ${btoa('clientId:clientSecret')}`, // Replace with actual clientId and clientSecret
+        'Content-Type': 'application/json',
       },
-      body: new URLSearchParams({
-        grant_type: 'password',
-        username: 'test@haiilo.com', // Replace with actual username
-        password: 'secret', // Replace with actual password
-      }),
+      body: JSON.stringify({ initToken }),
     });
 
-    if (!tokenResponse.ok) {
-      const errorBody = await tokenResponse.text();
-      console.error('[PatchedPluginAdapter] Error fetching access token:', tokenResponse.status, errorBody);
-      throw new Error(`Failed to fetch access token: ${errorBody}`);
+    if (!response.ok) {
+      const errorBody = await response.text();
+      console.error('[PatchedPluginAdapter] Error from exchange-token:', response.status, errorBody);
+      throw new Error(`Failed to exchange token: ${errorBody}`);
     }
 
-    const { access_token } = await tokenResponse.json();
-    console.log('[PatchedPluginAdapter] Access Token:', access_token);
+    const { sessionToken } = await response.json();
+    console.log('[PatchedPluginAdapter] Session Token obtained from exchange-token.js:', sessionToken);
 
-    return access_token;
+    if (!sessionToken) {
+      throw new Error('[PatchedPluginAdapter] No session token returned from exchange-token.js');
+    }
+
+    return sessionToken;
   }
 
   /**
