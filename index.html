@@ -20,7 +20,33 @@
         return;
       }
 
-      console.log('[PluginAdapter] Init Token obtained:', initResponse.token);
+      const initToken = initResponse.token;
+      console.log('[PluginAdapter] Init Token obtained:', initToken);
+
+      // Call the exchange-token Netlify function
+      try {
+        const exchangeResponse = await fetch('/.netlify/functions/exchange-token', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ initToken }),
+        });
+
+        if (!exchangeResponse.ok) {
+          console.error('[index.html] Failed to exchange token:', exchangeResponse.status);
+          return;
+        }
+
+        const { sessionToken } = await exchangeResponse.json();
+        console.log('[index.html] Session Token obtained from exchange-token.js:', sessionToken);
+
+        if (!sessionToken) {
+          console.error('[index.html] No session token returned from exchange-token.js');
+        }
+      } catch (error) {
+        console.error('[index.html] Error calling exchange-token.js:', error);
+      }
 
       // --- Workaround: fetch and eval pluginAdapter.js ---
       try {
