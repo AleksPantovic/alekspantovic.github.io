@@ -3,6 +3,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const axios = require('axios'); // Add axios for HTTP requests
 
 export const handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') {
@@ -41,34 +42,45 @@ export const handler = async (event) => {
   }
 
   try {
-    // There is no public Haiilo token exchange endpoint available at
-    // /web/authorization/token/exchange (404 Not Found).
-    // You cannot exchange the plugin init token for a backend API token automatically.
+    // Extract client credentials from environment variables
+    const clientId = process.env.HAIILO_CLIENT_ID;
+    const clientSecret = process.env.HAIILO_CLIENT_SECRET;
 
-    // For now, you can only echo back the init token (not recommended for production).
-    // If Haiilo provides a real token exchange endpoint in the future, update here.
-
-    // Try to return a real OAuth token if available
-    const storedTokenPath = path.join('/tmp', 'haiilo-token.txt');
-    if (fs.existsSync(storedTokenPath)) {
-      const realToken = fs.readFileSync(storedTokenPath, 'utf-8');
+    if (!clientId || !clientSecret) {
       return {
-        statusCode: 200,
+        statusCode: 500,
         headers: {
           'Access-Control-Allow-Origin': '*',
-          'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ accessToken: realToken })
+        body: 'Missing client credentials',
       };
     }
+
+    // Exchange the init token for an access token
+    const tokenResponse = await axios.post(
+      'https://your-haiilo-instance.com/api/oauth/token',
+      new URLSearchParams({
+        grant_type: 'password',
+        username: 'test@haiilo.com', // Replace with dynamic username if needed
+        password: 'secret', // Replace with dynamic password if needed
+      }),
+      {
+        headers: {
+          Authorization: `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString('base64')}`,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      }
+    );
+
+    const { access_token } = tokenResponse.data;
 
     return {
       statusCode: 200,
       headers: {
         'Access-Control-Allow-Origin': '*',
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ accessToken: initToken })
+      body: JSON.stringify({ accessToken: access_token }),
     };
   } catch (error) {
     return {
