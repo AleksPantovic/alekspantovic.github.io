@@ -27,7 +27,10 @@ class PatchedPluginAdapter extends PluginAdapter {
       throw new Error(`Failed to exchange token: ${errorBody}`);
     }
 
-    const { sessionToken } = await response.json();
+    const responseData = await response.json();
+    console.log('[PatchedPluginAdapter] Full Response from exchange-token.js:', responseData);
+
+    const { sessionToken } = responseData;
     console.log('[PatchedPluginAdapter] Session Token obtained from exchange-token.js:', sessionToken);
 
     if (!sessionToken) {
