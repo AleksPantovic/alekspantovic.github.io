@@ -1,0 +1,11 @@
+{
+  "version": "1.0",
+  "apis": [
+    {
+      "identifier": "coyo",
+      "source": "@coyo/v45.0#3jq2ylnu6kfsm",
+      "integrity": "sha512-u5E2HP51iDD39PuVC5G1YMgMpXK3EbX+5fqmaUmjQmMoalNhxI2vpdVWdCF0DXT9wBKA+PIhTVFaWif+OHO4ig==",
+      "installerVersion": "6.1.3"
+    }
+  ]
+}

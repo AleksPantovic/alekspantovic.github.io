@@ -1,0 +1,1223 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Haiilo Plug-in life cycle events webhook API",
+    "description": "A plug-in needs to implement this API to be able to receive life cycle events",
+    "contact": {
+      "name": "Haiilo Plug-in developer hub",
+      "url": "https://dev.coyoapp.com/"
+    },
+    "version": "1.1.0"
+  },
+  "servers": [
+    {
+      "url": "https://yourplugin.yourcompany.test"
+    }
+  ],
+  "paths": {
+    "/install": {
+      "post": {
+        "summary": "Life cycle event 'install'",
+        "description": "This event is sent when a Haiilo admin wants to install the plug-in",
+        "operationId": "install",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "format": "jwt",
+                "properties": {
+                  "token": {
+                    "description": "An encoded JWT token [RFC 7519] where the payload holds the event data. The token is signed.",
+                    "type": "object",
+                    "properties": {
+                      "header": {
+                        "description": "JWT header (JOSE compliant, see RFC 7515 section 4)",
+                        "type": "object",
+                        "properties": {
+                          "typ": {
+                            "description": "Content type, always 'JWT'",
+                            "type": "string",
+                            "enum": [
+                              "JWT"
+                            ]
+                          },
+                          "alg": {
+                            "description": "JWT signature algorithm.",
+                            "type": "string",
+                            "enum": [
+                              "NONE",
+                              "RS256",
+                              "RS368",
+                              "RS512"
+                            ]
+                          },
+                          "jku": {
+                            "description": "Link to public key that SHOULD be used to verify the token signature. The plug-in MUST verify that the URL leads to a trusted source.",
+                            "type": "string",
+                            "format": "uri",
+                            "pattern": "^https:\\/\\/[a-z0-9.-]+\\.(coyoapp\\.com|haiilo\\.com)\\/.*"
+                          }
+                        },
+                        "required": [
+                          "typ",
+                          "alg",
+                          "jku"
+                        ],
+                        "example": {
+                          "typ": "JWT",
+                          "alg": "RS512",
+                          "jku": "https://plugins.coyoapp.com/certificate/coyocloud.com_new.jwk.json"
+                        }
+                      },
+                      "payload": {
+                        "allOf": [
+                          {
+                            "description": "JWT payload",
+                            "type": "object",
+                            "properties": {
+                              "jti": {
+                                "description": "Token identifier",
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "iss": {
+                                "description": "The URL of the Haiilo tenant",
+                                "type": "string",
+                                "format": "url"
+                              },
+                              "iat": {
+                                "description": "Event creation time as a 'seconds since epoch' timestamp [RFC 3339]",
+                                "type": "integer"
+                              },
+                              "exp": {
+                                "description": "The token expiration time as a 'seconds since epoch' timestamp [RFC 3339]",
+                                "type": "integer"
+                              },
+                              "tenantId": {
+                                "description": "The ID of the Haiilo tenant",
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "pluginId": {
+                                "description": "The plug-in installation id. The plug-in should use a combination of the installation id and the tenantId or issuer url as a unique id to identify the installation.",
+                                "type": "string",
+                                "format": "uuid"
+                              }
+                            },
+                            "required": [
+                              "iss",
+                              "iat",
+                              "exp",
+                              "tenantId",
+                              "pluginId"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "sub": {
+                                "description": "Event action id, always 'install' for an install event",
+                                "type": "string",
+                                "enum": [
+                                  "install"
+                                ]
+                              },
+                              "certificate": {
+                                "description": "The certificate that is used to sign the JWT token and all following data tokens. The format is a one-liner PEM without the boundaries. As of version 1.1.0 this field is marked as deprecated and will be removed with the next major update. Instead the certificate information in the header MUST be used.",
+                                "deprecated": true,
+                                "type": "string",
+                                "format": "byte"
+                              }
+                            },
+                            "required": [
+                              "sub",
+                              "certificate"
+                            ]
+                          }
+                        ],
+                        "example": {
+                          "jti": "d9a87adb-b35e-4dc0-a9fd-c6ddd73de15d",
+                          "sub": "install",
+                          "iss": "https://example.coyocloud.com",
+                          "iat": 1599841260,
+                          "exp": 1599841320,
+                          "tenantId": "ffbf66a4-45f2-4681-92fc-c1925822fcac",
+                          "pluginId": "ad39450c-859f-429a-b63d-c8b85f42d25a",
+                          "certificate": "MIIGBzCCA++gAwIBAgIUcF+GTcGXAqi......GMnSAdHnB4BzuOI="
+                        }
+                      },
+                      "signature": {
+                        "description": "JWT signature",
+                        "type": "string",
+                        "format": "byte",
+                        "example": "LqbrY4NOlXdz08.....UKNNrRg"
+                      }
+                    },
+                    "required": [
+                      "header",
+                      "payload",
+                      "signature"
+                    ]
+                  }
+                },
+                "required": [
+                  "token"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "The plug-in accepted the installation."
+          },
+          "400": {
+            "description": "The plug-in encountered an error while installing.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "description": "Printable error message in English",
+                          "type": "string",
+                          "maxLength": 200
+                        }
+                      },
+                      "required": [
+                        "message"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "integer",
+                          "minimum": 100,
+                          "maximum": 599,
+                          "enum": [
+                            100,
+                            400,
+                            401,
+                            402,
+                            500
+                          ]
+                        }
+                      },
+                      "required": [
+                        "code"
+                      ]
+                    }
+                  ],
+                  "example": {
+                    "code": 100,
+                    "message": "Plug-in is already installed"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/uninstall": {
+      "post": {
+        "summary": "Life cycle event 'uninstall'",
+        "description": "This event is sent when a Haiilo admin wants to uninstall the plug-in",
+        "operationId": "uninstall",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "format": "jwt",
+                "properties": {
+                  "token": {
+                    "description": "An encoded JWT token [RFC 7519] where the payload holds the event data. The token is signed.",
+                    "type": "object",
+                    "properties": {
+                      "header": {
+                        "description": "JWT header (JOSE compliant, see RFC 7515 section 4)",
+                        "type": "object",
+                        "properties": {
+                          "typ": {
+                            "description": "Content type, always 'JWT'",
+                            "type": "string",
+                            "enum": [
+                              "JWT"
+                            ]
+                          },
+                          "alg": {
+                            "description": "JWT signature algorithm.",
+                            "type": "string",
+                            "enum": [
+                              "NONE",
+                              "RS256",
+                              "RS368",
+                              "RS512"
+                            ]
+                          },
+                          "jku": {
+                            "description": "Link to public key that SHOULD be used to verify the token signature. The plug-in MUST verify that the URL leads to a trusted source.",
+                            "type": "string",
+                            "format": "uri",
+                            "pattern": "^https:\\/\\/[a-z0-9.-]+\\.(coyoapp\\.com|haiilo\\.com)\\/.*"
+                          }
+                        },
+                        "required": [
+                          "typ",
+                          "alg",
+                          "jku"
+                        ],
+                        "example": {
+                          "typ": "JWT",
+                          "alg": "RS512",
+                          "jku": "https://plugins.coyoapp.com/certificate/coyocloud.com_new.jwk.json"
+                        }
+                      },
+                      "payload": {
+                        "allOf": [
+                          {
+                            "description": "JWT payload",
+                            "type": "object",
+                            "properties": {
+                              "jti": {
+                                "description": "Token identifier",
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "iss": {
+                                "description": "The URL of the Haiilo tenant",
+                                "type": "string",
+                                "format": "url"
+                              },
+                              "iat": {
+                                "description": "Event creation time as a 'seconds since epoch' timestamp [RFC 3339]",
+                                "type": "integer"
+                              },
+                              "exp": {
+                                "description": "The token expiration time as a 'seconds since epoch' timestamp [RFC 3339]",
+                                "type": "integer"
+                              },
+                              "tenantId": {
+                                "description": "The ID of the Haiilo tenant",
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "pluginId": {
+                                "description": "The plug-in installation id. The plug-in should use a combination of the installation id and the tenantId or issuer url as a unique id to identify the installation.",
+                                "type": "string",
+                                "format": "uuid"
+                              }
+                            },
+                            "required": [
+                              "iss",
+                              "iat",
+                              "exp",
+                              "tenantId",
+                              "pluginId"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "sub": {
+                                "description": "Event action id, always 'uninstall' for an uninstall event",
+                                "type": "string",
+                                "enum": [
+                                  "uninstall"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "sub"
+                            ]
+                          }
+                        ],
+                        "example": {
+                          "jti": "d9a87adb-b35e-4dc0-a9fd-c6ddd73de15d",
+                          "sub": "uninstall",
+                          "iss": "https://example.coyocloud.com",
+                          "iat": 1599841260,
+                          "exp": 1599841320,
+                          "tenantId": "ffbf66a4-45f2-4681-92fc-c1925822fcac",
+                          "pluginId": "ad39450c-859f-429a-b63d-c8b85f42d25a"
+                        }
+                      },
+                      "signature": {
+                        "description": "JWT signature",
+                        "type": "string",
+                        "format": "byte",
+                        "example": "LqbrY4NOlXdz08.....UKNNrRg"
+                      }
+                    },
+                    "required": [
+                      "header",
+                      "payload",
+                      "signature"
+                    ]
+                  }
+                },
+                "required": [
+                  "token"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "The plug-in accepted the uninstall."
+          },
+          "400": {
+            "description": "The plug-in encountered an error while uninstalling.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "description": "Printable error message in English",
+                          "type": "string",
+                          "maxLength": 200
+                        }
+                      },
+                      "required": [
+                        "message"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "integer",
+                          "minimum": 100,
+                          "maximum": 599,
+                          "enum": [
+                            400,
+                            401,
+                            402,
+                            500
+                          ]
+                        }
+                      },
+                      "required": [
+                        "code"
+                      ]
+                    }
+                  ],
+                  "example": {
+                    "code": 500,
+                    "message": "Internal Plug-in error"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/instance_add": {
+      "post": {
+        "summary": "Life cycle event 'instance_add'",
+        "description": "This event is sent when a Haiilo editor wants to add a plug-in instance",
+        "operationId": "instance_add",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "format": "jwt",
+                "properties": {
+                  "token": {
+                    "description": "An encoded JWT token [RFC 7519] where the payload holds the event data. The token is signed.",
+                    "type": "object",
+                    "properties": {
+                      "header": {
+                        "description": "JWT header (JOSE compliant, see RFC 7515 section 4)",
+                        "type": "object",
+                        "properties": {
+                          "typ": {
+                            "description": "Content type, always 'JWT'",
+                            "type": "string",
+                            "enum": [
+                              "JWT"
+                            ]
+                          },
+                          "alg": {
+                            "description": "JWT signature algorithm.",
+                            "type": "string",
+                            "enum": [
+                              "NONE",
+                              "RS256",
+                              "RS368",
+                              "RS512"
+                            ]
+                          },
+                          "jku": {
+                            "description": "Link to public key that SHOULD be used to verify the token signature. The plug-in MUST verify that the URL leads to a trusted source.",
+                            "type": "string",
+                            "format": "uri",
+                            "pattern": "^https:\\/\\/[a-z0-9.-]+\\.(coyoapp\\.com|haiilo\\.com)\\/.*"
+                          }
+                        },
+                        "required": [
+                          "typ",
+                          "alg",
+                          "jku"
+                        ],
+                        "example": {
+                          "typ": "JWT",
+                          "alg": "RS512",
+                          "jku": "https://plugins.coyoapp.com/certificate/coyocloud.com_new.jwk.json"
+                        }
+                      },
+                      "payload": {
+                        "allOf": [
+                          {
+                            "description": "JWT payload",
+                            "type": "object",
+                            "properties": {
+                              "jti": {
+                                "description": "Token identifier",
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "iss": {
+                                "description": "The URL of the Haiilo tenant",
+                                "type": "string",
+                                "format": "url"
+                              },
+                              "iat": {
+                                "description": "Event creation time as a 'seconds since epoch' timestamp [RFC 3339]",
+                                "type": "integer"
+                              },
+                              "exp": {
+                                "description": "The token expiration time as a 'seconds since epoch' timestamp [RFC 3339]",
+                                "type": "integer"
+                              },
+                              "tenantId": {
+                                "description": "The ID of the Haiilo tenant",
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "pluginId": {
+                                "description": "The plug-in installation id. The plug-in should use a combination of the installation id and the tenantId or issuer url as a unique id to identify the installation.",
+                                "type": "string",
+                                "format": "uuid"
+                              }
+                            },
+                            "required": [
+                              "iss",
+                              "iat",
+                              "exp",
+                              "tenantId",
+                              "pluginId"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "sub": {
+                                "description": "Event action id, always 'instance_add' for an instance add event",
+                                "type": "string",
+                                "enum": [
+                                  "instance_add"
+                                ]
+                              },
+                              "instanceId": {
+                                "description": "Unique instance id",
+                                "type": "string",
+                                "format": "uuid"
+                              }
+                            },
+                            "required": [
+                              "sub",
+                              "instanceId"
+                            ]
+                          }
+                        ],
+                        "example": {
+                          "jti": "d9a87adb-b35e-4dc0-a9fd-c6ddd73de15d",
+                          "sub": "instance_add",
+                          "iss": "https://example.coyocloud.com",
+                          "iat": 1599841260,
+                          "exp": 1599841320,
+                          "tenantId": "ffbf66a4-45f2-4681-92fc-c1925822fcac",
+                          "pluginId": "ad39450c-859f-429a-b63d-c8b85f42d25a",
+                          "instanceId": "4f4d6469-9851-4d8e-82d4-b87dc8b7de19"
+                        }
+                      },
+                      "signature": {
+                        "description": "JWT signature",
+                        "type": "string",
+                        "format": "byte",
+                        "example": "LqbrY4NOlXdz08.....UKNNrRg"
+                      }
+                    },
+                    "required": [
+                      "header",
+                      "payload",
+                      "signature"
+                    ]
+                  }
+                },
+                "required": [
+                  "token"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "The plug-in accepts the addition of the instance."
+          },
+          "400": {
+            "description": "The plug-in encountered an error while adding an instance.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "description": "Printable error message in English",
+                          "type": "string",
+                          "maxLength": 200
+                        }
+                      },
+                      "required": [
+                        "message"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "integer",
+                          "minimum": 100,
+                          "maximum": 599,
+                          "enum": [
+                            400,
+                            401,
+                            402,
+                            500
+                          ]
+                        }
+                      },
+                      "required": [
+                        "code"
+                      ]
+                    }
+                  ],
+                  "example": {
+                    "code": 500,
+                    "message": "Internal Plug-in error"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/instance_remove": {
+      "post": {
+        "summary": "Life cycle event 'instance_remove'",
+        "description": "This event is sent when a Haiilo editor wants to remove a plug-in instance",
+        "operationId": "instance_remove",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "format": "jwt",
+                "properties": {
+                  "token": {
+                    "description": "An encoded JWT token [RFC 7519] where the payload holds the event data. The token is signed.",
+                    "type": "object",
+                    "properties": {
+                      "header": {
+                        "description": "JWT header (JOSE compliant, see RFC 7515 section 4)",
+                        "type": "object",
+                        "properties": {
+                          "typ": {
+                            "description": "Content type, always 'JWT'",
+                            "type": "string",
+                            "enum": [
+                              "JWT"
+                            ]
+                          },
+                          "alg": {
+                            "description": "JWT signature algorithm.",
+                            "type": "string",
+                            "enum": [
+                              "NONE",
+                              "RS256",
+                              "RS368",
+                              "RS512"
+                            ]
+                          },
+                          "jku": {
+                            "description": "Link to public key that SHOULD be used to verify the token signature. The plug-in MUST verify that the URL leads to a trusted source.",
+                            "type": "string",
+                            "format": "uri",
+                            "pattern": "^https:\\/\\/[a-z0-9.-]+\\.(coyoapp\\.com|haiilo\\.com)\\/.*"
+                          }
+                        },
+                        "required": [
+                          "typ",
+                          "alg",
+                          "jku"
+                        ],
+                        "example": {
+                          "typ": "JWT",
+                          "alg": "RS512",
+                          "jku": "https://plugins.coyoapp.com/certificate/coyocloud.com_new.jwk.json"
+                        }
+                      },
+                      "payload": {
+                        "allOf": [
+                          {
+                            "description": "JWT payload",
+                            "type": "object",
+                            "properties": {
+                              "jti": {
+                                "description": "Token identifier",
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "iss": {
+                                "description": "The URL of the Haiilo tenant",
+                                "type": "string",
+                                "format": "url"
+                              },
+                              "iat": {
+                                "description": "Event creation time as a 'seconds since epoch' timestamp [RFC 3339]",
+                                "type": "integer"
+                              },
+                              "exp": {
+                                "description": "The token expiration time as a 'seconds since epoch' timestamp [RFC 3339]",
+                                "type": "integer"
+                              },
+                              "tenantId": {
+                                "description": "The ID of the Haiilo tenant",
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "pluginId": {
+                                "description": "The plug-in installation id. The plug-in should use a combination of the installation id and the tenantId or issuer url as a unique id to identify the installation.",
+                                "type": "string",
+                                "format": "uuid"
+                              }
+                            },
+                            "required": [
+                              "iss",
+                              "iat",
+                              "exp",
+                              "tenantId",
+                              "pluginId"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "sub": {
+                                "description": "Event action id, always 'instance_remove' for an instance remove event",
+                                "type": "string",
+                                "enum": [
+                                  "instance_remove"
+                                ]
+                              },
+                              "instanceId": {
+                                "description": "Unique instance id",
+                                "type": "string",
+                                "format": "uuid"
+                              }
+                            },
+                            "required": [
+                              "sub",
+                              "instanceId"
+                            ]
+                          }
+                        ],
+                        "example": {
+                          "jti": "d9a87adb-b35e-4dc0-a9fd-c6ddd73de15d",
+                          "sub": "instance_remove",
+                          "iss": "https://example.coyocloud.com",
+                          "iat": 1599841260,
+                          "exp": 1599841320,
+                          "tenantId": "ffbf66a4-45f2-4681-92fc-c1925822fcac",
+                          "pluginId": "ad39450c-859f-429a-b63d-c8b85f42d25a",
+                          "instanceId": "4f4d6469-9851-4d8e-82d4-b87dc8b7de19"
+                        }
+                      },
+                      "signature": {
+                        "description": "JWT signature",
+                        "type": "string",
+                        "format": "byte",
+                        "example": "LqbrY4NOlXdz08.....UKNNrRg"
+                      }
+                    },
+                    "required": [
+                      "header",
+                      "payload",
+                      "signature"
+                    ]
+                  }
+                },
+                "required": [
+                  "token"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "The plug-in accepts the removal of the instance."
+          },
+          "400": {
+            "description": "The plug-in encountered an error while removing an instance.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "description": "Printable error message in English",
+                          "type": "string",
+                          "maxLength": 200
+                        }
+                      },
+                      "required": [
+                        "message"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "integer",
+                          "minimum": 100,
+                          "maximum": 599,
+                          "enum": [
+                            400,
+                            401,
+                            402,
+                            500
+                          ]
+                        }
+                      },
+                      "required": [
+                        "code"
+                      ]
+                    }
+                  ],
+                  "example": {
+                    "code": 500,
+                    "message": "Internal Plug-in error"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/access_token": {
+      "post": {
+        "summary": "API access token event 'access_token'",
+        "description": "This event will be sent after installation if the manifest requested to receive a Haiilo API access token",
+        "operationId": "access_token",
+        "requestBody": {
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "token": {
+                    "description": "An encoded JWT token [RFC 7519] where the payload holds the event data. The token is signed.",
+                    "type": "object",
+                    "properties": {
+                      "header": {
+                        "description": "JWT header (JOSE compliant, see RFC 7515 section 4)",
+                        "type": "object",
+                        "properties": {
+                          "typ": {
+                            "description": "Content type, always 'JWT'",
+                            "type": "string",
+                            "enum": [
+                              "JWT"
+                            ]
+                          },
+                          "alg": {
+                            "description": "JWT signature algorithm.",
+                            "type": "string",
+                            "enum": [
+                              "NONE",
+                              "RS256",
+                              "RS368",
+                              "RS512"
+                            ]
+                          },
+                          "jku": {
+                            "description": "Link to public key that SHOULD be used to verify the token signature. The plug-in MUST verify that the URL leads to a trusted source.",
+                            "type": "string",
+                            "format": "uri",
+                            "pattern": "^https:\\/\\/[a-z0-9.-]+\\.(coyoapp\\.com|haiilo\\.com)\\/.*"
+                          }
+                        },
+                        "required": [
+                          "typ",
+                          "alg",
+                          "jku"
+                        ],
+                        "example": {
+                          "typ": "JWT",
+                          "alg": "RS512",
+                          "jku": "https://plugins.coyoapp.com/certificate/coyocloud.com_new.jwk.json"
+                        }
+                      },
+                      "payload": {
+                        "allOf": [
+                          {
+                            "description": "JWT payload",
+                            "type": "object",
+                            "properties": {
+                              "jti": {
+                                "description": "Token identifier",
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "iss": {
+                                "description": "The URL of the Haiilo tenant",
+                                "type": "string",
+                                "format": "url"
+                              },
+                              "iat": {
+                                "description": "Event creation time as a 'seconds since epoch' timestamp [RFC 3339]",
+                                "type": "integer"
+                              },
+                              "exp": {
+                                "description": "The token expiration time as a 'seconds since epoch' timestamp [RFC 3339]",
+                                "type": "integer"
+                              },
+                              "tenantId": {
+                                "description": "The ID of the Haiilo tenant",
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "pluginId": {
+                                "description": "The plug-in installation id. The plug-in should use a combination of the installation id and the tenantId or issuer url as a unique id to identify the installation.",
+                                "type": "string",
+                                "format": "uuid"
+                              }
+                            },
+                            "required": [
+                              "iss",
+                              "iat",
+                              "exp",
+                              "tenantId",
+                              "pluginId"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "sub": {
+                                "description": "Event action id, always 'access_token' for an access token event",
+                                "type": "string",
+                                "enum": [
+                                  "access_token"
+                                ]
+                              },
+                              "base_url": {
+                                "description": "The base URL for all URLs contained within this token and for requests to the Haiilo backend (not including the OAuth 2 context path '/api')",
+                                "type": "string",
+                                "format": "uri-reference"
+                              },
+                              "client": {
+                                "description": "Information about how to obtain a client-based access token via the queried grant flow",
+                                "type": "object",
+                                "properties": {
+                                  "client_id": {
+                                    "description": "The OAuth 2.0 client id",
+                                    "type": "string"
+                                  },
+                                  "client_secret": {
+                                    "description": "The OAuth 2.0 client secret",
+                                    "type": "string"
+                                  },
+                                  "authorization_code": {
+                                    "description": "The OAuth 2.0 authorization code",
+                                    "type": "string"
+                                  },
+                                  "token_endpoint_url": {
+                                    "description": "The OAuth 2.0 token endpoint where to redeem the authorization code for an API access token, relative to the base URL",
+                                    "type": "string",
+                                    "format": "uri-reference"
+                                  },
+                                  "trigger_event": {
+                                    "description": "Information about how to re-trigger an access token event when the token expired",
+                                    "type": "object",
+                                    "properties": {
+                                      "url": {
+                                        "description": "The URL, relative to the base URL",
+                                        "type": "string",
+                                        "format": "uri-reference"
+                                      },
+                                      "method": {
+                                        "description": "The request method",
+                                        "type": "string",
+                                        "enum": [
+                                          "POST"
+                                        ]
+                                      },
+                                      "body": {
+                                        "description": "If existing this request payload must be sent with the request as MIME type 'application/json'",
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "url",
+                                      "method"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "client_id",
+                                  "client_secret",
+                                  "authorization_code",
+                                  "token_endpoint_url",
+                                  "trigger_event"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "sub",
+                              "base_url",
+                              "client"
+                            ]
+                          }
+                        ],
+                        "example": {
+                          "jti": "d9a87adb-b35e-4dc0-a9fd-c6ddd73de15d",
+                          "sub": "access_token",
+                          "iss": "https://example.coyocloud.com",
+                          "iat": 1599841260,
+                          "exp": 1599841320,
+                          "tenantId": "ffbf66a4-45f2-4681-92fc-c1925822fcac",
+                          "pluginId": "ad39450c-859f-429a-b63d-c8b85f42d25a",
+                          "base_url": "https://foobar.coyocloud.com/",
+                          "client_credentials": {
+                            "client_id": "plugin-api-client-foobar",
+                            "client_secret": "fk4kcKk37LdhAD3$§cklaA28",
+                            "token_endpoint_url": "api/oauth/token",
+                            "authorization_code": "flel34",
+                            "trigger_event": {
+                              "uri": "https://foobar.coyocloud.com/api/plugins/authtoken",
+                              "method": "POST",
+                              "body": "{\"nonce\":\"c79059ab-d14a-4165-afb0-9d09dc5b1459\"}"
+                            }
+                          }
+                        }
+                      },
+                      "signature": {
+                        "description": "JWT signature",
+                        "type": "string",
+                        "format": "byte",
+                        "example": "LqbrY4NOlXdz08.....UKNNrRg"
+                      }
+                    },
+                    "required": [
+                      "header",
+                      "payload",
+                      "signature"
+                    ]
+                  }
+                },
+                "required": [
+                  "token"
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "The plug-in accepts the authentication token"
+          },
+          "400": {
+            "description": "The plug-in encountered an error while processing the authentication token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "allOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "message": {
+                          "description": "Printable error message in English",
+                          "type": "string",
+                          "maxLength": 200
+                        }
+                      },
+                      "required": [
+                        "message"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "integer",
+                          "minimum": 100,
+                          "maximum": 599,
+                          "enum": [
+                            400,
+                            401,
+                            402,
+                            500
+                          ]
+                        }
+                      },
+                      "required": [
+                        "code"
+                      ]
+                    }
+                  ],
+                  "example": {
+                    "code": 500,
+                    "message": "Internal Plug-in error"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "JwtHeader": {
+        "description": "JWT header (JOSE compliant, see RFC 7515 section 4)",
+        "type": "object",
+        "properties": {
+          "typ": {
+            "description": "Content type, always 'JWT'",
+            "type": "string",
+            "enum": [
+              "JWT"
+            ]
+          },
+          "alg": {
+            "description": "JWT signature algorithm.",
+            "type": "string",
+            "enum": [
+              "NONE",
+              "RS256",
+              "RS368",
+              "RS512"
+            ]
+          },
+          "jku": {
+            "description": "Link to public key that SHOULD be used to verify the token signature. The plug-in MUST verify that the URL leads to a trusted source.",
+            "type": "string",
+            "format": "uri",
+            "pattern": "^https:\\/\\/[a-z0-9.-]+\\.(coyoapp\\.com|haiilo\\.com)\\/.*"
+          }
+        },
+        "required": [
+          "typ",
+          "alg",
+          "jku"
+        ],
+        "example": {
+          "typ": "JWT",
+          "alg": "RS512",
+          "jku": "https://plugins.coyoapp.com/certificate/coyocloud.com_new.jwk.json"
+        }
+      },
+      "JwtPayloadBase": {
+        "description": "JWT payload",
+        "type": "object",
+        "properties": {
+          "jti": {
+            "description": "Token identifier",
+            "type": "string",
+            "format": "uuid"
+          },
+          "iss": {
+            "description": "The URL of the Haiilo tenant",
+            "type": "string",
+            "format": "url"
+          },
+          "iat": {
+            "description": "Event creation time as a 'seconds since epoch' timestamp [RFC 3339]",
+            "type": "integer"
+          },
+          "exp": {
+            "description": "The token expiration time as a 'seconds since epoch' timestamp [RFC 3339]",
+            "type": "integer"
+          },
+          "tenantId": {
+            "description": "The ID of the Haiilo tenant",
+            "type": "string",
+            "format": "uuid"
+          },
+          "pluginId": {
+            "description": "The plug-in installation id. The plug-in should use a combination of the installation id and the tenantId or issuer url as a unique id to identify the installation.",
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "iss",
+          "iat",
+          "exp",
+          "tenantId",
+          "pluginId"
+        ]
+      },
+      "JwtSignature": {
+        "description": "JWT signature",
+        "type": "string",
+        "format": "byte",
+        "example": "LqbrY4NOlXdz08.....UKNNrRg"
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "description": "Printable error message in English",
+            "type": "string",
+            "maxLength": 200
+          }
+        },
+        "required": [
+          "message"
+        ]
+      }
+    }
+  },
+  "externalDocs": {
+    "description": "Plug-in developer hub - API reference",
+    "url": "https://dev.coyoapp.com/reference"
+  }
+}
