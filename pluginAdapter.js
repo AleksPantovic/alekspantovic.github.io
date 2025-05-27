@@ -35,46 +35,34 @@ class PatchedPluginAdapter extends PluginAdapter {
   }
 
   /**
-   * Fetch users via the Haiilo API using the session token.
+   * Fetch users via the Haiilo API using adapter.fetch().
    */
-  async getUsers(sessionToken) {
-    const res = await fetch('https://asioso.coyocloud.com/api/users', {
-      headers: {
-        Authorization: `Bearer ${sessionToken}`,
-      },
-    });
-    if (!res.ok) {
-      const text = await res.text();
-      console.error('[PatchedPluginAdapter] getUsers() error:', res.status, text);
-      throw new Error(`HTTP ${res.status}: ${text}`);
+  async getUsers() {
+    try {
+      const response = await this.fetch('GET', '/api/users');
+      console.log('[PatchedPluginAdapter] Users fetched:', response);
+      return response;
+    } catch (error) {
+      console.error('[PatchedPluginAdapter] getUsers() error:', error);
+      throw new Error(`Failed to fetch users: ${error.message}`);
     }
-    return res.json();
   }
 
   /**
-   * Test direct call to /api/users with the session token (for debugging only).
-   * This will likely fail due to CORS if called from the browser.
+   * Wrapper for adapter.fetch() to handle API requests via Haiilo Home.
    */
-  async testDirectHaiiloApiCall(sessionToken) {
+  async fetch(method, path, options = {}) {
     try {
-      const res = await fetch('https://asioso.coyocloud.com/api/users', {
-        headers: {
-          Authorization: `Bearer ${sessionToken}`,
-        },
-      });
-      const text = await res.text();
-      if (!res.ok) {
-        console.error('[PatchedPluginAdapter] Direct /api/users error:', res.status, text);
-        throw new Error(`HTTP ${res.status}: ${text}`);
+      const response = await super.fetch(method, path, options);
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`[PatchedPluginAdapter] API error (${response.status}):`, errorText);
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
       }
-      try {
-        return JSON.parse(text);
-      } catch {
-        return text;
-      }
-    } catch (err) {
-      console.error('[PatchedPluginAdapter] Direct /api/users fetch failed:', err);
-      return null;
+      return response.json();
+    } catch (error) {
+      console.error('[PatchedPluginAdapter] fetch() failed:', error);
+      throw error;
     }
   }
 }
@@ -83,18 +71,14 @@ async function initializePlugin() {
   const adapter = new PatchedPluginAdapter();
   const initResponse = await adapter.init();
   let backendFetchedUsers = null;
-  let sessionToken = null;
 
   try {
-    sessionToken = await adapter.getSessionToken();
-    if (sessionToken) {
-      backendFetchedUsers = await adapter.getUsers(sessionToken);
-    }
+    backendFetchedUsers = await adapter.getUsers();
   } catch (err) {
-    console.error('[initializePlugin] Error fetching session token or users:', err);
+    console.error('[initializePlugin] Error fetching users:', err);
   }
 
-  return { adapter, initResponse, sessionToken, backendFetchedUsers };
+  return { adapter, initResponse, backendFetchedUsers };
 }
 
 // Attach to module.exports for CommonJS-style eval usage
