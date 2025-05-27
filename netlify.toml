@@ -74,7 +74,13 @@ for = "/*"
 
 [[redirects]]
   from = "/users"
-  to = "/.netlify/functions/proxy"
+  to = "/.netlify/functions/proxy.mts"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/auth/init"
+  to = "/.netlify/functions/auth-init.mts"
   status = 200
   force = true
 
@@ -82,12 +88,6 @@ for = "/*"
   from = "/*"
   to = "/index.html"
   status = 200
-
-[[redirects]]
-  from = "/auth/init"
-  to = "/.netlify/functions/auth-init"
-  status = 200
-  force = true
 
 [functions]
   directory = "netlify/functions"
