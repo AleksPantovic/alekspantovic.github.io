@@ -21,22 +21,16 @@ class PatchedPluginAdapter extends PluginAdapter {
       body: JSON.stringify({ initToken }),
     });
 
-    if (!response.ok) {
-      const errorBody = await response.text();
-      console.error('[PatchedPluginAdapter] Error from exchange-token:', response.status, errorBody);
-      throw new Error(`Failed to exchange token: ${errorBody}`);
-    }
-
     const responseData = await response.json();
     console.log('[PatchedPluginAdapter] Full Response from exchange-token.js:', responseData);
 
     const { sessionToken } = responseData;
-    console.log('[PatchedPluginAdapter] Session Token obtained from exchange-token.js:', sessionToken);
 
     if (!sessionToken) {
       throw new Error('[PatchedPluginAdapter] No session token returned from exchange-token.js');
     }
 
+    console.log('[PatchedPluginAdapter] Session Token obtained from exchange-token.js:', sessionToken);
     return sessionToken;
   }
 

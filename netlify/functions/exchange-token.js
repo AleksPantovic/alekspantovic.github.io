@@ -22,7 +22,7 @@ exports.handler = async (event) => {
       headers: {
         'Access-Control-Allow-Origin': '*',
       },
-      body: 'Method Not Allowed',
+      body: JSON.stringify({ message: 'Method Not Allowed' }),
     };
   }
 
@@ -41,34 +41,38 @@ exports.handler = async (event) => {
 
     console.log('[exchange-token.js] Received initToken:', initToken);
 
-    // Hypothetical Haiilo endpoint for token exchange
-    const haiiloTokenExchangeUrl = 'https://asioso.coyocloud.com/api/oauth/token/exchange';
-
+    // Call Haiilo's token exchange endpoint
+    const haiiloTokenExchangeUrl = 'https://asioso.coyocloud.com/api/oauth/token';
     const response = await axios.post(
       haiiloTokenExchangeUrl,
-      {}, // Adjust body if required by the API
+      new URLSearchParams({
+        grant_type: 'authorization_code',
+        code: initToken, // Assuming the initToken is an authorization code
+        redirect_uri: 'https://yourplugin.yourcompany.test', // Replace with your redirect URI
+        client_id: process.env.HAIILO_CLIENT_ID, // Set in environment variables
+        client_secret: process.env.HAIILO_CLIENT_SECRET, // Set in environment variables
+      }),
       {
         headers: {
-          Authorization: `Bearer ${initToken}`,
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/x-www-form-urlencoded',
         },
       }
     );
 
-    const sessionToken = response.data.access_token;
+    const { access_token } = response.data;
 
-    if (!sessionToken) {
-      console.error('[exchange-token.js] No session token returned from Haiilo API');
+    if (!access_token) {
+      console.error('[exchange-token.js] No access token returned from Haiilo API');
       return {
         statusCode: 500,
         headers: {
           'Access-Control-Allow-Origin': '*',
         },
-        body: JSON.stringify({ error: 'No session token returned' }),
+        body: JSON.stringify({ error: 'No access token returned' }),
       };
     }
 
-    console.log('[exchange-token.js] Successfully exchanged token. Session Token:', sessionToken);
+    console.log('[exchange-token.js] Access Token:', access_token);
 
     return {
       statusCode: 200,
@@ -76,7 +80,7 @@ exports.handler = async (event) => {
         'Access-Control-Allow-Origin': '*',
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ sessionToken }),
+      body: JSON.stringify({ sessionToken: access_token }),
     };
   } catch (error) {
     console.error('[exchange-token.js] Token exchange failed:', error.response?.data || error.message);
