@@ -62,6 +62,16 @@ for = "/*"
   Access-Control-Allow-Methods = "GET, POST, OPTIONS, PUT, DELETE"
   Access-Control-Allow-Headers = "Authorization, Content-Type, X-Requested-With"
 
+[[headers]]
+  for = "/pluginAdapter.mjs"
+  [headers.values]
+    Content-Type = "application/javascript"
+
+[[headers]]
+  for = "/**/*.mjs"
+  [headers.values]
+    Content-Type = "application/javascript"
+
 [[redirects]]
   from = "/users"
   to = "/.netlify/functions/proxy"
