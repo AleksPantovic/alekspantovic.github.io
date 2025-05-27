@@ -1,88 +1,23 @@
-class PatchedPluginAdapter extends PluginAdapter {
+import { PluginAdapter } from 'https://cdn.jsdelivr.net/npm/@coyoapp/plugin-adapter/+esm';
+
+export class PatchedPluginAdapter extends PluginAdapter {
   /**
-   * Fetch the Haiilo session token via your Netlify backend proxy (exchange-token).
-   */
-  async getSessionToken() {
-    // Ensure adapter is initialized to have the init token
-    const initResponse = this._initResponse || await this.init();
-    const initToken = initResponse?.token;
-    if (!initToken) {
-      throw new Error('[PatchedPluginAdapter] Could not get init token.');
-    }
-
-    console.log('[PatchedPluginAdapter] Init Token:', initToken);
-
-    // Call the Netlify function to exchange the init token for a session token
-    const response = await fetch('/.netlify/functions/exchange-token', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ initToken }),
-    });
-
-    const responseData = await response.json();
-    console.log('[PatchedPluginAdapter] Full Response from exchange-token.js:', responseData);
-
-    const { sessionToken } = responseData;
-
-    if (!sessionToken) {
-      throw new Error('[PatchedPluginAdapter] No session token returned from exchange-token.js');
-    }
-
-    console.log('[PatchedPluginAdapter] Session Token obtained from exchange-token.js:', sessionToken);
-    return sessionToken;
-  }
-
-  /**
-   * Fetch users via the Haiilo API using adapter.fetch().
+   * No manual session-token exchange needed for simple reads.
+   * We rely on adapter.fetch() to proxy through Haiilo Home.
    */
   async getUsers() {
     try {
+      // All calls to /api/users go via the built-in proxy
       const response = await this.fetch('GET', '/api/users');
-      console.log('[PatchedPluginAdapter] Users fetched:', response);
-      return response;
-    } catch (error) {
-      console.error('[PatchedPluginAdapter] getUsers() error:', error);
-      throw new Error(`Failed to fetch users: ${error.message}`);
-    }
-  }
-
-  /**
-   * Wrapper for adapter.fetch() to handle API requests via Haiilo Home.
-   */
-  async fetch(method, path, options = {}) {
-    try {
-      const response = await super.fetch(method, path, options);
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`[PatchedPluginAdapter] API error (${response.status}):`, errorText);
-        throw new Error(`HTTP ${response.status}: ${errorText}`);
-      }
-      return response.json();
-    } catch (error) {
-      console.error('[PatchedPluginAdapter] fetch() failed:', error);
-      throw error;
+      return response; // JSON parsed
+    } catch (err) {
+      console.error('[PatchedPluginAdapter] getUsers() error:', err);
+      throw err;
     }
   }
 }
 
-async function initializePlugin() {
-  const adapter = new PatchedPluginAdapter();
-  const initResponse = await adapter.init();
-  let backendFetchedUsers = null;
-
-  try {
-    backendFetchedUsers = await adapter.getUsers();
-  } catch (err) {
-    console.error('[initializePlugin] Error fetching users:', err);
-  }
-
-  return { adapter, initResponse, backendFetchedUsers };
-}
-
-// Attach to module.exports for CommonJS-style eval usage
+// CommonJS export for eval usage
 if (typeof module !== 'undefined' && module.exports) {
   module.exports.PatchedPluginAdapter = PatchedPluginAdapter;
-  module.exports.initializePlugin = initializePlugin;
 }

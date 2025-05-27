@@ -42,5 +42,9 @@
     ],
     "client_id": "organization",
     "client_secret": "81dd0c6a-6fd9-43ff-878c-21327b07ae1b"
+  },
+  "apiAccess": {
+    "scopes": ["users.read"],
+    "endpoints": ["/api/users"]
   }
 }
