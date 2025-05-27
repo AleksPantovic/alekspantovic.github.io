@@ -2,17 +2,40 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Haiilo Plugin</title>
-</head>
-<body>
-  <div id="root"></div>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Haiilo User List</title>
   <script type="module">
-    import React from 'https://cdn.jsdelivr.net/npm/react@17/umd/react.production.min.js';
-    import ReactDOM from 'https://cdn.jsdelivr.net/npm/react-dom@17/umd/react-dom.production.min.js';
-    import PluginApp from './src/PluginApp.jsx';
+    import { PatchedPluginAdapter } from './pluginAdapter.mjs';
 
-    ReactDOM.render(React.createElement(PluginApp), document.getElementById('root'));
+    document.addEventListener('DOMContentLoaded', async () => {
+      console.log('[index.html] DOMContentLoaded');
+      const adapter = new PatchedPluginAdapter();
+
+      try {
+        console.log('[index.html] Calling adapter.init()');
+        const initContext = await adapter.init();
+        console.log('[index.html] init context:', initContext);
+
+        console.log('[index.html] Fetching users via adapter');
+        const users = await adapter.getUsers();
+        console.log('[index.html] Users:', users);
+
+        // Render users in the DOM
+        const list = document.createElement('ul');
+        users.forEach(u => {
+          const li = document.createElement('li');
+          li.textContent = `${u.firstName} ${u.lastName} (${u.id})`;
+          list.appendChild(li);
+        });
+        document.body.appendChild(list);
+      } catch (err) {
+        console.error('[index.html] Error:', err);
+        const msg = document.createElement('pre');
+        msg.textContent = 'Error: ' + err.message;
+        document.body.appendChild(msg);
+      }
+    });
   </script>
-</body>
+</head>
+<body></body>
 </html>
