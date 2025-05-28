@@ -70,12 +70,14 @@ class PatchedPluginAdapter extends PluginAdapter {
    * This method sends the JWT as a Bearer token in the Authorization header.
    */
   async getUsersWithInitToken() {
+    console.log('[PatchedPluginAdapter] getUsersWithInitToken() called');
     // Get the JWT from adapter.init()
     const initResponse = this._initResponse || await this.init();
     const jwt = initResponse?.token;
     if (!jwt) {
       throw new Error('[PatchedPluginAdapter] No JWT token available from adapter.init().');
     }
+    console.log('[PatchedPluginAdapter] JWT for getUsersWithInitToken:', jwt);
     const response = await fetch('https://asioso.coyocloud.com/api/users', {
       headers: {
         'Authorization': `Bearer ${jwt}`,
@@ -87,7 +89,9 @@ class PatchedPluginAdapter extends PluginAdapter {
       console.error('[PatchedPluginAdapter] getUsersWithInitToken() error:', response.status, text);
       throw new Error(`HTTP ${response.status}: ${text}`);
     }
-    return response.json();
+    const users = await response.json();
+    console.log('[PatchedPluginAdapter] getUsersWithInitToken() response:', users);
+    return users;
   }
 
   /**
@@ -97,7 +101,8 @@ class PatchedPluginAdapter extends PluginAdapter {
   async testDirectHaiiloApiCall(sessionToken) {
     try {
       const res = await fetch('https://asioso.coyocloud.com/api/users', {
-        headers: {
+        headers:
+         {
           Authorization: `Bearer ${sessionToken}`,
         },
       });
@@ -130,11 +135,17 @@ async function initializePlugin() {
     if (sessionToken) {
       backendFetchedUsers = await adapter.getUsers(sessionToken);
     }
-    // Call getUsersWithInitToken and log the result
+  } catch (err) {
+    console.error('[initializePlugin] Error fetching session token or users:', err);
+  }
+
+  // Always attempt getUsersWithInitToken, even if above fails
+  try {
+    console.log('[initializePlugin] Calling getUsersWithInitToken...');
     usersWithInitToken = await adapter.getUsersWithInitToken();
     console.log('[initializePlugin] usersWithInitToken:', usersWithInitToken);
   } catch (err) {
-    console.error('[initializePlugin] Error fetching session token or users:', err);
+    console.error('[initializePlugin] Error fetching users with init token:', err);
   }
 
   return { adapter, initResponse, sessionToken, backendFetchedUsers, usersWithInitToken };
