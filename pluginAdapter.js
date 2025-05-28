@@ -30,6 +30,11 @@ class PatchedPluginAdapter extends PluginAdapter {
     const responseData = await response.json();
     console.log('[PatchedPluginAdapter] Full Response from exchange-token.js:', responseData);
 
+    // Add debug: log error and details if present
+    if (responseData.error || responseData.details) {
+      console.error('[PatchedPluginAdapter] exchange-token.js error:', responseData.error, responseData.details);
+    }
+
     const { sessionToken } = responseData;
     console.log('[PatchedPluginAdapter] Session Token obtained from exchange-token.js:', sessionToken);
 
