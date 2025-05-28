@@ -1,4 +1,4 @@
-export class PatchedPluginAdapter extends PluginAdapter {
+class PatchedPluginAdapter extends PluginAdapter {
   /**
    * Fetch the Haiilo session token via your Netlify backend proxy (exchange-token).
    */
@@ -78,6 +78,10 @@ async function initializePlugin() {
   return { adapter, initResponse, sessionToken, backendFetchedUsers };
 }
 
+// Attach to window for browser usage
+if (typeof window !== 'undefined') {
+  window.PatchedPluginAdapter = PatchedPluginAdapter;
+}
 // Attach to module.exports for CommonJS-style eval usage
 if (typeof module !== 'undefined' && module.exports) {
   module.exports.PatchedPluginAdapter = PatchedPluginAdapter;
