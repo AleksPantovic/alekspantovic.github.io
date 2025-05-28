@@ -4,86 +4,40 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Haiilo User List</title>
+  <!-- Load the PluginAdapter from CDN as a module -->
   <script type="module">
     import { PluginAdapter } from 'https://cdn.jsdelivr.net/npm/@coyoapp/plugin-adapter/+esm';
+    window.PluginAdapter = PluginAdapter;
+  </script>
+  <script type="module">
+    import './pluginAdapter.js'; // This will register PatchedPluginAdapter on window
 
     document.addEventListener('DOMContentLoaded', async () => {
-      console.log('[index.html] Entered DOMContentLoaded');
+      console.log('[index.html] DOMContentLoaded');
+      const adapter = new window.PatchedPluginAdapter();
 
-      const adapter = new PluginAdapter();
-      console.log('5. [PluginAdapter] Calling adapter.init()...');
-      const initResponse = await adapter.init();
-      console.log('6. [PluginAdapter] adapter.init() response:', initResponse);
-
-      if (!initResponse || !initResponse.token) {
-        console.error('[PluginAdapter] No token found in initResponse:', initResponse);
-        return;
-      }
-
-      const initToken = initResponse.token;
-      console.log('[PluginAdapter] Init Token obtained:', initToken);
-
-      // Call the exchange-token Netlify function
       try {
-        const exchangeResponse = await fetch('/.netlify/functions/exchange-token', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ initToken }),
+        console.log('[index.html] Calling adapter.init()');
+        const initContext = await adapter.init();
+        console.log('[index.html] init context:', initContext);
+
+        console.log('[index.html] Fetching users via adapter');
+        const users = await adapter.getUsers();
+        console.log('[index.html] Users:', users);
+
+        // Render users in the DOM
+        const list = document.createElement('ul');
+        users.forEach(u => {
+          const li = document.createElement('li');
+          li.textContent = `${u.firstName} ${u.lastName} (${u.id})`;
+          list.appendChild(li);
         });
-
-        if (!exchangeResponse.ok) {
-          console.error('[index.html] Failed to exchange token:', exchangeResponse.status);
-          return;
-        }
-
-        const { sessionToken } = await exchangeResponse.json();
-        console.log('[index.html] Session Token obtained from exchange-token.js:', sessionToken);
-
-        if (!sessionToken) {
-          console.error('[index.html] No session token returned from exchange-token.js');
-        }
-      } catch (error) {
-        console.error('[index.html] Error calling exchange-token.js:', error);
-      }
-
-      // --- Workaround: fetch and eval pluginAdapter.js ---
-      try {
-        const response = await fetch('./pluginAdapter.js');
-        if (!response.ok) {
-          console.error('[index.html] Failed to fetch pluginAdapter.js:', response.status);
-          return;
-        }
-        const pluginAdapterCode = await response.text();
-        const module = { exports: {} };
-        const require = (path) => {
-          if (path === 'https://cdn.jsdelivr.net/npm/@coyoapp/plugin-adapter/+esm') {
-            return { PluginAdapter };
-          }
-          return {};
-        };
-        try {
-          eval(pluginAdapterCode);
-        } catch (evalError) {
-          console.error('[index.html] Error during eval of pluginAdapter.js:', evalError);
-          console.error('[index.html] pluginAdapter.js code was:', pluginAdapterCode);
-          throw evalError;
-        }
-
-        if (module.exports.initializePlugin) {
-          console.log('[index.html] Found initializePlugin in fetched code');
-          const { sessionToken, backendFetchedUsers } = await module.exports.initializePlugin();
-          console.log('[PluginAdapter] Session Token:', sessionToken);
-          console.log('[PluginAdapter] Users from adapter.getUsers():', backendFetchedUsers);
-          if (sessionToken === null) {
-            console.error('[index.html] CORS error: Could not fetch session token. The browser was blocked by CORS when trying to access https://asioso.coyocloud.com/web/authorization/token. This endpoint must allow your plugin origin or you must use a backend proxy.');
-          }
-        } else {
-          console.error('[index.html] initializePlugin not found in fetched code');
-        }
-      } catch (error) {
-        console.error('[index.html] Error fetching or executing pluginAdapter.js:', error);
+        document.body.appendChild(list);
+      } catch (err) {
+        console.error('[index.html] Error:', err);
+        const msg = document.createElement('pre');
+        msg.textContent = 'Error: ' + err.message;
+        document.body.appendChild(msg);
       }
     });
   </script>
