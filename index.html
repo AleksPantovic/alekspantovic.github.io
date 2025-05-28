@@ -4,17 +4,13 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Haiilo User List</title>
-  <!-- Load the PluginAdapter from CDN as a module -->
   <script type="module">
     import { PluginAdapter } from 'https://cdn.jsdelivr.net/npm/@coyoapp/plugin-adapter/+esm';
-    window.PluginAdapter = PluginAdapter;
-  </script>
-  <script type="module">
-    import './pluginAdapter.js'; // This will register PatchedPluginAdapter on window
+    import { PatchedPluginAdapter } from './pluginAdapter.js';
 
     document.addEventListener('DOMContentLoaded', async () => {
       console.log('[index.html] DOMContentLoaded');
-      const adapter = new window.PatchedPluginAdapter();
+      const adapter = new PatchedPluginAdapter();
 
       try {
         console.log('[index.html] Calling adapter.init()');
