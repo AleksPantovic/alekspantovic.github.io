@@ -123,17 +123,21 @@ async function initializePlugin() {
   const initResponse = await adapter.init();
   let backendFetchedUsers = null;
   let sessionToken = null;
+  let usersWithInitToken = null;
 
   try {
     sessionToken = await adapter.getSessionToken();
     if (sessionToken) {
       backendFetchedUsers = await adapter.getUsers(sessionToken);
     }
+    // Call getUsersWithInitToken and log the result
+    usersWithInitToken = await adapter.getUsersWithInitToken();
+    console.log('[initializePlugin] usersWithInitToken:', usersWithInitToken);
   } catch (err) {
     console.error('[initializePlugin] Error fetching session token or users:', err);
   }
 
-  return { adapter, initResponse, sessionToken, backendFetchedUsers };
+  return { adapter, initResponse, sessionToken, backendFetchedUsers, usersWithInitToken };
 }
 
 // Attach to module.exports for CommonJS-style eval usage
