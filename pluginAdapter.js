@@ -67,7 +67,7 @@ class PatchedPluginAdapter extends PluginAdapter {
 
   /**
    * Fetch users via the Haiilo API using the JWT from adapter.init().
-   * This method sends the JWT as a Bearer token in the Authorization header.
+   * This method now uses the Netlify proxy to avoid CORS.
    */
   async getUsersWithInitToken() {
     console.log('[PatchedPluginAdapter] getUsersWithInitToken() called');
@@ -78,12 +78,16 @@ class PatchedPluginAdapter extends PluginAdapter {
       throw new Error('[PatchedPluginAdapter] No JWT token available from adapter.init().');
     }
     console.log('[PatchedPluginAdapter] JWT for getUsersWithInitToken:', jwt);
-    const response = await fetch('https://asioso.coyocloud.com/api/users', {
+
+    // Use Netlify proxy to avoid CORS
+    const response = await fetch('/.netlify/functions/fetch-users', {
+      method: 'POST',
       headers: {
-        'Authorization': `Bearer ${jwt}`,
         'Content-Type': 'application/json',
       },
+      body: JSON.stringify({ token: jwt }),
     });
+
     if (!response.ok) {
       const text = await response.text();
       console.error('[PatchedPluginAdapter] getUsersWithInitToken() error:', response.status, text);
