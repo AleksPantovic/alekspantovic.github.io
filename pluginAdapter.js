@@ -61,6 +61,31 @@ class PatchedPluginAdapter extends PluginAdapter {
   }
 
   /**
+   * Fetch users via the Haiilo API using the JWT from adapter.init().
+   * This method sends the JWT as a Bearer token in the Authorization header.
+   */
+  async getUsersWithInitToken() {
+    // Get the JWT from adapter.init()
+    const initResponse = this._initResponse || await this.init();
+    const jwt = initResponse?.token;
+    if (!jwt) {
+      throw new Error('[PatchedPluginAdapter] No JWT token available from adapter.init().');
+    }
+    const response = await fetch('https://asioso.coyocloud.com/api/users', {
+      headers: {
+        'Authorization': `Bearer ${jwt}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    if (!response.ok) {
+      const text = await response.text();
+      console.error('[PatchedPluginAdapter] getUsersWithInitToken() error:', response.status, text);
+      throw new Error(`HTTP ${response.status}: ${text}`);
+    }
+    return response.json();
+  }
+
+  /**
    * Test direct call to /api/users with the session token (for debugging only).
    * This will likely fail due to CORS if called from the browser.
    */
@@ -111,3 +136,10 @@ if (typeof module !== 'undefined' && module.exports) {
   module.exports.PatchedPluginAdapter = PatchedPluginAdapter;
   module.exports.initializePlugin = initializePlugin;
 }
+
+// Call the function and log the result
+initializePlugin().then(result => {
+  console.log('[pluginAdapter.js] initializePlugin result:', result);
+}).catch(err => {
+  console.error('[pluginAdapter.js] initializePlugin error:', err);
+});
