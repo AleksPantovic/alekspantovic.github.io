@@ -41,20 +41,23 @@ class PatchedPluginAdapter extends PluginAdapter {
   }
 
   /**
-   * Fetch users via the Haiilo API using the session token.
+   * Fetch users via the Haiilo API using the session token, but through your Netlify proxy function to avoid CORS.
    */
   async getUsers(sessionToken) {
-    const res = await fetch('https://asioso.coyocloud.com/api/users', {
+    // Instead of calling Haiilo API directly, call your Netlify proxy function
+    const response = await fetch('/.netlify/functions/fetch-users', {
+      method: 'POST',
       headers: {
-        Authorization: `Bearer ${sessionToken}`,
+        'Content-Type': 'application/json',
       },
+      body: JSON.stringify({ sessionToken }),
     });
-    if (!res.ok) {
-      const text = await res.text();
-      console.error('[PatchedPluginAdapter] getUsers() error:', res.status, text);
-      throw new Error(`HTTP ${res.status}: ${text}`);
+    if (!response.ok) {
+      const text = await response.text();
+      console.error('[PatchedPluginAdapter] getUsers() error:', response.status, text);
+      throw new Error(`HTTP ${response.status}: ${text}`);
     }
-    return res.json();
+    return response.json();
   }
 
   /**
