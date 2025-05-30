@@ -1,10 +1,25 @@
 class PatchedPluginAdapter extends PluginAdapter {
+  constructor() {
+    super();
+    this._initResponse = null;
+  }
+
+  /**
+   * Initialize adapter and cache the response.
+   */
+  async init() {
+    if (!this._initResponse) {
+      this._initResponse = await super.init();
+    }
+    return this._initResponse;
+  }
+
   /**
    * Fetch the Haiilo session token via your Netlify backend proxy (exchange-token).
    */
   async getSessionToken() {
     // Ensure adapter is initialized to have the init token
-    const initResponse = this._initResponse || await this.init();
+    const initResponse = await this.init();
     const initToken = initResponse?.token;
     if (!initToken) {
       throw new Error('[PatchedPluginAdapter] Could not get init token.');
@@ -67,27 +82,23 @@ class PatchedPluginAdapter extends PluginAdapter {
 
   /**
    * Fetch users via the Haiilo API using the JWT from adapter.init().
-   * This method now uses the Netlify proxy to avoid CORS.
+   * This method sends the JWT as a Bearer token in the Authorization header.
    */
   async getUsersWithInitToken() {
     console.log('[PatchedPluginAdapter] getUsersWithInitToken() called');
     // Get the JWT from adapter.init()
-    const initResponse = this._initResponse || await this.init();
+    const initResponse = await this.init();
     const jwt = initResponse?.token;
     if (!jwt) {
       throw new Error('[PatchedPluginAdapter] No JWT token available from adapter.init().');
     }
     console.log('[PatchedPluginAdapter] JWT for getUsersWithInitToken:', jwt);
-
-    // Use Netlify proxy to avoid CORS
-    const response = await fetch('/.netlify/functions/fetch-users', {
-      method: 'POST',
+    const response = await fetch('https://asioso.coyocloud.com/api/users', {
       headers: {
+        'Authorization': `Bearer ${jwt}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ token: jwt }),
     });
-
     if (!response.ok) {
       const text = await response.text();
       console.error('[PatchedPluginAdapter] getUsersWithInitToken() error:', response.status, text);

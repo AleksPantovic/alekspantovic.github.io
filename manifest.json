@@ -40,8 +40,7 @@
       "plugin:notify",
       "users.read"
     ],
-    "client_id": "organization",
-    "client_secret": "81dd0c6a-6fd9-43ff-878c-21327b07ae1b"
+    "client_id": "organization"
   },
   "apiAccess": {
     "scopes": ["users.read"],
