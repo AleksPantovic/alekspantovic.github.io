@@ -14,78 +14,14 @@ function getKey(header, callback) {
 }
 
 exports.handler = async (event) => {
-    try {
-        if (event.httpMethod !== 'POST') {
-            return {
-                statusCode: 405,
-                body: JSON.stringify({ error: 'Method Not Allowed' }),
-            };
-        }
+    console.log('[lifecycle] >>> FUNCTION TRIGGERED <<<');
+    console.log('[lifecycle] Event HTTP Method:', event.httpMethod);
+    console.log('[lifecycle] Event Path:', event.path);
+    console.log('[lifecycle] Event Body:', event.body);
+    console.log('[lifecycle] Event Headers:', event.headers);
 
-        const body = event.headers['content-type']?.includes('application/json')
-            ? JSON.parse(event.body)
-            : Object.fromEntries(new URLSearchParams(event.body));
-
-        // The JWT is in body.token
-        const token = body.token;
-        if (!token) {
-            return {
-                statusCode: 400,
-                body: JSON.stringify({ error: 'Missing token in request body' }),
-            };
-        }
-
-        // Decode JWT without verifying to get the event type
-        const decoded = jwt.decode(token, { complete: true });
-        if (!decoded || !decoded.payload || !decoded.payload.sub) {
-            return {
-                statusCode: 400,
-                body: JSON.stringify({ error: 'Invalid JWT or missing event type' }),
-            };
-        }
-
-        const eventType = decoded.payload.sub;
-        console.log(`Received lifecycle event: ${eventType}`);
-        console.log('JWT payload:', decoded.payload);
-
-        // Optionally: verify JWT signature here using getKey and jwt.verify
-
-        // Respond according to event type
-        if (eventType === 'install') {
-            // Handle install event
-            return {
-                statusCode: 201,
-                body: JSON.stringify({ message: 'Plugin installed successfully' }),
-            };
-        } else if (eventType === 'uninstall') {
-            // Handle uninstall event
-            return {
-                statusCode: 201,
-                body: JSON.stringify({ message: 'Plugin uninstalled successfully' }),
-            };
-        } else if (eventType === 'instance_add') {
-            // Handle instance add event
-            return {
-                statusCode: 201,
-                body: JSON.stringify({ message: 'Instance added successfully' }),
-            };
-        } else if (eventType === 'instance_remove') {
-            // Handle instance remove event
-            return {
-                statusCode: 201,
-                body: JSON.stringify({ message: 'Instance removed successfully' }),
-            };
-        } else {
-            return {
-                statusCode: 400,
-                body: JSON.stringify({ error: 'Unknown lifecycle event' }),
-            };
-        }
-    } catch (error) {
-        console.error('Error processing lifecycle event:', error.message);
-        return {
-            statusCode: 500,
-            body: JSON.stringify({ error: 'Internal Server Error', details: error.message }),
-        };
-    }
+    return {
+        statusCode: 200, // Or 201 for 'install' if you want to test that path
+        body: JSON.stringify({ message: 'Lifecycle function received the request' }),
+    };
 };
