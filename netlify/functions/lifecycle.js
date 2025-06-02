@@ -14,9 +14,6 @@ function getKey(header, callback) {
 }
 
 exports.handler = async (event) => {
-    // Add a top-level log to confirm function invocation
-    console.log('[lifecycle] HANDLER INVOKED');
-
     console.log('[lifecycle] >>> FUNCTION TRIGGERED <<<');
     console.log('[lifecycle] Event HTTP Method:', event.httpMethod);
     console.log('[lifecycle] Event Path:', event.path);
@@ -27,16 +24,23 @@ exports.handler = async (event) => {
     let token;
     const contentType = event.headers['content-type'] || event.headers['Content-Type'] || '';
     if (contentType.includes('application/x-www-form-urlencoded')) {
-        // Defensive: handle both string and Buffer
         let bodyString = event.body;
         if (typeof bodyString !== 'string') {
             bodyString = Buffer.from(event.body).toString('utf8');
         }
-        // Log the raw body for debugging
         console.log('[lifecycle] Raw body:', bodyString);
         const params = new URLSearchParams(bodyString);
         token = params.get('token');
-        console.log('[lifecycle] URLSearchParams token:', token);
+        // Log the parsed token object if possible (for OpenAPI spec compliance)
+        if (token) {
+            try {
+                const parsedToken = JSON.parse(token);
+                console.log('[lifecycle] Parsed token object:', parsedToken);
+                // If the token is actually a JWT string, this will fail and fall through
+            } catch {
+                console.log('[lifecycle] Token is not a JSON object, raw:', token);
+            }
+        }
     } else if (contentType.includes('application/json')) {
         const body = JSON.parse(event.body);
         token = body.token;
@@ -52,6 +56,16 @@ exports.handler = async (event) => {
     let decoded = null;
     if (token) {
         try {
+            // If token is an object (per OpenAPI spec), convert to JWT string
+            if (typeof token === 'object') {
+                // Re-encode as JWT if needed (not typical, but for spec compliance)
+                token = [
+                    Buffer.from(JSON.stringify(token.header)).toString('base64url'),
+                    Buffer.from(JSON.stringify(token.payload)).toString('base64url'),
+                    token.signature
+                ].join('.');
+                console.log('[lifecycle] Re-encoded JWT:', token);
+            }
             decoded = jwt.decode(token, { complete: true });
             eventType = decoded?.payload?.sub;
             console.log('[lifecycle] Decoded JWT:', decoded);
@@ -64,7 +78,6 @@ exports.handler = async (event) => {
             };
         }
     } else {
-        console.error('[lifecycle] No token found in request body');
         return {
             statusCode: 400,
             body: JSON.stringify({ error: 'Missing token in request body' }),
