@@ -24,7 +24,7 @@
     }
   ],
   "lifecycle": {
-    "url": "/.netlify/functions/lifecycle",
+    "url": "https://haiiloplugin.netlify.app/.netlify/functions/lifecycle",
     "events": [
       "install",
       "uninstall",

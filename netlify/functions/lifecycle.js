@@ -14,6 +14,9 @@ function getKey(header, callback) {
 }
 
 exports.handler = async (event) => {
+    // Add a top-level log to confirm function invocation
+    console.log('[lifecycle] HANDLER INVOKED');
+
     console.log('[lifecycle] >>> FUNCTION TRIGGERED <<<');
     console.log('[lifecycle] Event HTTP Method:', event.httpMethod);
     console.log('[lifecycle] Event Path:', event.path);
@@ -25,9 +28,13 @@ exports.handler = async (event) => {
     if (event.headers['content-type'] && event.headers['content-type'].includes('application/x-www-form-urlencoded')) {
         const params = new URLSearchParams(event.body);
         token = params.get('token');
+        console.log('[lifecycle] URLSearchParams token:', token);
     } else if (event.headers['content-type'] && event.headers['content-type'].includes('application/json')) {
         const body = JSON.parse(event.body);
         token = body.token;
+        console.log('[lifecycle] JSON token:', token);
+    } else {
+        console.log('[lifecycle] Unknown content-type:', event.headers['content-type']);
     }
 
     console.log('[lifecycle] Raw JWT token:', token);
@@ -48,6 +55,7 @@ exports.handler = async (event) => {
             };
         }
     } else {
+        console.error('[lifecycle] No token found in request body');
         return {
             statusCode: 400,
             body: JSON.stringify({ error: 'Missing token in request body' }),
