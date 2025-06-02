@@ -24,7 +24,7 @@
     }
   ],
   "lifecycle": {
-    "url": "/lifecycle/",
+    "url": "/.netlify/functions/lifecycle",
     "events": [
       "install",
       "uninstall",

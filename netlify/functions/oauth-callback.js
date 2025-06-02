@@ -5,8 +5,14 @@ exports.handler = async function (event) {
   try {
     const payload = JSON.parse(event.body);
     const accessToken = payload.access_token;
+    const tenantId = payload.tenantId || payload.instanceId;
 
     console.log('[oauth-callback] Received token:', accessToken);
+    if (tenantId) {
+      console.log('[oauth-callback] For tenant/instance:', tenantId);
+    } else {
+      console.warn('[oauth-callback] No tenant/instance ID found in payload.');
+    }
 
     // Store it to a file (for demo; use secure storage in production)
     fs.writeFileSync(path.join('/tmp', 'haiilo-token.txt'), accessToken);
