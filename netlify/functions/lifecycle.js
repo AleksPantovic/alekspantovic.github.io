@@ -22,32 +22,12 @@ exports.handler = async (event) => {
 
     // Parse form-urlencoded body if needed
     let token;
-    const contentType = event.headers['content-type'] || event.headers['Content-Type'] || '';
-    if (contentType.includes('application/x-www-form-urlencoded')) {
-        let bodyString = event.body;
-        if (typeof bodyString !== 'string') {
-            bodyString = Buffer.from(event.body).toString('utf8');
-        }
-        console.log('[lifecycle] Raw body:', bodyString);
-        const params = new URLSearchParams(bodyString);
+    if (event.headers['content-type'] && event.headers['content-type'].includes('application/x-www-form-urlencoded')) {
+        const params = new URLSearchParams(event.body);
         token = params.get('token');
-        // Log the parsed token object if possible (for OpenAPI spec compliance)
-        if (token) {
-            try {
-                const parsedToken = JSON.parse(token);
-                console.log('[lifecycle] Parsed token object:', parsedToken);
-                // If the token is actually a JWT string, this will fail and fall through
-            } catch {
-                console.log('[lifecycle] Token is not a JSON object, raw:', token);
-            }
-        }
-    } else if (contentType.includes('application/json')) {
+    } else if (event.headers['content-type'] && event.headers['content-type'].includes('application/json')) {
         const body = JSON.parse(event.body);
         token = body.token;
-        console.log('[lifecycle] JSON token:', token);
-    } else {
-        console.log('[lifecycle] Unknown content-type:', contentType);
-        console.log('[lifecycle] Raw body:', event.body);
     }
 
     console.log('[lifecycle] Raw JWT token:', token);
@@ -56,16 +36,6 @@ exports.handler = async (event) => {
     let decoded = null;
     if (token) {
         try {
-            // If token is an object (per OpenAPI spec), convert to JWT string
-            if (typeof token === 'object') {
-                // Re-encode as JWT if needed (not typical, but for spec compliance)
-                token = [
-                    Buffer.from(JSON.stringify(token.header)).toString('base64url'),
-                    Buffer.from(JSON.stringify(token.payload)).toString('base64url'),
-                    token.signature
-                ].join('.');
-                console.log('[lifecycle] Re-encoded JWT:', token);
-            }
             decoded = jwt.decode(token, { complete: true });
             eventType = decoded?.payload?.sub;
             console.log('[lifecycle] Decoded JWT:', decoded);
@@ -85,31 +55,35 @@ exports.handler = async (event) => {
     }
 
     // Respond according to event type
+    let response;
     if (eventType === 'install') {
         // Accept installation
-        return {
+        response = {
             statusCode: 201,
             body: JSON.stringify({ message: 'Plugin installed successfully' }),
         };
     } else if (eventType === 'uninstall') {
-        return {
+        response = {
             statusCode: 201,
             body: JSON.stringify({ message: 'Plugin uninstalled successfully' }),
         };
     } else if (eventType === 'instance_add') {
-        return {
+        response = {
             statusCode: 201,
             body: JSON.stringify({ message: 'Instance added successfully' }),
         };
     } else if (eventType === 'instance_remove') {
-        return {
+        response = {
             statusCode: 201,
             body: JSON.stringify({ message: 'Instance removed successfully' }),
         };
     } else {
-        return {
+        response = {
             statusCode: 400,
             body: JSON.stringify({ error: 'Unknown lifecycle event' }),
         };
     }
+
+    console.log('[lifecycle] Response:', response);
+    return response;
 };
