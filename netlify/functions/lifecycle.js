@@ -25,16 +25,25 @@ exports.handler = async (event) => {
 
     // Parse form-urlencoded body if needed
     let token;
-    if (event.headers['content-type'] && event.headers['content-type'].includes('application/x-www-form-urlencoded')) {
-        const params = new URLSearchParams(event.body);
+    const contentType = event.headers['content-type'] || event.headers['Content-Type'] || '';
+    if (contentType.includes('application/x-www-form-urlencoded')) {
+        // Defensive: handle both string and Buffer
+        let bodyString = event.body;
+        if (typeof bodyString !== 'string') {
+            bodyString = Buffer.from(event.body).toString('utf8');
+        }
+        // Log the raw body for debugging
+        console.log('[lifecycle] Raw body:', bodyString);
+        const params = new URLSearchParams(bodyString);
         token = params.get('token');
         console.log('[lifecycle] URLSearchParams token:', token);
-    } else if (event.headers['content-type'] && event.headers['content-type'].includes('application/json')) {
+    } else if (contentType.includes('application/json')) {
         const body = JSON.parse(event.body);
         token = body.token;
         console.log('[lifecycle] JSON token:', token);
     } else {
-        console.log('[lifecycle] Unknown content-type:', event.headers['content-type']);
+        console.log('[lifecycle] Unknown content-type:', contentType);
+        console.log('[lifecycle] Raw body:', event.body);
     }
 
     console.log('[lifecycle] Raw JWT token:', token);
