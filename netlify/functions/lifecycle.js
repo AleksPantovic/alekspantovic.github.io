@@ -30,20 +30,56 @@ exports.handler = async (event) => {
         token = body.token;
     }
 
-    console.log('[lifecycle] Parsed token:', token);
+    console.log('[lifecycle] Raw JWT token:', token);
 
-    // Optionally decode JWT for debugging
+    let eventType = null;
+    let decoded = null;
     if (token) {
         try {
-            const decoded = jwt.decode(token, { complete: true });
+            decoded = jwt.decode(token, { complete: true });
+            eventType = decoded?.payload?.sub;
             console.log('[lifecycle] Decoded JWT:', decoded);
+            console.log('[lifecycle] Event type (sub):', eventType);
         } catch (e) {
             console.error('[lifecycle] Failed to decode JWT:', e);
+            return {
+                statusCode: 400,
+                body: JSON.stringify({ error: 'Invalid JWT token' }),
+            };
         }
+    } else {
+        return {
+            statusCode: 400,
+            body: JSON.stringify({ error: 'Missing token in request body' }),
+        };
     }
 
-    return {
-        statusCode: 201, // 201 for install event
-        body: JSON.stringify({ message: 'Lifecycle function received the request' }),
-    };
+    // Respond according to event type
+    if (eventType === 'install') {
+        // Accept installation
+        return {
+            statusCode: 201,
+            body: JSON.stringify({ message: 'Plugin installed successfully' }),
+        };
+    } else if (eventType === 'uninstall') {
+        return {
+            statusCode: 201,
+            body: JSON.stringify({ message: 'Plugin uninstalled successfully' }),
+        };
+    } else if (eventType === 'instance_add') {
+        return {
+            statusCode: 201,
+            body: JSON.stringify({ message: 'Instance added successfully' }),
+        };
+    } else if (eventType === 'instance_remove') {
+        return {
+            statusCode: 201,
+            body: JSON.stringify({ message: 'Instance removed successfully' }),
+        };
+    } else {
+        return {
+            statusCode: 400,
+            body: JSON.stringify({ error: 'Unknown lifecycle event' }),
+        };
+    }
 };
