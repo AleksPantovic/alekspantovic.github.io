@@ -20,6 +20,14 @@ exports.handler = async (event) => {
     console.log('[lifecycle] Event Body:', event.body);
     console.log('[lifecycle] Event Headers:', event.headers);
 
+    if (event.httpMethod !== 'POST') {
+        console.log('[lifecycle] Received non-POST request, returning 405');
+        return {
+            statusCode: 405,
+            body: JSON.stringify({ error: 'Method Not Allowed' }),
+        };
+    }
+
     // Parse form-urlencoded body if needed
     let token;
     if (event.headers['content-type'] && event.headers['content-type'].includes('application/x-www-form-urlencoded')) {
