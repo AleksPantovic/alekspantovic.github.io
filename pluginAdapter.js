@@ -2,7 +2,7 @@ class PatchedPluginAdapter extends PluginAdapter {
   constructor() {
     super();
     this._initResponse = null;
-    this._accessToken = null; // Store the OAuth2 access token
+    // No direct access token storage in frontend
   }
 
   /**
@@ -56,30 +56,6 @@ class PatchedPluginAdapter extends PluginAdapter {
     return sessionToken;
   }
 
-  // Store the access token received via webhook
-  setAccessToken(accessToken) {
-    this._accessToken = accessToken;
-  }
-
-  // Fetch users using the stored access token
-  async getUsersWithAccessToken() {
-    if (!this._accessToken) {
-      throw new Error('[PatchedPluginAdapter] No access token available. Ensure the access_token webhook was processed.');
-    }
-    const response = await fetch('https://asioso.coyocloud.com/api/users', {
-      headers: {
-        'Authorization': `Bearer ${this._accessToken}`,
-        'Content-Type': 'application/json',
-      },
-    });
-    if (!response.ok) {
-      const text = await response.text();
-      throw new Error(`HTTP ${response.status}: ${text}`);
-    }
-    const users = await response.json();
-    return users;
-  }
-
   /**
    * Fetch users via the Haiilo API using the session token, but through your Netlify proxy function to avoid CORS.
    */
@@ -122,6 +98,28 @@ class PatchedPluginAdapter extends PluginAdapter {
     }
     const users = await response.json();
     return users;
+  }
+
+  /**
+   * Fetch users via your backend using the stored OAuth access token.
+   * Your backend must handle retrieving the correct token for the current tenant.
+   */
+  async getUsersWithOAuth(tenantId) {
+    // tenantId should be provided by your app context or session
+    const url = tenantId
+      ? `/.netlify/functions/fetch-users-oauth?tenantId=${encodeURIComponent(tenantId)}`
+      : '/.netlify/functions/fetch-users-oauth';
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`Failed to fetch users with OAuth: ${response.status} - ${text}`);
+    }
+    return response.json();
   }
 
   /**
@@ -184,7 +182,7 @@ async function initializePlugin() {
   let backendFetchedUsers = null;
   let sessionToken = null;
   let usersWithInitToken = null;
-  let usersWithAccessToken = null; // New variable
+  let usersWithOAuth = null;
 
   try {
     sessionToken = await adapter.getSessionToken();
@@ -195,24 +193,17 @@ async function initializePlugin() {
     // No log
   }
 
-  // Always attempt getUsersWithInitToken, even if above fails
   try {
     usersWithInitToken = await adapter.getUsersWithInitToken();
   } catch (err) {
     // No log
   }
 
-  // Simulate receiving the access_token event (for local testing)
-  // In a real Haiilo environment, this would happen via the webhook
-  await adapter.handleLifecycleEvent('access_token', {
-    access_token: 'example-oauth-access-token',
-    token_type: 'Bearer',
-    expires_in: 3600,
-    scope: 'plugin:notify users.read',
-  });
-
+  // Fetch users using OAuth token via backend (do not simulate access_token event)
   try {
-    usersWithAccessToken = await adapter.getUsersWithAccessToken();
+    // You must provide the correct tenantId for your context
+    // For example: usersWithOAuth = await adapter.getUsersWithOAuth(currentTenantId);
+    usersWithOAuth = null; // Placeholder, call with tenantId when available
   } catch (err) {
     // No log
   }
@@ -223,7 +214,7 @@ async function initializePlugin() {
     sessionToken,
     backendFetchedUsers,
     usersWithInitToken,
-    usersWithAccessToken, // Include the new result
+    usersWithOAuth,
   };
 }
 
@@ -239,28 +230,3 @@ initializePlugin().then(result => {
 }).catch(err => {
   // No log
 });
-
-// Example: Simulate receiving lifecycle events (for demonstration/testing)
-async function simulateLifecycleEvents() {
-  const adapter = new PatchedPluginAdapter();
-  // Simulate 'install' event
-  await adapter.handleLifecycleEvent('install', { /* install event data */ });
-  // Simulate 'access_token' event with example data
-  await adapter.handleLifecycleEvent('access_token', {
-    access_token: 'example-access-token',
-    token_type: 'Bearer',
-    expires_in: 3600,
-    scope: 'plugin:notify users.read'
-    // ...other OAuth2 fields...
-  });
-  // After the 'access_token' event is "received", you can try fetching users
-  try {
-    const usersWithOauth = await adapter.getUsersWithAccessToken();
-    // No log
-  } catch (error) {
-    // No log
-  }
-}
-
-// Optionally call simulateLifecycleEvents for demonstration
-simulateLifecycleEvents();
