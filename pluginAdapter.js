@@ -2,6 +2,7 @@ class PatchedPluginAdapter extends PluginAdapter {
   constructor() {
     super();
     this._initResponse = null;
+    this._accessToken = null; // Store the OAuth2 access token
   }
 
   /**
@@ -25,8 +26,6 @@ class PatchedPluginAdapter extends PluginAdapter {
       throw new Error('[PatchedPluginAdapter] Could not get init token.');
     }
 
-    console.log('[PatchedPluginAdapter] Init Token:', initToken);
-
     // Call the Netlify function to exchange the init token for a session token
     const response = await fetch('/.netlify/functions/exchange-token', {
       method: 'POST',
@@ -38,12 +37,10 @@ class PatchedPluginAdapter extends PluginAdapter {
 
     if (!response.ok) {
       const errorBody = await response.text();
-      console.error('[PatchedPluginAdapter] Error from exchange-token:', response.status, errorBody);
       throw new Error(`Failed to exchange token: ${errorBody}`);
     }
 
     const responseData = await response.json();
-    console.log('[PatchedPluginAdapter] Full Response from exchange-token.js:', responseData);
 
     // Add debug: log error and details if present
     if (responseData.error || responseData.details) {
@@ -51,13 +48,36 @@ class PatchedPluginAdapter extends PluginAdapter {
     }
 
     const { sessionToken } = responseData;
-    console.log('[PatchedPluginAdapter] Session Token obtained from exchange-token.js:', sessionToken);
 
     if (!sessionToken) {
       throw new Error('[PatchedPluginAdapter] No session token returned from exchange-token.js');
     }
 
     return sessionToken;
+  }
+
+  // Store the access token received via webhook
+  setAccessToken(accessToken) {
+    this._accessToken = accessToken;
+  }
+
+  // Fetch users using the stored access token
+  async getUsersWithAccessToken() {
+    if (!this._accessToken) {
+      throw new Error('[PatchedPluginAdapter] No access token available. Ensure the access_token webhook was processed.');
+    }
+    const response = await fetch('https://asioso.coyocloud.com/api/users', {
+      headers: {
+        'Authorization': `Bearer ${this._accessToken}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    if (!response.ok) {
+      const text = await response.text();
+      throw new Error(`HTTP ${response.status}: ${text}`);
+    }
+    const users = await response.json();
+    return users;
   }
 
   /**
@@ -74,7 +94,6 @@ class PatchedPluginAdapter extends PluginAdapter {
     });
     if (!response.ok) {
       const text = await response.text();
-      console.error('[PatchedPluginAdapter] getUsers() error:', response.status, text);
       throw new Error(`HTTP ${response.status}: ${text}`);
     }
     return response.json();
@@ -85,14 +104,12 @@ class PatchedPluginAdapter extends PluginAdapter {
    * This method sends the JWT as a Bearer token in the Authorization header.
    */
   async getUsersWithInitToken() {
-    console.log('[PatchedPluginAdapter] getUsersWithInitToken() called');
     // Get the JWT from adapter.init()
     const initResponse = await this.init();
     const jwt = initResponse?.token;
     if (!jwt) {
       throw new Error('[PatchedPluginAdapter] No JWT token available from adapter.init().');
     }
-    console.log('[PatchedPluginAdapter] JWT for getUsersWithInitToken:', jwt);
     const response = await fetch('https://asioso.coyocloud.com/api/users', {
       headers: {
         'Authorization': `Bearer ${jwt}`,
@@ -101,11 +118,9 @@ class PatchedPluginAdapter extends PluginAdapter {
     });
     if (!response.ok) {
       const text = await response.text();
-      console.error('[PatchedPluginAdapter] getUsersWithInitToken() error:', response.status, text);
       throw new Error(`HTTP ${response.status}: ${text}`);
     }
     const users = await response.json();
-    console.log('[PatchedPluginAdapter] getUsersWithInitToken() response:', users);
     return users;
   }
 
@@ -123,7 +138,6 @@ class PatchedPluginAdapter extends PluginAdapter {
       });
       const text = await res.text();
       if (!res.ok) {
-        console.error('[PatchedPluginAdapter] Direct /api/users error:', res.status, text);
         throw new Error(`HTTP ${res.status}: ${text}`);
       }
       try {
@@ -132,7 +146,6 @@ class PatchedPluginAdapter extends PluginAdapter {
         return text;
       }
     } catch (err) {
-      console.error('[PatchedPluginAdapter] Direct /api/users fetch failed:', err);
       return null;
     }
   }
@@ -142,7 +155,11 @@ class PatchedPluginAdapter extends PluginAdapter {
    * This should be called after the 'install' lifecycle event.
    */
   async handleAccessTokenWebhook(eventData) {
-    console.log('[PatchedPluginAdapter] Received access_token webhook event:', eventData);
+    console.log('[PatchedPluginAdapter] Received access_token webhook event in class:', eventData);
+    const { access_token } = eventData;
+    if (access_token) {
+      this.setAccessToken(access_token);
+    }
     // You can add further processing here if needed
   }
 
@@ -152,7 +169,6 @@ class PatchedPluginAdapter extends PluginAdapter {
    */
   async handleLifecycleEvent(eventType, eventData) {
     if (eventType === 'install') {
-      // ...handle install logic if needed...
       console.log('[PatchedPluginAdapter] Plugin installed.');
     }
     if (eventType === 'access_token') {
@@ -168,6 +184,7 @@ async function initializePlugin() {
   let backendFetchedUsers = null;
   let sessionToken = null;
   let usersWithInitToken = null;
+  let usersWithAccessToken = null; // New variable
 
   try {
     sessionToken = await adapter.getSessionToken();
@@ -175,19 +192,39 @@ async function initializePlugin() {
       backendFetchedUsers = await adapter.getUsers(sessionToken);
     }
   } catch (err) {
-    console.error('[initializePlugin] Error fetching session token or users:', err);
+    // No log
   }
 
   // Always attempt getUsersWithInitToken, even if above fails
   try {
-    console.log('[initializePlugin] Calling getUsersWithInitToken...');
     usersWithInitToken = await adapter.getUsersWithInitToken();
-    console.log('[initializePlugin] usersWithInitToken:', usersWithInitToken);
   } catch (err) {
-    console.error('[initializePlugin] Error fetching users with init token:', err);
+    // No log
   }
 
-  return { adapter, initResponse, sessionToken, backendFetchedUsers, usersWithInitToken };
+  // Simulate receiving the access_token event (for local testing)
+  // In a real Haiilo environment, this would happen via the webhook
+  await adapter.handleLifecycleEvent('access_token', {
+    access_token: 'example-oauth-access-token',
+    token_type: 'Bearer',
+    expires_in: 3600,
+    scope: 'plugin:notify users.read',
+  });
+
+  try {
+    usersWithAccessToken = await adapter.getUsersWithAccessToken();
+  } catch (err) {
+    // No log
+  }
+
+  return {
+    adapter,
+    initResponse,
+    sessionToken,
+    backendFetchedUsers,
+    usersWithInitToken,
+    usersWithAccessToken, // Include the new result
+  };
 }
 
 // Attach to module.exports for CommonJS-style eval usage
@@ -198,9 +235,9 @@ if (typeof module !== 'undefined' && module.exports) {
 
 // Call the function and log the result
 initializePlugin().then(result => {
-  console.log('[pluginAdapter.js] initializePlugin result:', result);
+  // No log
 }).catch(err => {
-  console.error('[pluginAdapter.js] initializePlugin error:', err);
+  // No log
 });
 
 // Example: Simulate receiving lifecycle events (for demonstration/testing)
@@ -216,7 +253,14 @@ async function simulateLifecycleEvents() {
     scope: 'plugin:notify users.read'
     // ...other OAuth2 fields...
   });
+  // After the 'access_token' event is "received", you can try fetching users
+  try {
+    const usersWithOauth = await adapter.getUsersWithAccessToken();
+    // No log
+  } catch (error) {
+    // No log
+  }
 }
 
 // Optionally call simulateLifecycleEvents for demonstration
-// simulateLifecycleEvents();
+simulateLifecycleEvents();
