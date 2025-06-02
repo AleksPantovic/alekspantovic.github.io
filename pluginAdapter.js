@@ -136,6 +136,30 @@ class PatchedPluginAdapter extends PluginAdapter {
       return null;
     }
   }
+
+  /**
+   * Handle access_token webhook event and log the response.
+   * This should be called after the 'install' lifecycle event.
+   */
+  async handleAccessTokenWebhook(eventData) {
+    console.log('[PatchedPluginAdapter] Received access_token webhook event:', eventData);
+    // You can add further processing here if needed
+  }
+
+  /**
+   * Simulate listening for lifecycle events and handle access_token after install.
+   * In a real plugin, this would be triggered by your backend/webhook handler.
+   */
+  async handleLifecycleEvent(eventType, eventData) {
+    if (eventType === 'install') {
+      // ...handle install logic if needed...
+      console.log('[PatchedPluginAdapter] Plugin installed.');
+    }
+    if (eventType === 'access_token') {
+      await this.handleAccessTokenWebhook(eventData);
+    }
+    // ...handle other events if needed...
+  }
 }
 
 async function initializePlugin() {
@@ -178,3 +202,21 @@ initializePlugin().then(result => {
 }).catch(err => {
   console.error('[pluginAdapter.js] initializePlugin error:', err);
 });
+
+// Example: Simulate receiving lifecycle events (for demonstration/testing)
+async function simulateLifecycleEvents() {
+  const adapter = new PatchedPluginAdapter();
+  // Simulate 'install' event
+  await adapter.handleLifecycleEvent('install', { /* install event data */ });
+  // Simulate 'access_token' event with example data
+  await adapter.handleLifecycleEvent('access_token', {
+    access_token: 'example-access-token',
+    token_type: 'Bearer',
+    expires_in: 3600,
+    scope: 'plugin:notify users.read'
+    // ...other OAuth2 fields...
+  });
+}
+
+// Optionally call simulateLifecycleEvents for demonstration
+// simulateLifecycleEvents();
