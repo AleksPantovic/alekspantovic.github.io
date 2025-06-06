@@ -64,81 +64,31 @@ exports.handler = async (event) => {
         };
     }
 
-    console.log('[lifecycle] Raw JWT token received (first 50 chars):', token.substring(0, 50) + '...');
-
-    let eventType = null;
-    let decodedPayload = null;
-
+    // Mimic the express example: decode and check issuer
+    let decodedToken;
     try {
-        const decoded = jwt.decode(token, { complete: true });
-        if (!decoded || !decoded.header || !decoded.payload) {
-            console.error('[lifecycle] JWT decoding resulted in incomplete token.');
-            return { statusCode: 400, body: JSON.stringify({ error: 'Incomplete JWT token decoded' }) };
-        }
-
-        eventType = decoded.payload.sub;
-        decodedPayload = decoded.payload;
-
-        console.log('[lifecycle] Decoded JWT Header:', decoded.header);
-        console.log('[lifecycle] Decoded JWT Payload (claims):', decoded.payload);
-        console.log('[lifecycle] Event type (sub claim):', eventType);
-
-        // JWT verification (recommended)
-        await new Promise((resolve, reject) => {
-            jwt.verify(token, getSigningKey, { algorithms: ['RS512'] }, function(err, verifiedPayload) {
-                if (err) {
-                    console.error('[lifecycle] JWT verification failed:', err.message);
-                    return reject(new Error('JWT verification failed'));
-                }
-                console.log('[lifecycle] JWT successfully verified.');
-                resolve();
-            });
-        });
-
+        decodedToken = jwt.decode(token, { complete: true });
+        console.log('[lifecycle] Decoded header:', decodedToken.header);
+        console.log('[lifecycle] Decoded payload:', decodedToken.payload);
     } catch (e) {
-        console.error('[lifecycle] Error processing JWT:', e.message);
+        console.error('[lifecycle] Failed to decode JWT:', e.message);
         return {
-            statusCode: 401,
-            body: JSON.stringify({ error: `JWT processing failed: ${e.message}` }),
+            statusCode: 400,
+            body: JSON.stringify({ error: 'Invalid JWT token' }),
         };
     }
 
-    let responseBody = { message: 'Lifecycle event processed successfully' };
-    let statusCode = 200;
-
-    switch (eventType) {
-        case 'install':
-            console.log('[lifecycle] Handling install event.');
-            statusCode = 201;
-            responseBody.message = 'Plugin installed successfully';
-            break;
-        case 'uninstall':
-            console.log('[lifecycle] Handling uninstall event.');
-            statusCode = 201;
-            responseBody.message = 'Plugin uninstalled successfully';
-            break;
-        case 'instance_add':
-            console.log('[lifecycle] Handling instance_add event.');
-            statusCode = 201;
-            responseBody.message = 'Instance added successfully';
-            break;
-        case 'instance_remove':
-            console.log('[lifecycle] Handling instance_remove event.');
-            statusCode = 201;
-            responseBody.message = 'Instance removed successfully';
-            break;
-        default:
-            console.warn(`[lifecycle] Unknown lifecycle event type: ${eventType}`);
-            statusCode = 400;
-            responseBody = { error: `Unknown lifecycle event: ${eventType}` };
-            break;
+    if (decodedToken && decodedToken.payload && decodedToken.payload.iss && decodedToken.payload.iss.indexOf('coyo') >= 0) {
+        console.log('Successful installation');
+        return {
+            statusCode: 201,
+            body: JSON.stringify({ code: 100, message: 'ok' }),
+        };
+    } else {
+        console.log('Unsupported COYO instance');
+        return {
+            statusCode: 400,
+            body: JSON.stringify({ code: 101, message: 'Unsupported COYO instance' }),
+        };
     }
-
-    const response = {
-        statusCode: statusCode,
-        body: JSON.stringify(responseBody),
-    };
-
-    console.log('[lifecycle] Final Response:', response);
-    return response;
 };
