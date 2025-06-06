@@ -31,21 +31,5 @@
       "instance_add",
       "instance_remove"
     ]
-  },
-  "integrations": {
-    "oauth2": {
-      "scopes": [
-        "plugin:notify",
-        "users.read"
-      ],
-      "client_id": "organization",
-      "webhooks": {
-        "access_token": "https://haiiloplugin.netlify.app/.netlify/functions/oauth-callback"
-      }
-    },
-    "apiAccess": {
-      "scopes": ["users.read"],
-      "endpoints": ["/api/users"]
-    }
   }
 }
