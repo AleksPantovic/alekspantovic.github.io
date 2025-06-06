@@ -32,18 +32,20 @@
       "instance_remove"
     ]
   },
-  "webhooks": {
-    "access_token": "https://haiiloplugin.netlify.app/.netlify/functions/oauth-callback"
-  },
-  "oauth2": {
-    "scopes": [
-      "plugin:notify",
-      "users.read"
-    ],
-    "client_id": "organization"
-  },
-  "apiAccess": {
-    "scopes": ["users.read"],
-    "endpoints": ["/api/users"]
+  "integrations": {
+    "oauth2": {
+      "scopes": [
+        "plugin:notify",
+        "users.read"
+      ],
+      "client_id": "organization",
+      "webhooks": {
+        "access_token": "https://haiiloplugin.netlify.app/.netlify/functions/oauth-callback"
+      }
+    },
+    "apiAccess": {
+      "scopes": ["users.read"],
+      "endpoints": ["/api/users"]
+    }
   }
 }
