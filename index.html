@@ -2,8 +2,9 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Haiilo Plugin - Entry Points Data</title>
+  <script src="https://static.haiilo.io/plugin-sdk/v1.js"></script>
 </head>
 <body>
   <h1>Entry Points Data</h1>
@@ -13,24 +14,23 @@
   <div id="config-values">Loading...</div>
 
   <script type="module">
-    // Wait for Haiilo to initialize the plugin context
-    window.haiiloPlugin.initialize().then(context => {
-      const config = context.config;
+    if (window.haiiloPlugin && window.haiiloPlugin.initialize) {
+      window.haiiloPlugin.initialize().then(context => {
+        const config = context.config || {};
 
-      const configDiv = document.getElementById('config-values');
-      configDiv.innerHTML = `
-        <div>API Key: <b>${config.apiKey || "Not set"}</b></div>
-        <div>Custom Title: <b>${config.customTitle || "Not set"}</b></div>
-      `;
-
-      // Optional: show entry points if needed (you can remove this part if not using)
-      const entryPoints = [
-        { id: "510e9e0c-e3b8-44a8-8db1-5185d3d844ce", url: "/" },
-        { id: "b5e2e2b7-3e6a-4e2e-9e2e-7e2e2e2e2e2e", url: "/entry1" },
-        { id: "c6f3e3c8-4f7b-4d2e-8e3e-8e3e3e3e3e3e", url: "/entry2" },
-        { id: "d7e4e4d9-5a8c-4e3e-9e4e-9e4e4e4e4e4e", url: "/entry3" }
-      ];
-
+        document.getElementById('config-values').innerHTML = `
+          <div>API Key: <b>${config.apiKey || "Not set"}</b></div>
+          <div>Custom Title: <b>${config.customTitle || "Not set"}</b></div>
+        `;
+      }).catch(error => {
+        document.getElementById('config-values').innerText = "Init failed: " + error;
+      });
+    } else {
+      document.getElementById('config-values').innerText = "Haiilo plugin SDK not available.";
+    }
+  </script>
+</body>
+</html>
       const ul = document.getElementById('entrypoints');
       for (const ep of entryPoints) {
         fetch(ep.url)
@@ -52,4 +52,3 @@
   </script>
 </body>
 </html>
-c
