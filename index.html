@@ -8,16 +8,32 @@
 <body>
   <h1>Entry Points Data</h1>
   <ul id="entrypoints"></ul>
+
+  <h2>Plugin Config Fields</h2>
+  <form id="plugin-config">
+    <label>
+      API Key:
+      <input type="text" id="apiKey" name="apiKey" value="">
+    </label>
+    <br>
+    <label>
+      Custom Title:
+      <input type="text" id="customTitle" name="customTitle" value="Welcome!">
+    </label>
+    <br>
+    <button type="submit">Save</button>
+  </form>
+
   <script type="module">
+    // Entry points display (unchanged)
     const entryPoints = [
       { id: "510e9e0c-e3b8-44a8-8db1-5185d3d844ce", url: "/" },
-      { id: "entrypoint-1", url: "/entry1" },
-      { id: "entrypoint-2", url: "/entry2" },
-      { id: "entrypoint-3", url: "/entry3" }
+      { id: "b5e2e2b7-3e6a-4e2e-9e2e-7e2e2e2e2e2e", url: "/entry1" },
+      { id: "c6f3e3c8-4f7b-4d2e-8e3e-8e3e3e3e3e3e", url: "/entry2" },
+      { id: "d7e4e4d9-5a8c-4e3e-9e4e-9e4e4e4e4e4e", url: "/entry3" }
     ];
 
     const ul = document.getElementById('entrypoints');
-
     for (const ep of entryPoints) {
       fetch(ep.url)
         .then(res => res.text())
@@ -32,6 +48,15 @@
           ul.appendChild(li);
         });
     }
+
+    // Handle config form
+    document.getElementById('plugin-config').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const apiKey = document.getElementById('apiKey').value;
+      const customTitle = document.getElementById('customTitle').value;
+      alert(`API Key: ${apiKey}\nCustom Title: ${customTitle}`);
+      // Here you would send/store these values as needed for your plugin logic
+    });
   </script>
 </body>
 </html>
