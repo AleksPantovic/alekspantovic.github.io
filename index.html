@@ -3,93 +3,35 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Haiilo Plugin - User Data (Console Debug Only)</title>
-  <script type="module">
-    import { PluginAdapter } from 'https://cdn.jsdelivr.net/npm/@coyoapp/plugin-adapter/+esm';
-
-    document.addEventListener('DOMContentLoaded', async () => {
-      console.log('[index.html] Entered DOMContentLoaded');
-
-      const adapter = new PluginAdapter();
-      console.log('5. [PluginAdapter] Calling adapter.init()...');
-      const initResponse = await adapter.init();
-      console.log('6. [PluginAdapter] adapter.init() response:', initResponse);
-
-      if (!initResponse || !initResponse.token) {
-        console.error('[PluginAdapter] No token found in initResponse:', initResponse);
-        return;
-      }
-
-      const initToken = initResponse.token;
-      console.log('[PluginAdapter] Init Token obtained:', initToken);
-
-      // Call the exchange-token Netlify function
-      try {
-        const exchangeResponse = await fetch('/.netlify/functions/exchange-token', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ initToken }),
-        });
-
-        if (!exchangeResponse.ok) {
-          console.error('[index.html] Failed to exchange token:', exchangeResponse.status);
-          return;
-        }
-
-        const { sessionToken } = await exchangeResponse.json();
-        console.log('[index.html] Session Token obtained from exchange-token.js:', sessionToken);
-
-        if (!sessionToken) {
-          console.error('[index.html] No session token returned from exchange-token.js');
-        }
-      } catch (error) {
-        console.error('[index.html] Error calling exchange-token.js:', error);
-      }
-
-      // --- Workaround: fetch and eval pluginAdapter.js ---
-      try {
-        const response = await fetch('./pluginAdapter.js');
-        if (!response.ok) {
-          console.error('[index.html] Failed to fetch pluginAdapter.js:', response.status);
-          return;
-        }
-        const pluginAdapterCode = await response.text();
-        const module = { exports: {} };
-        const require = (path) => {
-          if (path === 'https://cdn.jsdelivr.net/npm/@coyoapp/plugin-adapter/+esm') {
-            return { PluginAdapter };
-          }
-          return {};
-        };
-        try {
-          eval(pluginAdapterCode);
-        } catch (evalError) {
-          console.error('[index.html] Error during eval of pluginAdapter.js:', evalError);
-          console.error('[index.html] pluginAdapter.js code was:', pluginAdapterCode);
-          throw evalError;
-        }
-
-        if (module.exports.initializePlugin) {
-          console.log('[index.html] Found initializePlugin in fetched code');
-          const { sessionToken, backendFetchedUsers } = await module.exports.initializePlugin();
-          console.log('[PluginAdapter] Session Token:', sessionToken);
-          console.log('[PluginAdapter] Users from adapter.getUsers():', backendFetchedUsers);
-          if (sessionToken === null) {
-            console.error('[index.html] CORS error: Could not fetch session token. The browser was blocked by CORS when trying to access https://asioso.coyocloud.com/web/authorization/token. This endpoint must allow your plugin origin or you must use a backend proxy.');
-          }
-        } else {
-          console.error('[index.html] initializePlugin not found in fetched code');
-        }
-      } catch (error) {
-        console.error('[index.html] Error fetching or executing pluginAdapter.js:', error);
-      }
-    });
-  </script>
+  <title>Haiilo Plugin - Entry Points Data</title>
 </head>
 <body>
+  <h1>Entry Points Data</h1>
+  <ul id="entrypoints"></ul>
+  <script type="module">
+    const entryPoints = [
+      { id: "510e9e0c-e3b8-44a8-8db1-5185d3d844ce", url: "/" },
+      { id: "entrypoint-1", url: "/entry1" },
+      { id: "entrypoint-2", url: "/entry2" },
+      { id: "entrypoint-3", url: "/entry3" }
+    ];
 
-  <script src="./test.js" type="module"></script>
+    const ul = document.getElementById('entrypoints');
+
+    for (const ep of entryPoints) {
+      fetch(ep.url)
+        .then(res => res.text())
+        .then(data => {
+          const li = document.createElement('li');
+          li.textContent = `ID: ${ep.id}, URL: ${ep.url}, Data: ${data}`;
+          ul.appendChild(li);
+        })
+        .catch(err => {
+          const li = document.createElement('li');
+          li.textContent = `ID: ${ep.id}, URL: ${ep.url}, Error: ${err}`;
+          ul.appendChild(li);
+        });
+    }
+  </script>
 </body>
 </html>
