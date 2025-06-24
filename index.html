@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Haiilo Plugin - Entry Points Data</title>
 </head>
 <body>
@@ -10,53 +10,46 @@
   <ul id="entrypoints"></ul>
 
   <h2>Plugin Config Fields</h2>
-  <form id="plugin-config">
-    <label>
-      API Key:
-      <input type="text" id="apiKey" name="apiKey" value="">
-    </label>
-    <br>
-    <label>
-      Custom Title:
-      <input type="text" id="customTitle" name="customTitle" value="Welcome!">
-    </label>
-    <br>
-    <button type="submit">Save</button>
-  </form>
+  <div id="config-values">Loading...</div>
 
   <script type="module">
-    // Entry points display (unchanged)
-    const entryPoints = [
-      { id: "510e9e0c-e3b8-44a8-8db1-5185d3d844ce", url: "/" },
-      { id: "b5e2e2b7-3e6a-4e2e-9e2e-7e2e2e2e2e2e", url: "/entry1" },
-      { id: "c6f3e3c8-4f7b-4d2e-8e3e-8e3e3e3e3e3e", url: "/entry2" },
-      { id: "d7e4e4d9-5a8c-4e3e-9e4e-9e4e4e4e4e4e", url: "/entry3" }
-    ];
+    // Wait for Haiilo to initialize the plugin context
+    window.haiiloPlugin.initialize().then(context => {
+      const config = context.config;
 
-    const ul = document.getElementById('entrypoints');
-    for (const ep of entryPoints) {
-      fetch(ep.url)
-        .then(res => res.text())
-        .then(data => {
-          const li = document.createElement('li');
-          li.textContent = `ID: ${ep.id}, URL: ${ep.url}, Data: ${data}`;
-          ul.appendChild(li);
-        })
-        .catch(err => {
-          const li = document.createElement('li');
-          li.textContent = `ID: ${ep.id}, URL: ${ep.url}, Error: ${err}`;
-          ul.appendChild(li);
-        });
-    }
+      const configDiv = document.getElementById('config-values');
+      configDiv.innerHTML = `
+        <div>API Key: <b>${config.apiKey || "Not set"}</b></div>
+        <div>Custom Title: <b>${config.customTitle || "Not set"}</b></div>
+      `;
 
-    // Handle config form
-    document.getElementById('plugin-config').addEventListener('submit', function(e) {
-      e.preventDefault();
-      const apiKey = document.getElementById('apiKey').value;
-      const customTitle = document.getElementById('customTitle').value;
-      alert(`API Key: ${apiKey}\nCustom Title: ${customTitle}`);
-      // Here you would send/store these values as needed for your plugin logic
+      // Optional: show entry points if needed (you can remove this part if not using)
+      const entryPoints = [
+        { id: "510e9e0c-e3b8-44a8-8db1-5185d3d844ce", url: "/" },
+        { id: "b5e2e2b7-3e6a-4e2e-9e2e-7e2e2e2e2e2e", url: "/entry1" },
+        { id: "c6f3e3c8-4f7b-4d2e-8e3e-8e3e3e3e3e3e", url: "/entry2" },
+        { id: "d7e4e4d9-5a8c-4e3e-9e4e-9e4e4e4e4e4e", url: "/entry3" }
+      ];
+
+      const ul = document.getElementById('entrypoints');
+      for (const ep of entryPoints) {
+        fetch(ep.url)
+          .then(res => res.text())
+          .then(data => {
+            const li = document.createElement('li');
+            li.textContent = `ID: ${ep.id}, URL: ${ep.url}, Data: ${data}`;
+            ul.appendChild(li);
+          })
+          .catch(err => {
+            const li = document.createElement('li');
+            li.textContent = `ID: ${ep.id}, URL: ${ep.url}, Error: ${err}`;
+            ul.appendChild(li);
+          });
+      }
+    }).catch(error => {
+      document.getElementById('config-values').innerText = "Failed to load Haiilo context: " + error;
     });
   </script>
 </body>
 </html>
+c
