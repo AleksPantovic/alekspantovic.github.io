@@ -61,20 +61,22 @@
   ],
   "config": [
     {
-      "id": "apiKey",
+      "key": "apiKey",
       "type": "text",
       "label": {
-        "en": "API Key"
+        "en": "API Key",
+        "de": "API-Schlüssel"
       },
-      "defaultValue": ""
+      "default": ""
     },
     {
-      "id": "customTitle",
+      "key": "customTitle",
       "type": "text",
       "label": {
-        "en": "Custom Title"
+        "en": "Custom Title",
+        "de": "Benutzerdefinierter Titel"
       },
-      "defaultValue": "Welcome!"
+      "default": "Welcome!"
     }
   ],
   "lifecycle": {
