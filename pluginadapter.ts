@@ -1,4 +1,7 @@
 // pluginadapter.ts
+// This log should appear first if the file is parsed and executed
+console.log("--> pluginadapter.js: File started execution.");
+
 import { PluginAdapter } from '@coyoapp/plugin-adapter';
 
 export class DemoPlugin {
