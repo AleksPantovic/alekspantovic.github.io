@@ -1,14 +1,19 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
+    "target": "ES2020", // This helps
+    "lib": ["es2020", "dom"], // THIS IS THE KEY FOR 'Map' AND BROWSER APIS
     "module": "ESNext",
     "moduleResolution": "Node",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "outDir": "./dist",
+    "outDir": "./dist", // Preferred output directory
     "rootDir": "./"
   },
-  "include": ["netlify/functions/**/*.ts", "netlify/functions/**/*.mts"],
+  "include": [
+    "./pluginadapter.ts", // Make sure this path is correct relative to tsconfig.json
+    "netlify/functions/**/*.ts",
+    "netlify/functions/**/*.mts"
+  ],
   "exclude": ["node_modules"]
 }

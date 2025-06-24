@@ -1,91 +1,116 @@
 {
   "manifestVersion": "2.0.0",
-  "pluginVersion": "0.1.0",
+  "pluginVersion": "0.3.1",
   "name": {
-    "en": "Asioso Haiilo Plugin",
-    "de": "Asioso Haiilo Plugin"
+    "en": "Demo Plugin - Step 3a",
+    "de": "Demo Plugin - Step 3a"
   },
   "description": {
-    "en": "Integration plugin for Haiilo platform",
-    "de": "Integrationsplugin für die Haiilo-Plattform"
+    "en": "A simple demo plug-in",
+    "de": "Ein einfaches Beispiel-Plug-in"
   },
+  "context": ["userName"],
+  "config": [
+    {
+      "key": "background",
+      "type": "text",
+      "label": {
+        "en": "Background color",
+        "de": "Hintergrundfarbe"
+      },
+      "placeholder": {
+        "en": "HEX color - #AFD62D",
+        "de": "HEX color - #AFD62D"
+      },
+      "description": {
+        "en": "Enter a valid HEX color code.",
+        "de": "Gib einen validen HEX-Farbcode an."
+      },
+      "pattern": "^#([a-fA-F0-9]{6}|[a-fA-F0-9]{3})$",
+      "required": true
+    }
+  ],
   "entryPoints": [
     {
       "id": "510e9e0c-e3b8-44a8-8db1-5185d3d844ce",
-      "url": "/",
       "name": {
-        "en": "User Management",
-        "de": "Benutzerverwaltung"
+        "en": "Personal View 1",
+        "de": "Persönliche Ansicht 1"
       },
       "description": {
-        "en": "Manage Haiilo user data",
-        "de": "Haiilo-Benutzerdaten verwalten"
-      }
+        "en": "Greeting the user",
+        "de": "Persönlicher Gruß"
+      },
+      "url": "/ep1.html"
     },
     {
-      "id": "b5e2e2b7-3e6a-4e2e-9e2e-7e2e2e2e2e2e",
-      "url": "/entry1",
+      "id": "4f434887-9289-48ac-986d-4ff1f37ab618",
       "name": {
-        "en": "Entry Point 1",
-        "de": "Einstiegspunkt 1"
+        "en": "View 2",
+        "de": "Ansicht 2"
       },
       "description": {
-        "en": "Returns a string from entry point 1",
-        "de": "Gibt einen String von Einstiegspunkt 1 zurück"
-      }
-    },
-    {
-      "id": "c6f3e3c8-4f7b-4d2e-8e3e-8e3e3e3e3e3e",
-      "url": "/entry2",
-      "name": {
-        "en": "Entry Point 2",
-        "de": "Einstiegspunkt 2"
+        "en": "Displaying view 2",
+        "de": "Ansicht 2 wird angezeigt"
       },
-      "description": {
-        "en": "Returns a string from entry point 2",
-        "de": "Gibt einen String von Einstiegspunkt 2 zurück"
-      }
-    },
-    {
-      "id": "d7e4e4d9-5a8c-4e3e-9e4e-9e4e4e4e4e4e",
-      "url": "/entry3",
-      "name": {
-        "en": "Entry Point 3",
-        "de": "Einstiegspunkt 3"
-      },
-      "description": {
-        "en": "Returns a string from entry point 3",
-        "de": "Gibt einen String von Einstiegspunkt 3 zurück"
-      }
+      "url": "/ep2.html",
+      "config": [
+        {
+          "key": "spotifyLink",
+          "type": "text",
+          "label": {
+            "en": "Spotify Link",
+            "de": "Spotify Link"
+          },
+          "placeholder": {
+            "en": "https://open.spotify.com/album/4RuzGKLG99XctuBMBkFFOC",
+            "de": "https://open.spotify.com/album/4RuzGKLG99XctuBMBkFFOC"
+          },
+          "description": {
+            "en": "Enter a spotify link you get through the share menu.",
+            "de": "Gib einen Spotify Link, den du über das Teilen-Menu erhältst, ein."
+          },
+          "pattern": "^https:\\/\\/open\\.spotify\\.com\\/(track|album|playlist)\\/[A-Za-z0-9]+$",
+          "required": true
+        },
+        {
+          "key": "spotifyLayout",
+          "type": "radio",
+          "label": {
+            "en": "Spotify Layout",
+            "de": "Spotify Layout"
+          },
+          "description": {
+            "en": "The layout of the spotify view",
+            "de": "Layout der Spotify Anzeige"
+          },
+          "options": [
+            {
+              "value": "LARGE",
+              "label": {
+                "en": "Large",
+                "de": "Groß"
+              },
+              "description": {
+                "en": "Large layout with song list",
+                "de": "Große Anzeige mit Liederliste"
+              }
+            },
+            {
+              "value": "COMPACT",
+              "label": {
+                "en": "Compact",
+                "de": "Kompakt"
+              },
+              "description": {
+                "en": "Compact layout with single song",
+                "de": "Kompakte Anzeige mit einem Lied"
+              }
+            }
+          ],
+          "required": true
+        }
+      ]
     }
-  ],
-  "config": [
-    {
-      "key": "apiKey",
-      "type": "text",
-      "label": {
-        "en": "API Key",
-        "de": "API-Schlüssel"
-      },
-      "default": ""
-    },
-    {
-      "key": "customTitle",
-      "type": "text",
-      "label": {
-        "en": "Custom Title",
-        "de": "Benutzerdefinierter Titel"
-      },
-      "default": "Welcome!"
-    }
-  ],
-  "lifecycle": {
-    "url": "https://haiiloplugin.netlify.app/.netlify/functions/lifecycle",
-    "events": [
-      "install",
-      "uninstall",
-      "instance_add",
-      "instance_remove"
-    ]
-  }
+  ]
 }
