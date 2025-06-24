@@ -1,7 +1,7 @@
 [[headers]]
 for = "/*.js"
 [headers.values]
-  Content-Type = "application/javascript"
+  Content-Type = "application/javascript; charset=utf-8"
 [[headers]]
   for = "/pluginAdapter.js"
   [headers.values]
@@ -15,7 +15,10 @@ for = "/*.mjs"
 for = "*.js"
 [headers.values]
   Content-Type = "application/javascript"
-
+[[headers]]
+  for = "/dist/pluginadapter.js"
+  [headers.values]
+    Content-Type = "application/javascript"
 [[headers]]
 for = "*.mjs"
 [headers.values]
