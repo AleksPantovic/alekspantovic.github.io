@@ -48,14 +48,6 @@ export class DemoPlugin {
                 console.log("Extracted spotifyLayout:", spotifyLayout);
                 this.updateSpanText('spotifyLayout', spotifyLayout || 'No Spotify layout'); // Display Spotify Layout text
 
-                // Add Spotify iframe if link and layout are available
-                if (spotifyLink && spotifyLayout) {
-                    console.log("Attempting to add Spotify iframe.");
-                    this.addSpotify(spotifyLink, spotifyLayout as "LARGE" | "COMPACT");
-                } else {
-                    console.log("Spotify link or layout missing, not adding iframe.");
-                }
-
             } else {
                 console.warn("Haiilo Plugin Data is not an object or is null:", pluginData);
                 this.updateSpanText('userName', 'No plugin data received.');
@@ -104,22 +96,6 @@ export class DemoPlugin {
         } else {
             console.log("No background color provided.");
         }
-    }
-
-    /**
-     * Adds a Spotify iframe to the document body.
-     * @param spotifyLink The Spotify share link.
-     * @param spotifyLayout The desired layout (LARGE or COMPACT).
-     */
-    private addSpotify(spotifyLink: string, spotifyLayout: "LARGE" | "COMPACT") {
-        const spotifyFrame = document.createElement("iframe");
-        spotifyFrame.width = '300';
-        spotifyFrame.height = spotifyLayout === "LARGE" ? '380' : '80';
-        spotifyFrame.allow = "encrypted-media";
-        // Convert the share link to an embed link
-        spotifyFrame.src = spotifyLink.replace('https://open.spotify.com', 'https://open.spotify.com/embed');
-        document.body.appendChild(spotifyFrame);
-        console.log(`Spotify iframe added with link: ${spotifyFrame.src} and layout: ${spotifyLayout}`);
     }
 }
 

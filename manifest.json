@@ -12,24 +12,6 @@
   "context": ["userName"],
   "config": [
     {
-      "key": "spotifyLink",
-      "type": "text",
-      "label": {
-        "en": "Spotify Link",
-        "de": "Spotify Link"
-      },
-      "placeholder": {
-        "en": "https://open.spotify.com/album/4RuzGKLG99XctuBMBkFFOC",
-        "de": "https://open.spotify.com/album/4RuzGKLG99XctuBMBkFFOC"
-      },
-      "description": {
-        "en": "Enter a spotify link you get through the share menu.",
-        "de": "Gib einen Spotify Link, den du über das Teilen-Menu erhältst, ein."
-      },
-      "pattern": "^https:\\/\\/open\\.spotify\\.com\\/(track|album|playlist)\\/[A-Za-z0-9]+$",
-      "required": true
-    },
-    {
       "key": "spotifyTitle",
       "type": "text",
       "label": {
