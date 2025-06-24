@@ -3,38 +3,66 @@ import { PluginAdapter } from '@coyoapp/plugin-adapter';
 
 export class DemoPlugin {
     constructor() {
+        console.log("DemoPlugin constructor called."); // Log when constructor starts
+
         // Initialize the PluginAdapter and fetch context/config data
         new PluginAdapter().init().then(data => {
             // Cast to any to avoid type errors with ctx.* and cfg.* properties
             const pluginData: any = data;
 
-            console.log("Haiilo Plugin Data Received:", pluginData); // Log the full data object for debugging
+            // --- IMPORTANT: Log the full received data object ---
+            console.log("Haiilo Plugin Data Received (raw):", data);
+            console.log("Haiilo Plugin Data Received (casted):", pluginData);
 
-            // --- Access and display Context Data ---
-            const userName = pluginData['ctx.userName'];
-            this.updateSpanText('userName', userName || 'Guest'); // Default to 'Guest' if not provided
+            // Check if pluginData has expected structure
+            if (pluginData && typeof pluginData === 'object') {
+                console.log("Data is an object. Proceeding to extract values.");
 
-            // --- Access and display Config Data ---
-            const apiKey = pluginData['cfg.apiKey'];
-            this.updateSpanText('apiKey', apiKey || 'Not set'); // Display API Key from config
+                // --- Access and display Context Data ---
+                const userName = pluginData['ctx.userName'];
+                console.log("Extracted userName:", userName);
+                this.updateSpanText('userName', userName || 'Guest'); // Default to 'Guest' if not provided
 
-            const customTitle = pluginData['cfg.customTitle'];
-            this.updateSpanText('customTitle', customTitle || 'No custom title'); // Display Custom Title from config
+                // --- Access and display Config Data ---
+                const apiKey = pluginData['cfg.apiKey'];
+                console.log("Extracted apiKey:", apiKey);
+                this.updateSpanText('apiKey', apiKey || 'Not set'); // Display API Key from config
 
-            const background = pluginData['cfg.background'];
-            this.updateSpanText('background', background || 'Default (no color)'); // Display Background color text
-            this.setBackgroundColor(background); // Apply background color
+                const customTitle = pluginData['cfg.customTitle'];
+                console.log("Extracted customTitle:", customTitle);
+                this.updateSpanText('customTitle', customTitle || 'No custom title'); // Display Custom Title from config
 
-            const spotifyLink = pluginData['cfg.spotifyLink'];
-            this.updateSpanText('spotifyLink', spotifyLink || 'No Spotify link'); // Display Spotify Link text
+                const background = pluginData['cfg.background'];
+                console.log("Extracted background:", background);
+                this.updateSpanText('background', background || 'Default (no color)'); // Display Background color text
+                this.setBackgroundColor(background); // Apply background color
 
-            const spotifyLayout = pluginData['cfg.spotifyLayout'];
-            this.updateSpanText('spotifyLayout', spotifyLayout || 'No Spotify layout'); // Display Spotify Layout text
+                const spotifyLink = pluginData['cfg.spotifyLink'];
+                console.log("Extracted spotifyLink:", spotifyLink);
+                this.updateSpanText('spotifyLink', spotifyLink || 'No Spotify link'); // Display Spotify Link text
 
-            // Add Spotify iframe if link and layout are available
-            if (spotifyLink && spotifyLayout) {
-                this.addSpotify(spotifyLink, spotifyLayout as "LARGE" | "COMPACT");
+                const spotifyLayout = pluginData['cfg.spotifyLayout'];
+                console.log("Extracted spotifyLayout:", spotifyLayout);
+                this.updateSpanText('spotifyLayout', spotifyLayout || 'No Spotify layout'); // Display Spotify Layout text
+
+                // Add Spotify iframe if link and layout are available
+                if (spotifyLink && spotifyLayout) {
+                    console.log("Attempting to add Spotify iframe.");
+                    this.addSpotify(spotifyLink, spotifyLayout as "LARGE" | "COMPACT");
+                } else {
+                    console.log("Spotify link or layout missing, not adding iframe.");
+                }
+
+            } else {
+                console.warn("Haiilo Plugin Data is not an object or is null:", pluginData);
+                this.updateSpanText('userName', 'No plugin data received.');
+                this.updateSpanText('apiKey', 'No plugin data received.');
+                this.updateSpanText('customTitle', 'No plugin data received.');
+                this.updateSpanText('background', 'No plugin data received.');
+                this.updateSpanText('spotifyLink', 'No plugin data received.');
+                this.updateSpanText('spotifyLayout', 'No plugin data received.');
             }
+
         }).catch(error => {
             console.error("Error initializing Haiilo Plugin Adapter:", error);
             // Optionally, update a status element on the page to show the error
@@ -56,8 +84,9 @@ export class DemoPlugin {
         const element = document.getElementById(id);
         if (element) {
             element.innerText = text;
+            console.log(`Updated span '${id}' with text: '${text}'`); // Log successful span update
         } else {
-            console.warn(`Element with ID '${id}' not found.`);
+            console.warn(`Element with ID '${id}' not found. Cannot update.`);
         }
     }
 
@@ -68,6 +97,9 @@ export class DemoPlugin {
     private setBackgroundColor(color: string) {
         if (color) {
             document.body.style.backgroundColor = color;
+            console.log(`Set background color to: '${color}'`);
+        } else {
+            console.log("No background color provided.");
         }
     }
 
@@ -84,6 +116,7 @@ export class DemoPlugin {
         // Convert the share link to an embed link
         spotifyFrame.src = spotifyLink.replace('https://open.spotify.com', 'https://open.spotify.com/embed');
         document.body.appendChild(spotifyFrame);
+        console.log(`Spotify iframe added with link: ${spotifyFrame.src} and layout: ${spotifyLayout}`);
     }
 }
 
