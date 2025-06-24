@@ -59,26 +59,24 @@
       }
     }
   ],
-  "config": {
-    "fields": [
-      {
-        "id": "apiKey",
-        "type": "text",
-        "label": {
-          "en": "API Key"
-        },
-        "defaultValue": ""
+  "config": [
+    {
+      "id": "apiKey",
+      "type": "text",
+      "label": {
+        "en": "API Key"
       },
-      {
-        "id": "customTitle",
-        "type": "text",
-        "label": {
-          "en": "Custom Title"
-        },
-        "defaultValue": "Welcome!"
-      }
-    ]
-  },
+      "defaultValue": ""
+    },
+    {
+      "id": "customTitle",
+      "type": "text",
+      "label": {
+        "en": "Custom Title"
+      },
+      "defaultValue": "Welcome!"
+    }
+  ],
   "lifecycle": {
     "url": "https://haiiloplugin.netlify.app/.netlify/functions/lifecycle",
     "events": [
