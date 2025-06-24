@@ -3,60 +3,14 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Haiilo Plugin - Entry Points Data</title>
-  <script src="https://static.haiilo.io/plugin-sdk/v1.js"></script>
+  <title>Haiilo Plugin</title>
 </head>
 <body>
-  <h1>Entry Points Data</h1>
-  <ul id="entrypoints"></ul>
+  <h1>Haiilo Plugin Config</h1>
+  <div>API Key: <span id="apiKey">...</span></div>
+  <div>Custom Title: <span id="customTitle">...</span></div>
+  <div>Hello, <span id="userName">...</span>!</div>
 
-  <h2>Plugin Config Fields</h2>
-  <div id="config-values">Loading...</div>
-
-  <script type="module">
-    const entryPoints = [
-      { id: "510e9e0c-e3b8-44a8-8db1-5185d3d844ce", url: "/" },
-      { id: "b5e2e2b7-3e6a-4e2e-9e2e-7e2e2e2e2e2e", url: "/entry1" },
-      { id: "c6f3e3c8-4f7b-4d2e-8e3e-8e3e3e3e3e3e", url: "/entry2" },
-      { id: "d7e4e4d9-5a8c-4e3e-9e4e-9e4e4e4e4e4e", url: "/entry3" }
-    ];
-
-    if (window.haiiloPlugin && typeof window.haiiloPlugin.initialize === "function") {
-      console.log("✅ Haiilo SDK found, initializing...");
-      window.haiiloPlugin.initialize().then(context => {
-        console.log("✅ Haiilo context:", context);
-
-        const config = context.config || {};
-        document.getElementById('config-values').innerHTML = `
-          <div>API Key: <b>${config.apiKey || "Not set"}</b></div>
-          <div>Custom Title: <b>${config.customTitle || "Not set"}</b></div>
-        `;
-
-        const ul = document.getElementById('entrypoints');
-        for (const ep of entryPoints) {
-          console.log(`📡 Fetching from: ${ep.url}`);
-          fetch(ep.url)
-            .then(res => res.text())
-            .then(data => {
-              const li = document.createElement('li');
-              li.textContent = `ID: ${ep.id}, URL: ${ep.url}, Data: ${data}`;
-              ul.appendChild(li);
-            })
-            .catch(err => {
-              const li = document.createElement('li');
-              li.textContent = `ID: ${ep.id}, URL: ${ep.url}, Error: ${err}`;
-              ul.appendChild(li);
-              console.error(`❌ Error fetching ${ep.url}:`, err);
-            });
-        }
-      }).catch(error => {
-        document.getElementById('config-values').innerText = "Failed to load Haiilo context: " + error;
-        console.error("❌ Haiilo init failed:", error);
-      });
-    } else {
-      console.warn("❌ Haiilo plugin SDK not available.");
-      document.getElementById('config-values').innerText = "Haiilo plugin SDK not available.";
-    }
-  </script>
+  <script type="module" src="/pluginadapter.ts"></script>
 </body>
 </html>
