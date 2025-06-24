@@ -12,105 +12,70 @@
   "context": ["userName"],
   "config": [
     {
-      "key": "background",
+      "key": "spotifyLink",
       "type": "text",
       "label": {
-        "en": "Background color",
-        "de": "Hintergrundfarbe"
+        "en": "Spotify Link",
+        "de": "Spotify Link"
       },
       "placeholder": {
-        "en": "HEX color - #AFD62D",
-        "de": "HEX color - #AFD62D"
+        "en": "https://open.spotify.com/album/4RuzGKLG99XctuBMBkFFOC",
+        "de": "https://open.spotify.com/album/4RuzGKLG99XctuBMBkFFOC"
       },
       "description": {
-        "en": "Enter a valid HEX color code.",
-        "de": "Gib einen validen HEX-Farbcode an."
+        "en": "Enter a spotify link you get through the share menu.",
+        "de": "Gib einen Spotify Link, den du über das Teilen-Menu erhältst, ein."
       },
-      "pattern": "^#([a-fA-F0-9]{6}|[a-fA-F0-9]{3})$",
+      "pattern": "^https:\\/\\/open\\.spotify\\.com\\/(track|album|playlist)\\/[A-Za-z0-9]+$",
       "required": true
+    },
+    {
+      "key": "spotifyTitle",
+      "type": "text",
+      "label": {
+        "en": "Spotify Title",
+        "de": "Spotify Titel"
+      },
+      "placeholder": {
+        "en": "My Favorite Playlist",
+        "de": "Meine Lieblingsplaylist"
+      },
+      "description": {
+        "en": "Enter a title for the Spotify embed.",
+        "de": "Gib einen Titel für das Spotify-Embed ein."
+      },
+      "required": false
+    },
+    {
+      "key": "userName",
+      "type": "text",
+      "label": {
+        "en": "User Name",
+        "de": "Benutzername"
+      },
+      "placeholder": {
+        "en": "John Doe",
+        "de": "Max Mustermann"
+      },
+      "description": {
+        "en": "Enter your user name.",
+        "de": "Gib deinen Benutzernamen ein."
+      },
+      "required": false
     }
   ],
   "entryPoints": [
     {
       "id": "510e9e0c-e3b8-44a8-8db1-5185d3d844ce",
       "name": {
-        "en": "Personal View 1",
-        "de": "Persönliche Ansicht 1"
+        "en": "Main View",
+        "de": "Hauptansicht"
       },
       "description": {
-        "en": "Greeting the user",
-        "de": "Persönlicher Gruß"
+        "en": "Main plugin view",
+        "de": "Hauptansicht des Plugins"
       },
-      "url": "/ep1.html"
-    },
-    {
-      "id": "4f434887-9289-48ac-986d-4ff1f37ab618",
-      "name": {
-        "en": "View 2",
-        "de": "Ansicht 2"
-      },
-      "description": {
-        "en": "Displaying view 2",
-        "de": "Ansicht 2 wird angezeigt"
-      },
-      "url": "/ep2.html",
-      "config": [
-        {
-          "key": "spotifyLink",
-          "type": "text",
-          "label": {
-            "en": "Spotify Link",
-            "de": "Spotify Link"
-          },
-          "placeholder": {
-            "en": "https://open.spotify.com/album/4RuzGKLG99XctuBMBkFFOC",
-            "de": "https://open.spotify.com/album/4RuzGKLG99XctuBMBkFFOC"
-          },
-          "description": {
-            "en": "Enter a spotify link you get through the share menu.",
-            "de": "Gib einen Spotify Link, den du über das Teilen-Menu erhältst, ein."
-          },
-          "pattern": "^https:\\/\\/open\\.spotify\\.com\\/(track|album|playlist)\\/[A-Za-z0-9]+$",
-          "required": true
-        },
-        {
-          "key": "spotifyLayout",
-          "type": "radio",
-          "label": {
-            "en": "Spotify Layout",
-            "de": "Spotify Layout"
-          },
-          "description": {
-            "en": "The layout of the spotify view",
-            "de": "Layout der Spotify Anzeige"
-          },
-          "options": [
-            {
-              "value": "LARGE",
-              "label": {
-                "en": "Large",
-                "de": "Groß"
-              },
-              "description": {
-                "en": "Large layout with song list",
-                "de": "Große Anzeige mit Liederliste"
-              }
-            },
-            {
-              "value": "COMPACT",
-              "label": {
-                "en": "Compact",
-                "de": "Kompakt"
-              },
-              "description": {
-                "en": "Compact layout with single song",
-                "de": "Kompakte Anzeige mit einem Lied"
-              }
-            }
-          ],
-          "required": true
-        }
-      ]
+      "url": "/"
     }
   ]
 }
