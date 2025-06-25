@@ -1,15 +1,10 @@
-// pluginadapter.ts
-// This log should appear first if the file is parsed and executed
 console.log("--> pluginadapter.js: File started execution.");
 import { PluginAdapter } from '@coyoapp/plugin-adapter';
 export class DemoPlugin {
     constructor() {
-        console.log("DemoPlugin constructor called."); // Log when constructor starts
-        // Initialize the PluginAdapter and fetch context/config data
+        console.log("DemoPlugin constructor called.");
         new PluginAdapter().init().then(data => {
-            // Cast to any to avoid type errors with ctx.* and cfg.* properties
             const pluginData = data;
-            // --- IMPORTANT: Log the full received data object ---
             console.log("Haiilo Plugin Data Received (raw):", data);
             console.log("Haiilo Plugin Data Received (casted):", pluginData);
             // Check if pluginData has expected structure
@@ -18,18 +13,17 @@ export class DemoPlugin {
                 // --- Access and display Context Data ---
                 const userName = pluginData['ctx.userName'];
                 console.log("Extracted userName:", userName);
-                this.updateSpanText('userName', userName || 'Guest'); // Default to 'Guest' if not provided
-                // --- Access and display Config Data ---
+                this.updateSpanText('userName', userName || 'Guest');
                 const apiKey = pluginData['cfg.apiKey'];
                 console.log("Extracted apiKey:", apiKey);
-                this.updateSpanText('apiKey', apiKey || 'Not set'); // Display API Key from config
+                this.updateSpanText('apiKey', apiKey || 'Not set');
                 const customTitle = pluginData['cfg.customTitle'];
                 console.log("Extracted customTitle:", customTitle);
-                this.updateSpanText('customTitle', customTitle || 'No custom title'); // Display Custom Title from config
+                this.updateSpanText('customTitle', customTitle || 'No custom title');
                 const background = pluginData['cfg.background'];
                 console.log("Extracted background:", background);
-                this.updateSpanText('background', background || 'Default (no color)'); // Display Background color text
-                this.setBackgroundColor(background); // Apply background color
+                this.updateSpanText('background', background || 'Default (no color)');
+                this.setBackgroundColor(background);
             }
             else {
                 console.warn("Haiilo Plugin Data is not an object or is null:", pluginData);
@@ -40,7 +34,6 @@ export class DemoPlugin {
             }
         }).catch(error => {
             console.error("Error initializing Haiilo Plugin Adapter:", error);
-            // Optionally, update a status element on the page to show the error
             this.updateSpanText('userName', 'Error loading plugin data!');
             this.updateSpanText('apiKey', 'Error');
             this.updateSpanText('customTitle', 'Error');

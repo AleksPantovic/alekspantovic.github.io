@@ -6,7 +6,7 @@ import { defineConfig } from 'vite';
 // Set the base path for GitHub Pages deployment
 export default defineConfig({
   // plugins: [react()], // Uncomment if using React
-  base: '/haiiloplugin/', // Ensure this matches your repo name
+  base: '/haiiloplugin/', // <--- THIS IS THE CRUCIAL LINE
   build: {
     outDir: 'dist'
   }
