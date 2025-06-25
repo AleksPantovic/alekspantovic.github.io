@@ -11,8 +11,10 @@
   <div>Custom Title: <span id="customTitle">...</span></div>
   <div>Hello, <span id="userName">...</span>!</div>
   <div>Background: <span id="background">...</span></div>
-  <div>Spotify Link: <span id="spotifyLink">...</span></div>
-  <div>Spotify Layout: <span id="spotifyLayout">...</span></div>
-  <script type="module" src="/haiiloplugin/dist/pluginadapter.js"></script>
+  <!-- Remove Spotify lines if not needed -->
+  <!-- Load PluginAdapter from CDN (make sure this URL is correct for your version) -->
+  <script src="https://unpkg.com/@coyoapp/plugin-adapter@latest/dist/plugin-adapter.umd.js"></script>
+  <!-- Load your plugin code (compiled JS) -->
+  <script type="module" src="./dist/pluginadapter.js"></script>
 </body>
 </html>
