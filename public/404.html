@@ -4,26 +4,21 @@
     <meta charset="utf-8" />
     <title>Redirecting...</title>
     <script>
-      // Always redirect to the correct base path for GitHub Pages
-      // Adjust this if your repo name changes
-      const repo = 'haiiloplugin';
-      const path = '/' + repo;
-      const redirectPath = path + '/index.html';
-      // If already on /haiiloplugin, just reload index.html
-      if (!location.pathname.startsWith(path)) {
-        location.replace(
-          location.protocol +
-            '//' +
-            location.hostname +
-            (location.port ? ':' + location.port : '') +
-            redirectPath +
-            location.pathname +
-            location.search +
-            location.hash
-        );
+      // The repository name for GitHub Pages, used as the base path.
+      const repo = 'haiiloplugin'; // Make sure this matches your GitHub repository name exactly.
+
+      // Construct the full absolute path to index.html including the repository name.
+      const indexPath = `/${repo}/index.html`;
+
+      // Get the full original URL path requested, including query parameters and hash.
+      const currentFullPath = window.location.pathname + window.location.search + window.location.hash;
+
+      // Check if the current path already starts with the repository base.
+      if (currentFullPath.startsWith(`/${repo}`)) {
+        window.location.replace(indexPath + window.location.search + window.location.hash);
       } else {
-        // If already in the correct base, just reload index.html
-        location.replace(redirectPath + location.search + location.hash);
+        const targetPath = `${indexPath}${currentFullPath}`;
+        window.location.replace(targetPath);
       }
     </script>
   </head>
