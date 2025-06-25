@@ -58,12 +58,9 @@ for = "/*"
 [headers.values]
   Content-Security-Policy = "script-src 'self' 'unsafe-inline' 'unsafe-eval'; object-src 'none';"
   X-Content-Type-Options = "nosniff"
-  X-Frame-Options = "DENY"
+  # X-Frame-Options = "DENY" # Remove or change to SAMEORIGIN if you need iframe embedding
   Referrer-Policy = "strict-origin-when-cross-origin"
   Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
-  Access-Control-Allow-Origin = "*"
-  Access-Control-Allow-Methods = "GET, POST, OPTIONS, PUT, DELETE"
-  Access-Control-Allow-Headers = "Authorization, Content-Type, X-Requested-With"
 
 [[headers]]
   for = "/pluginAdapter.mjs"
@@ -71,9 +68,47 @@ for = "/*"
     Content-Type = "application/javascript"
 
 [[headers]]
+  for = "/dist/*.js"
+  [headers.values]
+    Content-Type = "application/javascript"
+
+[[headers]]
   for = "/**/*.mjs"
   [headers.values]
     Content-Type = "application/javascript"
+
+[[headers]]
+  for = "*.json"
+  [headers.values]
+    Content-Type = "application/json"
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "GET, OPTIONS"
+    Access-Control-Allow-Headers = "Content-Type"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "GET, POST, OPTIONS, PUT, DELETE"
+    Access-Control-Allow-Headers = "Authorization, Content-Type, X-Requested-With"
+    Access-Control-Allow-Credentials = "true"
+
+[[headers]]
+  for = "/api/*"
+  [headers.values]
+    Content-Type = "application/json"
+    Access-Control-Allow-Origin = "*"
+    Access-Control-Allow-Methods = "GET, OPTIONS, POST, PUT, DELETE"
+    Access-Control-Allow-Headers = "Authorization, Content-Type, X-Requested-With"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Content-Security-Policy = "script-src 'self' 'unsafe-inline' 'unsafe-eval'; object-src 'none';"
+    X-Content-Type-Options = "nosniff"
+    # X-Frame-Options = "DENY" # Remove or change to SAMEORIGIN if you need iframe embedding
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
 
 [[redirects]]
   from = "/users"
