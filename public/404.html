@@ -4,8 +4,8 @@
     <meta charset="utf-8" />
     <title>Redirecting...</title>
     <script>
-      // Always force redirect to the main app root
-      window.location.replace('/haiiloplugin/');
+      // If user lands on the root 404 (https://alekspantovic.github.io/?src=...), redirect to /haiiloplugin/ with query/hash
+      window.location.replace('/haiiloplugin/' + window.location.search + window.location.hash);
     </script>
   </head>
   <body></body>
