@@ -30,12 +30,6 @@ export class DemoPlugin {
                 console.log("Extracted background:", background);
                 this.updateSpanText('background', background || 'Default (no color)'); // Display Background color text
                 this.setBackgroundColor(background); // Apply background color
-                const spotifyLink = pluginData['cfg.spotifyLink'];
-                console.log("Extracted spotifyLink:", spotifyLink);
-                this.updateSpanText('spotifyLink', spotifyLink || 'No Spotify link'); // Display Spotify Link text
-                const spotifyLayout = pluginData['cfg.spotifyLayout'];
-                console.log("Extracted spotifyLayout:", spotifyLayout);
-                this.updateSpanText('spotifyLayout', spotifyLayout || 'No Spotify layout'); // Display Spotify Layout text
             }
             else {
                 console.warn("Haiilo Plugin Data is not an object or is null:", pluginData);
@@ -43,8 +37,6 @@ export class DemoPlugin {
                 this.updateSpanText('apiKey', 'No plugin data received.');
                 this.updateSpanText('customTitle', 'No plugin data received.');
                 this.updateSpanText('background', 'No plugin data received.');
-                this.updateSpanText('spotifyLink', 'No plugin data received.');
-                this.updateSpanText('spotifyLayout', 'No plugin data received.');
             }
         }).catch(error => {
             console.error("Error initializing Haiilo Plugin Adapter:", error);
@@ -53,8 +45,6 @@ export class DemoPlugin {
             this.updateSpanText('apiKey', 'Error');
             this.updateSpanText('customTitle', 'Error');
             this.updateSpanText('background', 'Error');
-            this.updateSpanText('spotifyLink', 'Error');
-            this.updateSpanText('spotifyLayout', 'Error');
         });
     }
     /**
@@ -86,5 +76,4 @@ export class DemoPlugin {
         }
     }
 }
-// Instantiate the plugin to start its execution when the script loads
 new DemoPlugin();
