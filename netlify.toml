@@ -95,3 +95,7 @@ for = "/*"
 [functions]
   directory = "netlify/functions"
   node_bundler = "esbuild"
+
+[build]
+  publish = "dist"
+  command = "npm run build"
