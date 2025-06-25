@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Redirecting...</title>
+    <script>
+      // Adjust this if your repo name changes
+      const path = '/haiiloplugin';
+      const redirectPath = path + '/index.html';
+      location.replace(
+        location.protocol +
+          '//' +
+          location.hostname +
+          (location.port ? ':' + location.port : '') +
+          redirectPath +
+          location.pathname +
+          location.search +
+          location.hash
+      );
+    </script>
+  </head>
+  <body></body>
+</html>
