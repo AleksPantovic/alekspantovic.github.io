@@ -13,6 +13,6 @@
     "vite": "^7.0.0"
   },
   "dependencies": {
-    "@coyoapp/plugin-adapter": "^0.3.1"
+    "@coyoapp/plugin-adapter": "^1.3.0"
   }
 }
