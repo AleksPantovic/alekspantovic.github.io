@@ -6,12 +6,12 @@ export class DemoPlugin {
     constructor() {
         console.log("DemoPlugin constructor called.");
 
-        new PluginAdapter().init().then(data => {
+        new PluginAdapter().init().then(result => {
+            // Log the full result to inspect the new structure after breaking changes
+            console.log("Haiilo Plugin Init Result (raw):", result);
 
-            const pluginData: any = data;
-
-            console.log("Haiilo Plugin Data Received (raw):", data);
-            console.log("Haiilo Plugin Data Received (casted):", pluginData);
+            // Try to access claims or data property, fallback to result itself
+            const pluginData: any = result?.claims || result?.data || result;
 
             // Check if pluginData has expected structure
             if (pluginData && typeof pluginData === 'object') {
@@ -43,10 +43,11 @@ export class DemoPlugin {
 
         }).catch(error => {
             console.error("Error initializing Haiilo Plugin Adapter:", error);
-            this.updateSpanText('userName', 'Error loading plugin data!');
-            this.updateSpanText('apiKey', 'Error');
-            this.updateSpanText('customTitle', 'Error');
-            this.updateSpanText('background', 'Error');
+            // Log the full error object for debugging
+            this.updateSpanText('userName', `Error: ${error?.message || error || 'Unknown error'}`);
+            this.updateSpanText('apiKey', `Error: ${error?.message || error || 'Unknown error'}`);
+            this.updateSpanText('customTitle', `Error: ${error?.message || error || 'Unknown error'}`);
+            this.updateSpanText('background', `Error: ${error?.message || error || 'Unknown error'}`);
         });
     }
 
