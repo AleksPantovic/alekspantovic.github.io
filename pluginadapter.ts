@@ -10,8 +10,8 @@ export class DemoPlugin {
             // Log the full result to inspect the new structure after breaking changes
             console.log("Haiilo Plugin Init Result (raw):", result);
 
-            // Try to access claims or data property, fallback to result itself
-            const pluginData: any = result?.claims || result?.data || result;
+            // Try to access claims property, fallback to result itself
+            const pluginData: any = result?.claims || result;
 
             // Check if pluginData has expected structure
             if (pluginData && typeof pluginData === 'object') {
