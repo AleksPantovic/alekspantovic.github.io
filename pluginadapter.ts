@@ -7,75 +7,26 @@ export class DemoPlugin {
         console.log("DemoPlugin constructor called.");
 
         new PluginAdapter().init().then(result => {
-            // Log the full result to inspect the new structure after breaking changes
-            console.log("Haiilo Plugin Init Result (raw):", result);
-
-            // Try to access claims property, fallback to result itself
+            // Use only data keys defined in your manifest: userName and spotifyTitle
             const pluginData: any = result?.claims || result;
 
-            // Check if pluginData has expected structure
-            if (pluginData && typeof pluginData === 'object') {
-                console.log("Data is an object. Proceeding to extract values.");
+            // userName from context
+            const userName = pluginData['ctx.userName'];
+            this.updateSpanText('userName', userName || 'Guest');
 
-                // --- Access and display Context Data ---
-                const userName = pluginData['ctx.userName'];
-                console.log("Extracted userName:", userName);
-                this.updateSpanText('userName', userName || 'Guest'); 
-
-                const apiKey = pluginData['cfg.apiKey'];
-                console.log("Extracted apiKey:", apiKey);
-                this.updateSpanText('apiKey', apiKey || 'Not set'); 
-                const customTitle = pluginData['cfg.customTitle'];
-                console.log("Extracted customTitle:", customTitle);
-                this.updateSpanText('customTitle', customTitle || 'No custom title'); 
-
-                const background = pluginData['cfg.background'];
-                console.log("Extracted background:", background);
-                this.updateSpanText('background', background || 'Default (no color)'); 
-                this.setBackgroundColor(background);
-            } else {
-                console.warn("Haiilo Plugin Data is not an object or is null:", pluginData);
-                this.updateSpanText('userName', 'No plugin data received.');
-                this.updateSpanText('apiKey', 'No plugin data received.');
-                this.updateSpanText('customTitle', 'No plugin data received.');
-                this.updateSpanText('background', 'No plugin data received.');
-            }
-
+            // spotifyTitle from config
+            const spotifyTitle = pluginData['cfg.spotifyTitle'];
+            this.updateSpanText('spotifyTitle', spotifyTitle || 'No Spotify Title');
         }).catch(error => {
-            console.error("Error initializing Haiilo Plugin Adapter:", error);
-            // Log the full error object for debugging
             this.updateSpanText('userName', `Error: ${error?.message || error || 'Unknown error'}`);
-            this.updateSpanText('apiKey', `Error: ${error?.message || error || 'Unknown error'}`);
-            this.updateSpanText('customTitle', `Error: ${error?.message || error || 'Unknown error'}`);
-            this.updateSpanText('background', `Error: ${error?.message || error || 'Unknown error'}`);
+            this.updateSpanText('spotifyTitle', `Error: ${error?.message || error || 'Unknown error'}`);
         });
     }
 
-    /**
-     * Helper method to update the text content of a span element by its ID.
-     * @param id The ID of the span element.
-     * @param text The text content to set.
-     */
     private updateSpanText(id: string, text: string) {
         const element = document.getElementById(id);
         if (element) {
             element.innerText = text;
-            console.log(`Updated span '${id}' with text: '${text}'`); // Log successful span update
-        } else {
-            console.warn(`Element with ID '${id}' not found. Cannot update.`);
-        }
-    }
-
-    /**
-     * Sets the background color of the body.
-     * @param color The CSS color value.
-     */
-    private setBackgroundColor(color: string) {
-        if (color) {
-            document.body.style.backgroundColor = color;
-            console.log(`Set background color to: '${color}'`);
-        } else {
-            console.log("No background color provided.");
         }
     }
 }
