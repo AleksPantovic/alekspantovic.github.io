@@ -9,7 +9,6 @@
     "en": "A simple demo plug-in",
     "de": "Ein einfaches Beispiel-Plug-in"
   },
-  "context": ["test1", "test2"],
   "config": [
     {
       "key": "test1",
