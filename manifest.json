@@ -9,39 +9,39 @@
     "en": "A simple demo plug-in",
     "de": "Ein einfaches Beispiel-Plug-in"
   },
-  "context": ["userName"],
+  "context": ["test1", "test2"],
   "config": [
     {
-      "key": "spotifyTitle",
+      "key": "test1",
       "type": "text",
       "label": {
-        "en": "Spotify Title",
-        "de": "Spotify Titel"
+        "en": "Test1",
+        "de": "Test1"
       },
       "placeholder": {
-        "en": "My Favorite Playlist",
-        "de": "Meine Lieblingsplaylist"
+        "en": "Test1 value",
+        "de": "Test1 Wert"
       },
       "description": {
-        "en": "Enter a title for the Spotify embed.",
-        "de": "Gib einen Titel für das Spotify-Embed ein."
+        "en": "Enter a value for Test1.",
+        "de": "Gib einen Wert für Test1 ein."
       },
       "required": false
     },
     {
-      "key": "userName",
+      "key": "test2",
       "type": "text",
       "label": {
-        "en": "User Name",
-        "de": "Benutzername"
+        "en": "Test2",
+        "de": "Test2"
       },
       "placeholder": {
-        "en": "John Doe",
-        "de": "Max Mustermann"
+        "en": "Test2 value",
+        "de": "Test2 Wert"
       },
       "description": {
-        "en": "Enter your user name.",
-        "de": "Gib deinen Benutzernamen ein."
+        "en": "Enter a value for Test2.",
+        "de": "Gib einen Wert für Test2 ein."
       },
       "required": false
     }
