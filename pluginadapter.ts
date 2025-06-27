@@ -7,19 +7,19 @@ export class DemoPlugin {
         console.log("DemoPlugin constructor called.");
 
         new PluginAdapter().init().then(result => {
-            // Use only data keys defined in your manifest: userName and spotifyTitle
-            const pluginData: any = result?.claims || result;
+            // v0.2.0+ claims API: claims are now nested objects, not dot-separated keys
+            // result.claims.cfg.test1, result.claims.cfg.test2, result.claims.ctx.test1, etc.
+            const claims = result.claims || result;
 
-            // userName from context
-            const userName = pluginData['ctx.userName'];
-            this.updateSpanText('userName', userName || 'Guest');
+            // Prefer config, fallback to context if not set
+            const test1 = claims.cfg?.test1 ?? claims.ctx?.test1 ?? 'No Test1';
+            const test2 = claims.cfg?.test2 ?? claims.ctx?.test2 ?? 'No Test2';
 
-            // spotifyTitle from config
-            const spotifyTitle = pluginData['cfg.spotifyTitle'];
-            this.updateSpanText('spotifyTitle', spotifyTitle || 'No Spotify Title');
+            this.updateSpanText('test1', test1);
+            this.updateSpanText('test2', test2);
         }).catch(error => {
-            this.updateSpanText('userName', `Error: ${error?.message || error || 'Unknown error'}`);
-            this.updateSpanText('spotifyTitle', `Error: ${error?.message || error || 'Unknown error'}`);
+            this.updateSpanText('test1', `Error: ${error?.message || error || 'Unknown error'}`);
+            this.updateSpanText('test2', `Error: ${error?.message || error || 'Unknown error'}`);
         });
     }
 
