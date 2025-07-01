@@ -43,6 +43,91 @@
         "de": "Gib einen Wert für Test2 ein."
       },
       "required": false
+    },
+    {
+      "key": "tenantId",
+      "type": "text",
+      "label": {
+        "en": "Tenant ID",
+        "de": "Mandanten-ID"
+      },
+      "placeholder": {
+        "en": "Azure Directory (Tenant) ID",
+        "de": "Azure Mandanten-ID"
+      },
+      "description": {
+        "en": "Your Azure Entra Directory (Tenant) ID",
+        "de": "Ihre Azure Entra Mandanten-ID"
+      },
+      "required": true
+    },
+    {
+      "key": "clientId",
+      "type": "text",
+      "label": {
+        "en": "Client ID",
+        "de": "Client-ID"
+      },
+      "placeholder": {
+        "en": "Application (Client) ID",
+        "de": "Anwendungs-ID"
+      },
+      "description": {
+        "en": "Your Azure App Registration Client ID",
+        "de": "Ihre Azure App-Registrierungs-ID"
+      },
+      "required": true
+    },
+    {
+      "key": "clientSecret",
+      "type": "text",
+      "label": {
+        "en": "Client Secret",
+        "de": "Client Secret"
+      },
+      "placeholder": {
+        "en": "Client Secret",
+        "de": "Client Secret"
+      },
+      "description": {
+        "en": "Your Azure App Registration Client Secret",
+        "de": "Ihr Azure App-Registrierungs-Client Secret"
+      },
+      "required": true
+    },
+    {
+      "key": "scope",
+      "type": "text",
+      "label": {
+        "en": "Scope",
+        "de": "Scope"
+      },
+      "placeholder": {
+        "en": "https://graph.microsoft.com/.default",
+        "de": "https://graph.microsoft.com/.default"
+      },
+      "description": {
+        "en": "OAuth2 scope (default: https://graph.microsoft.com/.default)",
+        "de": "OAuth2 Scope (Standard: https://graph.microsoft.com/.default)"
+      },
+      "required": false
+    },
+    {
+      "key": "apiEndpoint",
+      "type": "text",
+      "label": {
+        "en": "API Endpoint",
+        "de": "API-Endpunkt"
+      },
+      "placeholder": {
+        "en": "https://graph.microsoft.com/v1.0/users",
+        "de": "https://graph.microsoft.com/v1.0/users"
+      },
+      "description": {
+        "en": "Microsoft Graph API endpoint",
+        "de": "Microsoft Graph API-Endpunkt"
+      },
+      "required": false
     }
   ],
   "entryPoints": [
